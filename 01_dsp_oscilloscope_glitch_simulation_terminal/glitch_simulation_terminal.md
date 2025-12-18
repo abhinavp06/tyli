@@ -120,7 +120,7 @@ The threshold is a balance between **Physics** (DSP) and **Aesthetics** (Visuals
 2. **Visuals:** Since our screen resolution is low (30 rows), a tiny movement in audio might look like a 2-row jump.
     - _Recommendation:_ Set `GLITCH_THRESHOLD = 2`. This ensures we don't draw red lines for normal fast signals (like a snare drum), but we DO draw them for unnatural snaps (like a buffer underrun).
 
-### What would a Production Grade IEM use? (The "Senior Engineer" View)
+### What would a Production Grade IEM use? 
 While this C++ code simulates the logic perfectly, a real firmware implementation for an IEM (like the Letshuoer S12 Pro DSP cable) would differ in three key ways:
 1. **Memory Management (Static vs. Dynamic):**
     - _This Code:_ Uses `std::vector` and `std::deque`. These ask the OS for memory every frame (`malloc`). This is non-deterministic and can cause audio dropouts.

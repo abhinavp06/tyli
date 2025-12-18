@@ -18,88 +18,107 @@ const std::string BLUE = "\033[1;34m";
 const std::string RESET = "\033[0m";
 
 int coordinate_mapper(float value) {
-    if (value > 1.0f) value = 1.0f;
-    if (value < -1.0f) value = -1.0f;
+	/*
+	* Even though we have clamping at the bottom of the function, this is still important.
+	* This ensures that we clip before anything is processed. This doesn't cause any weird math issues.
+	*/
+	if (value > 1.0f) value = 1.0f;
+	if (value < -1.0f) value = -1.0f;
 
-    int result = std::round((1.0f - value) * (TOTAL_ROWS / 2));
+	int result = std::round((1.0f - value) * (TOTAL_ROWS / 2));
 
-    if (TOTAL_ROWS % 2 == 0) result -= 1;
+	/*
+	* This is needed because if TOTAL_ROWS is 20, result will have a value of 20.
+	* This will cause an array out of bounds error.
+	*/
+	if (TOTAL_ROWS % 2 == 0) result -= 1;
 
-    if (result > BOTTOM_ROW) return BOTTOM_ROW;
-    if (result < TOP_ROW) return TOP_ROW;
-    return result;
+	// Clamping
+	if (result > BOTTOM_ROW) return BOTTOM_ROW;
+	if (result < TOP_ROW) return TOP_ROW;
+
+	return result;
 }
 
-void renderWave(const std::vector<float>& buffer) {
-    std::vector<std::string> canvas(TOTAL_ROWS, std::string(buffer.size(), ' '));
-    canvas[ZERO_AUDIO_ROW] = std::string(buffer.size(), '-');
+void render_wave(const std::vector<float>& buffer) {
+	std::vector<std::string> canvas(TOTAL_ROWS, std::string(buffer.size(), ' '));
+	canvas[ZERO_AUDIO_ROW] = std::string(buffer.size(), '-');
 
-    int previousRow = -1;
+	int previous_row = -1;
 
-    for (int i = 0; i < buffer.size(); i++) {
-        int targetRow = coordinate_mapper(buffer[i]);
+	for (int i = 0; i < buffer.size(); i++) {
+		int target_row = coordinate_mapper(buffer[i]);
 
-        if (previousRow != -1) {
-            int distance = std::abs(targetRow - previousRow);
-            if (distance > GLITCH_THRESHOLD) {
-                int start = std::min(previousRow, targetRow);
-                int end = std::max(previousRow, targetRow);
-                for (int r = start + 1; r < end; r++) {
-                    canvas[r][i] = '|';
-                }
-            }
-        }
+		/*
+		* buffer[0] means the 0th column
+		* the coordinate_mapper decides which row the star should be printed in
+		* we are basically printing TOTAL_ROWS strings. 
+		* The canvas is prefilled before being displayed on the terminal.
+		*/
+		if (previous_row != -1) {
+			int distance = std::abs(target_row - previous_row);
+			if (distance > GLITCH_THRESHOLD) {
+				int start = std::min(previous_row, target_row);
+				int end = std::max(previous_row, target_row);
+				for (int r = start + 1; r < end; r++) {
+					canvas[r][i] = '|';
+				}
+			}
+		}
 
-        canvas[targetRow][i] = '*';
-        previousRow = targetRow;
-    }
+		canvas[target_row][i] = '*';
+		previous_row = target_row;
 
-    std::cout << "--- IEM DSP VISUALIZER ---" << std::endl;
-    for (const std::string& row : canvas) {
-        for (char c : row) {
-            if (c == '|') {
-                std::cout << RED << c << RESET;
-            }
-            else if (c == '*') {
-                std::cout << GREEN << c << RESET;
-            }
-            else if (c == '-') {
-                std::cout << BLUE << c << RESET;
-            }
-            else {
-                std::cout << c;
-            }
-        }
-        std::cout << "\n";
-    }
+	}
+
+	std::cout << "--- IEM DSP VISUALIZER ---" << std::endl;
+	for (const std::string& row : canvas) {
+		for (char c : row) {
+			if (c == '|') {
+				std::cout << RED << c << RESET;
+			}
+			else if (c == '*') {
+				std::cout << GREEN << c << RESET;
+			}
+			else if (c == '-') {
+				std::cout << BLUE << c << RESET;
+			}
+			else {
+				std::cout << c;
+			}
+		}
+		std::cout << "\n";
+	}
+
 }
+
 
 int main() {
-    const int WINDOW_WIDTH = 100;
-    std::deque<float> audioHistory(WINDOW_WIDTH, 0.0f);
+	const int WINDOW_WIDTH = 100;
+	std::deque<float> audio_history(WINDOW_WIDTH, 0.0f);
 
-    float globalTime = 0.0f;
-    float timeStep = 0.05f;
+	float global_time = 0.0f;
+	float time_step = 0.05f;
 
-    while (true) {
-        float sample = std::sin(globalTime);
+	while (true) {
+		float sample = std::sin(global_time);
 
-        // INTENTIONAL GLITCH: Every ~30 frames, force a hard snap
-        if ((int)(globalTime * 10) % 50 == 0) {
-            sample = ((int)globalTime % 2 == 0) ? 0.9f : -0.9f;
-        }
+		// INTENTIONAL GLITCH: Every ~30 frames, force a hard snap
+		if ((int)(global_time * 10) % 50 == 0) {
+			sample = ((int)global_time % 2 == 0) ? 0.9f : -0.9f;
+		}
 
-        audioHistory.pop_front(); 
-        audioHistory.push_back(sample);
+		audio_history.pop_front();
+		audio_history.push_back(sample);
 
-        std::vector<float> currentBuffer(audioHistory.begin(), audioHistory.end());
+		std::vector<float> current_buffer(audio_history.begin(), audio_history.end());
 
-        std::cout << "\033[2J\033[H";
-        renderWave(currentBuffer);
+		std::cout << "\033[2J\033[H";
+		render_wave(current_buffer);
 
-        globalTime += timeStep;
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    }
+		global_time += time_step;
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+	}
 
-    return 0;
+	return 0;
 }
