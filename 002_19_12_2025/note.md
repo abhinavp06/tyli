@@ -68,6 +68,10 @@ The #term_ZeroProblem
 
 ### What happens when you increase the bit depth from 3 to 8 in the 'Only Mud' visualizer?
 
+### What is the relationship between LSB and Mud? How does the size of the LSB affect the mud?
+
+### 
+
 ### We call it #term_HarmonicDistortion because of a repeating pattern. What is the term for the distortion that is not periodic?
 -> Lead to white noise implementation
 
@@ -105,3 +109,77 @@ You need to be comfortable with the term **Transfer Function**. It’s just a fa
 - A "Perfect" system is a straight diagonal line (Input = Output).
 - Your "Bit Crusher" is a **Staircase**.
 - **Why it matters:** Mid-Rise and Mid-Tread are simply two different ways of drawing that staircase.
+
+# 🚩 The Decision Boundary: The Most Dangerous Part of the Map
+The **Decision Boundary** (the $0.5 \times LSB$ line) is the "Event Horizon" of digital audio. It is the exact threshold where the math decides if a piece of information is worth keeping or if it should be discarded forever.
+### 1. The "Blindness" Problem (The Dead Zone)
+In the analog world, every tiny vibration matters. In the digital world, the system is **blind** to anything that doesn't "trip the wire" of the decision boundary.
+
+> [!ABSTRACT] The Analogy: The Heavy Door
+> 
+> Imagine a massive, heavy sliding door.
+> 
+> - A **strong person** (High Volume Signal) pushes the door open easily. You can see them clearly.
+>     
+> - A **small child** (Quiet Signal / Detail) pushes with all their might, but the door is too heavy to budge.
+>     
+> - To the person on the other side of the door, **the child does not exist.** **The Takeaway:** Quiet details (the "Truth" of the sound) don't just get "noisier" in a bit crusher; they are **censored**. If the signal is trapped between the Lego studs, the output is a flat line of silence.
+>     
+
+### 2. The Physics of Failure: "The Gate"
+This is the physical manifestation of the Decision Boundary. When a sound fades out (like a piano note ringing out), it eventually crosses the boundary for the last time.
+- Instead of a smooth fade to silence, the sound **drops off a cliff.**
+- This is **The Gate**: The moment the math decides $0.499 = 0$.
+
+### 3. Correlation: The "Stalking" Shadow
+The Decision Boundary is dangerous because it is predictable.
+
+Because the boundary is fixed in stone, the "Mud" (Error Signal) is forced to follow the music.
+- If the singer moves up, the error snaps up.
+- If the singer moves down, the error snaps down.
+- **The Result:** The noise isn't like "rain" on a roof (which is independent of what happens inside). It is like a **jagged shadow** that is physically glued to the singer’s feet. This is why it sounds like "robotic grit" rather than "hiss."
+### 4. Mid-Tread vs. Mid-Rise: Where do you draw the line?
+The danger changes depending on where you place the "Zero" brick.
+- **Mid-Tread (The Floor):** You place a flat brick exactly at zero. This creates a stable "Silence," but it creates a large **Dead Zone** where quiet sounds are ignored.
+- **Mid-Rise (The Crack):** You put the "Decision Boundary" exactly at zero. There is no silence. Even the tiniest vibration forces the system to jump between $+1$ and $-1$.
+
+> [!DANGER] First Principle
+> 
+> In digital audio, Information Loss happens at the bottom. The Decision Boundary is the "Filter" that decides what is "Music" and what is "Nothing."
+
+
+# 👁️ The Resolution Trap: Terminal vs. Reality
+
+When using the #term_BitCrusher visualizer, there is a final "Engineering Trap" to be aware of: the difference between **Audio Resolution** and **Visual Resolution**.
+
+### 1. The Row Illusion
+In your C++ code, you have a fixed number of rows (e.g., `TOTAL_ROWS = 30`).
+- **At 3-bit:** You have 8 "Lego" levels. Since $8 < 30$, your terminal can easily draw every single step. You see the "Staircase" clearly.
+- **At 8-bit:** You have 256 levels. Since $256 > 30$, your terminal **physically cannot draw the steps anymore.** The wave starts to look "smooth" again in the terminal, even though it is still technically a staircase in the code.
+
+> [!WARNING] The Perceptual Mirror
+> 
+> This is exactly how the human ear works.
+> 
+> - If the "Lego Bricks" (LSBs) are larger than our ear's resolution, we hear **Distortion**.
+>     
+> - If the "Lego Bricks" are smaller than our ear's resolution (like in 16-bit audio), the sound appears **Smooth**, even though it is still made of blocks.
+>     
+
+### 2. "Truth" vs. "Perception"
+Just because you can't _see_ the steps in the terminal doesn't mean the **Mud** isn't there. It just means the error is now "Sub-Pixel."
+- In audio, 16-bit is effectively perfect because the "Mud" is "Sub-Audible."
+- In high-end OLEDs, 10-bit is used because the "Banding" becomes "Sub-Visual."
+
+### 3. The Sandpaper Principle (Intro to Dither)
+If you have 3-bit audio (big blocks), the "Resolution Trap" works against you—you hear the grit.
+
+**Topic 03 (Dither)** is the art of using **Noise** like sandpaper. By "sanding down" the sharp corners of the 3-bit bricks, we trick the ear into thinking the wave is smooth, effectively pushing the distortion into the "Resolution Trap" where we can no longer distinguish it from a smooth curve.
+
+---
+
+### 📝 Note Summary
+
+> [!TIP] The Takeaway
+> 
+> Always distinguish between the Actual Resolution (the math) and the Display Resolution (the terminal or the ear). If the error is smaller than the display's "grid," the system appears linear, even when it is quantized.

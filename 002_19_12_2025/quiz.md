@@ -158,12 +158,24 @@
 
 ---
 
+**21. THE BORDERLINE CHALLENGE: In a 3-bit system ($LSB = 0.25$), an input of 0.1250001 results in an output of 0.25. If the input drops to 0.1249999, the output becomes 0.0. Why?**
+- A) Because 0.125 is the "Decision Boundary" (Half-LSB) where `std::round` snaps to a different integer.
+- B) Because the computer cannot process 7 decimal places.
+- C) Because the negative range is larger than the positive range.
+- D) Because the signal became non-periodic.
+
+---
 ### 🗝️ Answer Key
 
 <details>
 
 <summary>Click to reveal answers</summary>
 
-1. B | 2. C | 3. B | 4. C | 5. C | 6. B | 7. B | 8. C | 9. B | 10. A | 11. C | 12. B | 13. C | 14. B | 15. B | 16. B | 17. B | 18. A | 19. C | 20. C
-    
-    </details>
+1. B | 2. C | 3. B | 4. C | 5. C | 6. B | 7. B | 8. C | 9. B | 10. A | 11. C | 12. B | 13. C | 14. B | 15. B | 16. B | 17. B | 18. A | 19. C | 20. C | 21. A    
+</details>
+
+Detailed Rationale for Question 21:
+		In this 3-bit system, we scale the input by 4 ($2^{3-1}$).
+		- For **0.1250001**: $0.1250001 \times 4 = 0.5000004$. `std::round` sees a value $> 0.5$ and snaps it to **1.0**. $1.0 / 4 = 0.25$.
+		- For 0.1249999: $0.1249999 \times 4 = 0.4999996$. std::round sees a value $< 0.5$ and snaps it down to 0.0. $0.0 / 4 = 0.0$.
+	    This prove that 0.125 is the exact "Half-LSB" threshold. This range between $-0.125$ and $+0.125$ is the Dead Zone of the Mid-Tread architecture, causing the "Gate Effect."
