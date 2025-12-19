@@ -1,8 +1,17 @@
 The first code [[tyli/01_Phase_1_Master_Bit_Crusher/01_Amplitude_Logic/01_Sample_Rate_and_Bit_Rate/implementation.cpp|implementation]] generated a glitch by telling a sample to a random location. A bit crusher will force every sample to teleport to the nearest "legal" grid line. This gives the hazy and muddy sound.
 
-N-bit audio means 2^N-1 legal values. We are basically shaving off (clumping) some edges. The lower the N, the lower the quality of information.
+>[!Prompt to Gemini]
+>I know for a bit crusher I need to accept a stream of bits and then I need to randomly hold a value for a particular duration. Am I correct?
+>
+>>[!Gemini Reply Summary]
+>> - What you've said is the definition of a Sample Rate Reducer (also known as a down sampler).
+>> - 
+>
 
-I know for a bit crusher I need to accept a stream of bits and then I need to randomly hold a value for a particular duration.
+
+
+
+
 
 #### The Initial Intuition: "Smoothness"
 
