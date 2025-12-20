@@ -1,8 +1,6 @@
-# 01_Sample_Rate_and_Bit_Rate
-> **Status:** #status/active
-> **Tags:** #domain/DSP #concept/digital_audio #term/SampleRate #term/BitDepth
-> **Related:** [[02_Dither_and_Chaos]] | [[06_Aliasing]]
-
+# Projects
+1. [[01_basic_glitch_simulator.cpp]]
+2. [[02_block]]
 ---
 
 ## 1. The Executive Summary
