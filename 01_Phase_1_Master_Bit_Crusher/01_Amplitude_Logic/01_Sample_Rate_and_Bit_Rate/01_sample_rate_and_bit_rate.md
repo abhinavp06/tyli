@@ -1,6 +1,6 @@
 # Projects
 1. [[01_basic_glitch_simulator.cpp]]
-2. [[02_blocky_bit_rate_simulator.cpp]]
+2. [[02_blocky_bit_crusher_simulator.cpp]]
 ---
 
 ## 1. The Executive Summary
