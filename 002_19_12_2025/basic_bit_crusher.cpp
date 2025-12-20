@@ -83,7 +83,7 @@ void render_wave(const std::vector<float>& buffer) {
 
 	}
 
-	std::cout << "--- BIT CRUSHER MUD VISUALIZER ---" << std::endl;
+	std::cout << "--- BIT CRUSHER VISUALIZER ---" << std::endl;
 	for (const std::string& row : canvas) {
 		for (char c : row) {
 			if (c == '|') {
@@ -112,20 +112,20 @@ int main() {
 	float time_step = 0.05f;
 
 	// uncomment for white noise
-	 std::default_random_engine generator;
-	 std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+	 //std::default_random_engine generator;
+	 //std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
 	while (true) {
 		float sample = std::sin(global_time);
 		float bit_crushed_sample = apply_bit_crush(sample);
 
-		float error_signal = bit_crushed_sample - sample;
-		float white_noise = distribution(generator);
+		// float error_signal = bit_crushed_sample - sample; // uncomment for error signal (mud visualization)
+		// float white_noise = distribution(generator); // uncomment for white noise
 
 		audio_history.pop_front();
-		// audio_history.push_back(bit_crushed_sample);
-		// audio_history.push_back(error_signal); // too see the mud only
-		audio_history.push_back(white_noise); // too simulate white noise
+		 audio_history.push_back(bit_crushed_sample); // replace with error_signal or white_noise
+		 //audio_history.push_back(error_signal); // too see the mud only
+		//audio_history.push_back(white_noise); // too simulate white noise
 
 		std::vector<float> current_buffer(audio_history.begin(), audio_history.end());
 
