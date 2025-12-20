@@ -7,72 +7,81 @@
 
 ```
 ======================================================================
-                  THE MASTER AUDIO SYSTEM ROADMAP
+                  AUDIO DSP ROADMAP
 ======================================================================
 
-[PHASE 01: MASTER BIT CRUSHER] <--- 🔥 STATUS: ACTIVE
+[PHASE 01: MASTER BIT CRUSHER]
    | (Foundation & Amplitude)
-   +-- [x] [01: Amplitude Logic] 🟢 DONE
-   |     +-- [x] Sample Rate & Bit Rate (Pre/Post Echo Theory)
-   |     +-- [x] Linear Quantization (The Integer Bridge)
-   +-- [/] [02: Basic Linear Quantization] 🟡 ACTIVE
+   +-- [] [01: Amplitude Logic]
+   |     +-- [x] Sample Rate & Bit Rate
+   |     +-- [ ] Watery Smearing
+   |     +-- [ ] Pre Echo
+   |     +-- [ ] Post Echo
+   |     +-- [ ] Temporal Masking
+   |     +-- [ ] [ implementations]
+   |            +--- [x] Basic Glitch Simulator
+   |            +--- [ ] Blocky Bit Rate Simulator
+   |            +--- [ ] Pre Echo Generator
+   |            +--- [ ] Post Echo Generator
+   |            +--- [ ] Temporal Masking
+   +-- [] [02: Basic Linear Quantization]
    |     +-- [x] Basic Bit Crusher Implementation
    |     +-- [/] Mid-Rise vs Mid-Tread Architectures (Current Focus)
    |     +-- [ ] Dither Theory & TPDF Implementation
    |     +-- [ ] Quantization Error Analysis (Delta Math)
-   +-- [ ] [02: Spectral Cleanup] ⚪ PENDING
+   +-- [ ] [02: Spectral Cleanup]
    |     +-- [ ] Noise Shaping & Error Feedback
    |     +-- [ ] IIR Filter Design (Leaky Integrators)
    |     +-- [ ] DC Offset Correction
-   +-- [ ] [03: Advanced Dynamics] ⚪ PENDING
+   +-- [ ] [03: Advanced Dynamics]
          +-- [ ] Decimation & Anti-Aliasing
          +-- [ ] Envelope Following (Attack/Release Ballistics)
          +-- [ ] Variable Sample Rate Emulation
-                                                              |
-[PHASE 02: THE THEORY BRIDGE]                                 |
-   | (Math & Frequency)                                       |
-   +-- [ ] [01: Math Foundations] ⚪ PENDING                  |
-   |     +-- [ ] Complex Numbers & Euler Identity             |
-   |     +-- [ ] Convolution & Impulse Response               |
-   |     +-- [ ] Z-Transforms (Poles & Zeros)                 |
-   +-- [ ] [02: The Frequency Domain] ⚪ PENDING              |
-   |     +-- [ ] DFT (Brute Force) vs. FFT (Cooley-Tukey)         |
-   |     +-- [ ] Windowing (Hann, Hamming, Blackman)              |
-   +-- [ ] [03: Psychoacoustics & Info Theory] ⚪ PENDING     |
-         +-- [ ] The Bark Scale & Critical Bands                  |
-         +-- [ ] Shannon Entropy & Huffman Coding                 |
-                                                              |
-[PHASE 03: THE COMPRESSION GITA]                              |
-   | (The Lossy Masterpiece)                                  |
-   +-- [ ] [01: The Transport Layer] ⚪ PENDING               |
-   |     +-- [ ] Binary I/O & Bit Packing                         |
-   |     +-- [ ] WAV/RIFF Parsing                                 |
-   +-- [ ] [02: The Transform Engine] ⚪ PENDING              |
-   |     +-- [ ] MDCT & Time-Domain Aliasing Cancellation         |
-   |     +-- [ ] Overlap-Add Reconstruction                       |
-   +-- [ ] [03: The Decision Model] ⚪ PENDING                |
-   |     +-- [ ] Signal-to-Mask Ratio (SMR)                       |
-   |     +-- [ ] Bit Reservoir Management                         |
-                                                              |
-[PHASE 04: HARDWARE SIMULATION]                               |
-   | (Physical Imperfection)                                  |
-   +-- [ ] [01: Reconstruction] --> Sinc Interpolation            |  FEEDBACK
-   +-- [ ] [02: DAC Simulation] --> Clock Jitter & Non-linearity  |    LOOP
-   +-- [ ] [03: Driver Physics] --> Mass-Spring-Damper Models     | (Measure &
-                                                              |   Refine)
-[PHASE 05: ACOUSTIC PHYSICS]                                  |
-   | (Spatial Reality)                                        |
-   +-- [ ] [01: Wave Propagation] --> Ray Tracing & Reflections   |
-   +-- [ ] [02: Binaural]       --> HRTF & 3D Panning             |
-   +-- [ ] [03: Geometry]       --> Diffraction & Occlusion       |
-                                                              |
-[PHASE 06: NEURAL DSP]                                        |
-   | (Machine Intelligence)                                   |
-   +-- [ ] [01: Modeling]       --> LSTM/CNN Guitar Amp Sims      |
-   +-- [ ] [02: Extraction]     --> Source Separation (U-Net)     |
-   +-- [ ] [03: Generation]     --> Differentiable DSP (DDSP)     |
-                                                              |
-[PHASE 07: QUALITY BENCHMARKING] <----------------------------+
+
+[PHASE 02: THE THEORY BRIDGE]                                 
+   | (Math & Frequency)                                       
+   +-- [ ] [01: Math Foundations]                
+   |     +-- [ ] Complex Numbers & Euler Identity             
+   |     +-- [ ] Convolution & Impulse Response               
+   |     +-- [ ] Z-Transforms (Poles & Zeros)                 
+   +-- [ ] [02: The Frequency Domain]              
+   |     +-- [ ] DFT (Brute Force) vs. FFT (Cooley-Tukey)         
+   |     +-- [ ] Windowing (Hann, Hamming, Blackman)              
+   +-- [ ] [03: Psychoacoustics & Info Theory]   
+         +-- [ ] The Bark Scale & Critical Bands                  
+         +-- [ ] Shannon Entropy & Huffman Coding                 
+
+[PHASE 03: THE COMPRESSION GITA]                              
+   | (The Lossy Masterpiece)                                  
+   +-- [ ] [01: The Transport Layer]             
+   |     +-- [ ] Binary I/O & Bit Packing                         
+   |     +-- [ ] WAV/RIFF Parsing                                 
+   +-- [ ] [02: The Transform Engine]             
+   |     +-- [ ] MDCT & Time-Domain Aliasing Cancellation         
+   |     +-- [ ] Overlap-Add Reconstruction                       
+   +-- [ ] [03: The Decision Model]               
+   |     +-- [ ] Signal-to-Mask Ratio (SMR)                       
+   |     +-- [ ] Bit Reservoir Management                         
+                                                              
+[PHASE 04: HARDWARE SIMULATION]                               
+   | (Physical Imperfection)                                  
+   +-- [ ] [01: Reconstruction] --> Sinc Interpolation
+   +-- [ ] [02: DAC Simulation] --> Clock Jitter & Non-linearity 
+   +-- [ ] [03: Driver Physics] --> Mass-Spring-Damper Models 
+
+[PHASE 05: ACOUSTIC PHYSICS]                                  
+   | (Spatial Reality)                                        
+   +-- [ ] [01: Wave Propagation] --> Ray Tracing & Reflections   
+   +-- [ ] [02: Binaural]       --> HRTF & 3D Panning             
+   +-- [ ] [03: Geometry]       --> Diffraction & Occlusion       
+ 
+[PHASE 06: NEURAL DSP]                                        
+   | (Machine Intelligence)                                   
+   +-- [ ] [01: Modeling]       --> LSTM/CNN Guitar Amp Sims      
+   +-- [ ] [02: Extraction]     --> Source Separation (U-Net)     
+   +-- [ ] [03: Generation]     --> Differentiable DSP (DDSP)     
+
+[PHASE 07: QUALITY BENCHMARKING]
      (The Auditor)
      +-- [ ] [01: Time Alignment] --> Cross-Correlation
      +-- [ ] [02: Objective Scoring]--> PEAQ & Delta Signal Analysis
