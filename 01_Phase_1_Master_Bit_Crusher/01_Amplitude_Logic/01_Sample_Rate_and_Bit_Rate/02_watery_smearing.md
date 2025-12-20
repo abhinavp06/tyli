@@ -50,3 +50,5 @@ Think about a **Film Projector**:
 - **The "Watery" part:** Imagine if, instead of showing a crisp frame every half-second, the projector **blurred** all the missing frames together into one messy image.
 
 That blur is what your `m_accumulator` is doing. It’s a temporal blur.
+
+

@@ -13,6 +13,7 @@
 * 4. The jitter's job is to make the "hold" durations irregular so that it can sound more "natural" after bit crushing.
 * 5. The dither's job is to actually help the speaker not go crazy by protecting the amount of "swing" between two amplitude levels.
 *       i. This happens over multiple buffer cycles. Imagining it with a single buffer sized sample will make it difficult to understand.
+*		ii. Dither does not smooth the wave in the time domain; it decorrelates the error. Instead of the speaker making a predictable buzzing mistake it makes a random hissing mistake. The detail comes from the fact that the average of that hiss is the original signal.
 * Note: 
 * The reason bit crusher sounds like a half-completed version of a dubstep bass.
 * The fuzziness/muddiness is due to information loss caused by the stretching
