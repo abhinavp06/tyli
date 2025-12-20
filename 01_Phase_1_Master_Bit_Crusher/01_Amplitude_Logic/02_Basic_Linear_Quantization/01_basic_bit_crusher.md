@@ -99,7 +99,7 @@ Time to implement a basic bit crusher to visualize the 'mud'.
 4. Then divide it back by $2^{N-1}$
 
 
-![[Pasted image 20251220005201.png]]
+![[01_image_1.png]]
 Basic Bit Crusher (with attached mud)
 	The red bars represent the moment the error becomes so large that it jumps to a new row. The mud is physically attached to the signal.
 	This is the #term_QuantizedSignal
@@ -107,7 +107,7 @@ Basic Bit Crusher (with attached mud)
 		Then the error signal is attached to this ideal curve and we get this jagged look.
 		 This jagged look is the visual evidence for the error signal being on top of the music.
 
-![[Pasted image 20251220005252.png]]
+![[01_image_2.png]]
 Basic Bit Crusher (Only mud)
 	We have removed the "music" and are only showing the mud.
 	This is #term_HarmonicDistortion because the mud is created by rounding the sine wave, the mud looks like the sine wave.  ^39a1c1
