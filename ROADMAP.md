@@ -26,7 +26,7 @@
    |            +--- [ ] Temporal Masking
    +-- [] [02: Basic Linear Quantization]
    |     +-- [x] Basic Bit Crusher Implementation
-   |     +-- [/] Mid-Rise vs Mid-Tread Architectures (Current Focus)
+   |     +-- [ ] Mid-Rise vs Mid-Tread Architectures (Current Focus)
    |     +-- [ ] Dither Theory & TPDF Implementation
    |     +-- [ ] Quantization Error Analysis (Delta Math)
    +-- [ ] [02: Spectral Cleanup]
