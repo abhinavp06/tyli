@@ -1,3 +1,0 @@
-I want to learn Audio DSP. These are my new notes. After experimenting with so many ways of storing my notes and implementation, I have realized the best way is to create a simple note for a day and keep appending all thoughts there and simply use tags to connect them.
-
-I have already implemented a simple "click" generator which simulates a click in the terminal.

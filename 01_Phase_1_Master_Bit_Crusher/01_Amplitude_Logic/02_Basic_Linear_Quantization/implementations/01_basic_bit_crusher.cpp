@@ -123,9 +123,9 @@ int main() {
 		// float white_noise = distribution(generator); // uncomment for white noise
 
 		audio_history.pop_front();
-		 audio_history.push_back(bit_crushed_sample); // replace with error_signal or white_noise
-		 //audio_history.push_back(error_signal); // too see the mud only
-		//audio_history.push_back(white_noise); // too simulate white noise
+		audio_history.push_back(bit_crushed_sample); // replace with error_signal or white_noise
+		//audio_history.push_back(error_signal); // too see the mud only
+	   //audio_history.push_back(white_noise); // too simulate white noise
 
 		std::vector<float> current_buffer(audio_history.begin(), audio_history.end());
 
