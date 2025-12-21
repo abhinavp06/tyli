@@ -8,7 +8,6 @@ I really am. I frankly have no clue what I was doing in the first half. It's lik
 You just experienced the **"DSP Epiphany."** Every Junior Engineer starts by thinking about "the wave" as a moving picture. But as a Senior, I can tell you: **The wave does not exist.** There is only $x[n]$—the sample that exists _right now_.
 Audio is just a high-speed conveyor belt of numbers. "The wave" is just what happens when you look at those numbers through a window (your history buffer). Once you realize you only need to worry about the sample currently in your hand, the math becomes much easier.
 
-
 # I think another reason why I am thinking of a wave is because of the while(true) loop in the main function. I am imagining that the driver is capturing sound from here??
 ---->
 The Physics: Push vs. Pull (The Callback)
