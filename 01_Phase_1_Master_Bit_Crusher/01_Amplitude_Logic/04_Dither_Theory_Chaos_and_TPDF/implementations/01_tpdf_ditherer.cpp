@@ -1,4 +1,10 @@
 /*
+* In 02_Basic_Linear_Quantization, we created a 02_blocky_bit_rate_simulator.
+* In this simulator, the dither was inefficient and very basic. It used rand() as well.
+* This TPDF dither is much faster and efficient.
+*/
+
+/*
 * Implementing a TPDF dither using the sum of 2 independent RPDF sources
 *	1. The dither signal must be exactly [-1.0, 1.0] LSB peak-to-peak. No dividing the sum by 2.
 *   2. Use a fast Linear Congruential Generator (LCG) or Xorshift.
