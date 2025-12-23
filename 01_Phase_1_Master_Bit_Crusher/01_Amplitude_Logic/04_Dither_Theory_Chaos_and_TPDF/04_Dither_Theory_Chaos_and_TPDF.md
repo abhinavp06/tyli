@@ -47,6 +47,13 @@ We divide this into four projects to isolate different failure points in the sig
 ### Project 4: Professional Architecture
 - **Strategic Goal:** Mastering **Computational Efficiency**.
 - **The "Why":** A plugin that sounds great but eats 15% of the CPU is useless. This project forces you to pre-calculate scales outside the sample loop, moving from "math experiment" to "production tool."
+- **Requirements:**
+	1. **Horizontal:** `rate_divider` with a `phase_accumulator`.
+	2. **Horizontal:** A `jitter` parameter that modulates the `phase_accumulator` threshold.
+	3. **Gate:** The 512-sample `silence_counter` with `epsilon` check.
+	4. **Vertical:** The `TPDFDitherer` (2 LSB range, LCG-based).
+	5. **Vertical:** Mid-Tread Quantization to the target `bit_depth`.
+	6. **Optimization:** Pre-calculate the `inv_scale` so you aren't calling `pow()` or `1<<bit_depth` every sample.
 
 ---
 

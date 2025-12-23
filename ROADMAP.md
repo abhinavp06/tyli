@@ -118,3 +118,4 @@
 ### WHEN IT'S ALL DONE
 - Build an IEM which will produce THE most realistic audio ever possible.
 - Invent a whole new type of sound effect (effects being things like bit crusher, downsampler, etc.)
+- Try to remaster a song from my music collection by loading a flac file.

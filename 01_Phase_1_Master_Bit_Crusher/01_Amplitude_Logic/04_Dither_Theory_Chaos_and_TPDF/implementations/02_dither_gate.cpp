@@ -39,7 +39,6 @@ public:
 	}
 
 private:
-	int bit_depth = 4;
 	int silence_counter = 0;
 	uint32_t state_1 = 12764, state_2 = 209375;
 	const float F_MIN = -0.5f;
