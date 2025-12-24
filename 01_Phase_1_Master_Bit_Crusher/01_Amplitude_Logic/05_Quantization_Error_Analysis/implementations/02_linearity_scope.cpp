@@ -1,0 +1,1 @@
+// to verify if the dither actually blurs the steps or just adds noise on top

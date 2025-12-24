@@ -1,0 +1,1 @@
+// calculate the RMS of the error sgnal to determine the actual bit depth
