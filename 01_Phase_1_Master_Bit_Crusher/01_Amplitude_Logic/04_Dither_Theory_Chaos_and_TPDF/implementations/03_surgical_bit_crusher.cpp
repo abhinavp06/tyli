@@ -101,6 +101,8 @@ private:
 	float levels = 0.0f;
 
 	float fast_random() {
-		return (state_1 * 1664525) + 1013904223;
+		// updating the state otherwise the jitter will be a fixed offset
+		state_1 = (state_1 * 1664525) + 1013904223;
+		return static_cast<float>(state_1);
 	}
 };
