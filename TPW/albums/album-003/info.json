@@ -1,0 +1,69 @@
+{
+  "albumName": "Ænima",
+  "albumArtist": "Tool",
+  "releaseYear": "1996",
+  "reviewPublishDate": "August 31, 2025",
+  "tracklist": [
+    {
+      "songName": "Stinkfist",
+      "sequence": "1"
+    },
+    {
+      "songName": "Eulogy",
+      "sequence": "2"
+    },
+    {
+      "songName": "H.",
+      "sequence": "3"
+    },
+    {
+      "songName": "Useful Idiot",
+      "sequence": "4"
+    },
+    {
+      "songName": "Forty Six & 2",
+      "sequence": "5"
+    },
+    {
+      "songName": "Message to Harry Manback",
+      "sequence": "6"
+    },
+    {
+      "songName": "Hooker with a Penis",
+      "sequence": "7"
+    },
+    {
+      "songName": "Intermission",
+      "sequence": "8"
+    },
+    {
+      "songName": "Jimmy",
+      "sequence": "9"
+    },
+    {
+      "songName": "Die Eier von Satan",
+      "sequence": "10"
+    },
+    {
+      "songName": "Pushit",
+      "sequence": "11"
+    },
+    {
+      "songName": "Cesaro Summability",
+      "sequence": "12"
+    },
+    {
+      "songName": "Ænema",
+      "sequence": "13"
+    },
+    {
+      "songName": "(-) Ions",
+      "sequence": "14"
+    },
+    {
+      "songName": "Third Eye",
+      "sequence": "15"
+    }
+  ],
+  "globalSequence": "3"
+}
