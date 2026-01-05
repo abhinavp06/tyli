@@ -5,6 +5,10 @@
 #include <chrono>
 #include <thread>
 #include <algorithm>
+#include <random>
+
+const int BIT_DEPTH = 3; // keep it low so that the jumps are dramatic
+const float TOTAL_STEPS = std::pow(2.0f, BIT_DEPTH - 1);
 
 const int TOTAL_ROWS = 30;
 const int ZERO_AUDIO_ROW = 15;
@@ -16,6 +20,14 @@ const std::string RED = "\033[1;31m";
 const std::string GREEN = "\033[1;32m";
 const std::string BLUE = "\033[1;34m";
 const std::string RESET = "\033[0m";
+
+float apply_bit_crush(float input) {
+	float projected_input = TOTAL_STEPS * input;
+
+	float rounded_projected_input = std::round(projected_input);
+
+	return (rounded_projected_input / TOTAL_STEPS);
+}
 
 int coordinate_mapper(float value) {
 	/*
@@ -52,7 +64,7 @@ void render_wave(const std::vector<float>& buffer) {
 		/*
 		* buffer[0] means the 0th column
 		* the coordinate_mapper decides which row the star should be printed in
-		* we are basically printing TOTAL_ROWS strings. 
+		* we are basically printing TOTAL_ROWS strings.
 		* The canvas is prefilled before being displayed on the terminal.
 		*/
 		if (previous_row != -1) {
@@ -71,7 +83,7 @@ void render_wave(const std::vector<float>& buffer) {
 
 	}
 
-	std::cout << "--- IEM DSP VISUALIZER ---" << std::endl;
+	std::cout << "--- BIT CRUSHER VISUALIZER ---" << std::endl;
 	for (const std::string& row : canvas) {
 		for (char c : row) {
 			if (c == '|') {
@@ -92,7 +104,6 @@ void render_wave(const std::vector<float>& buffer) {
 
 }
 
-
 int main() {
 	const int WINDOW_WIDTH = 100;
 	std::deque<float> audio_history(WINDOW_WIDTH, 0.0f);
@@ -100,20 +111,26 @@ int main() {
 	float global_time = 0.0f;
 	float time_step = 0.05f;
 
+	// uncomment for white noise
+	 //std::default_random_engine generator;
+	 //std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+
 	while (true) {
 		float sample = std::sin(global_time);
+		float bit_crushed_sample = apply_bit_crush(sample);
 
-		// INTENTIONAL GLITCH: Every ~30 frames, force a hard snap
-		if ((int)(global_time * 10) % 50 == 0) {
-			sample = ((int)global_time % 2 == 0) ? 0.9f : -0.9f;
-		}
+		// float error_signal = bit_crushed_sample - sample; // uncomment for error signal (mud visualization)
+		// float white_noise = distribution(generator); // uncomment for white noise
 
 		audio_history.pop_front();
-		audio_history.push_back(sample);
+		audio_history.push_back(bit_crushed_sample); // replace with error_signal or white_noise
+		//audio_history.push_back(error_signal); // too see the mud only
+	   //audio_history.push_back(white_noise); // too simulate white noise
 
 		std::vector<float> current_buffer(audio_history.begin(), audio_history.end());
 
 		std::cout << "\033[2J\033[H";
+		std::cout << "CURRENT BIT DEPTH: " << BIT_DEPTH << " bits" << std::endl;
 		render_wave(current_buffer);
 
 		global_time += time_step;

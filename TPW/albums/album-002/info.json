@@ -1,0 +1,37 @@
+{
+  "albumName": "Black Sabbath",
+  "albumArtist": "Black Sabbath",
+  "releaseYear": "1970",
+  "reviewPublishDate": "July 26, 2025",
+  "tracklist": [
+    {
+      "songName": "Black Sabbath",
+      "sequence": "1"
+    },
+    {
+      "songName": "The Wizard",
+      "sequence": "2"
+    },
+    {
+      "songName": "Behind the Wall of Sleep",
+      "sequence": "3"
+    },
+    {
+      "songName": "N.I.B.",
+      "sequence": "4"
+    },
+    {
+      "songName": "Evil Woman (Don't Play Your Games With Me)",
+      "sequence": "5"
+    },
+    {
+      "songName": "Sleeping Village",
+      "sequence": "6"
+    },
+    {
+      "songName": "Warning",
+      "sequence": "7"
+    }
+  ],
+  "globalSequence": "2"
+}

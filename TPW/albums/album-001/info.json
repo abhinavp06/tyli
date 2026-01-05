@@ -1,0 +1,57 @@
+{
+  "albumName": "Man In The Box",
+  "albumArtist": "Alice In Chains",
+  "releaseYear": "1990",
+  "reviewPublishDate": "July 25, 2025",
+  "tracklist": [
+    {
+      "songName": "We Die Young",
+      "sequence": "1"
+    },
+    {
+      "songName": "Man in the Box",
+      "sequence": "2"
+    },
+    {
+      "songName": "Sea of Sorrow",
+      "sequence": "3"
+    },
+    {
+      "songName": "Bleed the Freak",
+      "sequence": "4"
+    },
+    {
+      "songName": "I Can't Remember",
+      "sequence": "5"
+    },
+    {
+      "songName": "Love, Hate, Love",
+      "sequence": "6"
+    },
+    {
+      "songName": "It Ain't Like That",
+      "sequence": "7"
+    },
+    {
+      "songName": "Sunshine",
+      "sequence": "8"
+    },
+    {
+      "songName": "Put You Down",
+      "sequence": "9"
+    },
+    {
+      "songName": "Confusion",
+      "sequence": "10"
+    },
+    {
+      "songName": "I Know Somethin(Bout You)",
+      "sequence": "11"
+    },
+    {
+      "songName": "Real Thing",
+      "sequence": "12"
+    }
+  ],
+  "globalSequence": "1"
+}

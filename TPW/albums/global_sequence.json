@@ -1,0 +1,16 @@
+{
+  "albums": [
+    {
+      "path": "albums/album-001",
+      "globalSequence": 1
+    },
+    {
+      "path": "albums/album-002",
+      "globalSequence": 2
+    },
+    {
+      "path": "albums/album-003",
+      "globalSequence": 3
+    }
+  ]
+}
