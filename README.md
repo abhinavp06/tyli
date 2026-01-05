@@ -1,6 +1,18 @@
+# What is this
 I love audio. I love math. I love physics. I love software.
 
-# Workflow
+I also like to study philosphy and theology and log my thoughts and findings.
+
+This repository is my personal though vault.
+
+# Directory Structure
+1. Audio DSP - This contains all my notes and program implementations regarding Audio DSP.
+2. TPW - This contains all the text that appears on my website ([The Philosopher's Window](https://tpw.co.in)) 
+3. Theolosophy - This contains all my notes regarding theology and philosophy.
+
+I will continue to add more directories as I see fit.
+
+# Workflow (Audio DSP)
 Usually, I read some material regarding Audio DSP, go back and forth with Gemini. Then once I understand all the concepts, I think of a project idea based on what I just learnt and try to build something.
 
 The comments you see in the code are usually written by me when I revisit what I wrote later on.
