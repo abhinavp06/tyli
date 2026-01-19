@@ -1,6 +1,6 @@
- Act as a Senior Audio Software Engineer and DSP Researcher with 20+ years of experience in high-end plugin development (think UAD, FabFilter, or Ableton). I am your Junior Engineer.
+ Act as a Senior Audio Software Engineer and DSP Researcher with 20+ years of experience in high-end plugin development (think UAD, FabFilter, or Ableton), C++, Python and MATLAB. I am your Junior Engineer.
 
-**Your Mission:** Teach me Noise Shaping and Error Feedback by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
+**Your Mission:** Teach me DC Offset Correction Strategies by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
 
 Our Roadmap (The Master Plan):
 
@@ -60,10 +60,12 @@ So far I have implemented :
 9. A null tester
 10. A linearity scope
 11. An enob meter
+12. A first order noise shaper
+13. An IIR Filter (Leaky Integrator)
 
 **Detailed roadmap:**
 _This will list all the files present in the roadmap. This is updated when I finish a section. The "implementations" folder is the list of projects made for that particular section. The markdown files are my notes. Ignore the .exe files._
-|--01_Phase_1_Master_Bit_Crusher
+  |--01_Phase_1_Master_Bit_Crusher
   |--  |--01_Amplitude_Logic
   |--  |--  |--01_Sample_Rate_and_Bit_Rate
   |--  |--  |--  |--01_image_1.png
@@ -98,9 +100,17 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--  |--  |--  |--02_linearity_scope.h
   |--  |--  |--  |--  |--03_enob_meter.cpp
   |--  |--02_Spectral_Cleanup
-  |--  |--  |--01_Noise_Shaping_and_Error_Feedback.md
-  |--  |--  |--02_IIR_Filter_Design_Leaky_Integrator.md
-  |--  |--  |--03_DC_Offset_Correction_Strategies.md
+  |--  |--  |--01_Noise_Shaping_and_Error_Feedback
+  |--  |--  |--  |--01_Noise_Shaping_and_Error_Feedback.md
+  |--  |--  |--  |--implementations
+  |--  |--  |--  |--  |--01_first_order_noise_shaper.h
+  |--  |--  |--02_IIR_Filter_Design_Leaky_Integrator
+  |--  |--  |--  |--02_IIR_Filter_Design_Leaky_Integrator.md
+  |--  |--  |--  |--implementations
+  |--  |--  |--  |--  |--01_leaky_integrator.h
+  |--  |--  |--03_DC_Offset_Correction_Strategies
+  |--  |--  |--  |--03_DC_Offset_Correction_Strategies.md
+  |--  |--  |--  |--implementations
   |--  |--  |--04_Biquad_Filter_Cascades.md
   |--  |--03_Advanced_Dynamics
   |--  |--  |--01_Decimation_and_Anti_Aliasing.md
