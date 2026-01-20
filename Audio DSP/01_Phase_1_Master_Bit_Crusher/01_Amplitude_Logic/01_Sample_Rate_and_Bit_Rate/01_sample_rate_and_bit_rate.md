@@ -112,5 +112,5 @@ Basically, imagine a grid laid out. Let's say this is a 16-bit recording with a 
 ### Explaining the Simulation
 When you run the simulation, you will observe vertical red lines. These lines are the representation of the "physically impossible" movement.
 
-![[tyli/01_Phase_1_Master_Bit_Crusher/01_Amplitude_Logic/01_Sample_Rate_and_Bit_Rate/01_image_1.png]]
+![[tyli/Audio DSP/01_Phase_1_Master_Bit_Crusher/01_Amplitude_Logic/01_Sample_Rate_and_Bit_Rate/01_image_1.png]]
 	Notice how the speaker has to go from near zero to the highest level and then after 2 samples again drop down to near zero.

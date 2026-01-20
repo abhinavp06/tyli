@@ -19,7 +19,7 @@ I wanted to create a simple visualization for the bit crusher.
 
 This focuses entirely on #term_BitDepth. It rounds the input signal to the nearest "rung" (level). When we round the signal, we lose the subtle nuance between levels. This lost information doesn't disappear. It actually turns into #term_QuantizationNoise .
 
-![[tyli/01_Phase_1_Master_Bit_Crusher/01_Amplitude_Logic/02_Basic_Linear_Quantization/01_image_1.png]]
+![[tyli/Audio DSP/01_Phase_1_Master_Bit_Crusher/01_Amplitude_Logic/02_Basic_Linear_Quantization/01_image_1.png]]
 	_Basic Bit Crusher (with attached mud)_
 		- The red bars represent the moment the error becomes so large that it jumps to a new row. The mud is physically attached to the signal.
 		- This is the #term_QuantizedSignal

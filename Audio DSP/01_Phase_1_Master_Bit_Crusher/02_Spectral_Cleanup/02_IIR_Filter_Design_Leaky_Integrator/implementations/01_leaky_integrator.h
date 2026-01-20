@@ -68,7 +68,7 @@ namespace DSP {
 
             // 3. DENORMAL PROTECTION (CRITICAL)
             // If the value is infinitesimally small (but not zero),
-            // the CPU takes a massive performance hit.
+            // the CPU takes a massive performance hit (because of denormal mode).
             // We snap it to true zero.
             if (std::abs(m_output) < 1.0e-15f) {
                 m_output = 0.0f;

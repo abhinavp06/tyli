@@ -22,9 +22,6 @@ If the "DC Wind" is strong, the flag doesn't flap around the pole; it flaps whil
 2.  **Heat:** The speaker coil is constantly energized just to hold that position, turning electricity into heat, not sound.
 3.  **Clicks:** Muting or stopping playback causes a massive "pop" as the speaker snaps back to 0.
 
-![[dc_offset_illustration.png]]
-*(Note: Paste a screenshot of an off-center waveform here)*
-
 ---
 
 ## 2. The Math: The Recursive DC Blocker

@@ -120,3 +120,4 @@
 - Invent a whole new type of sound effect (effects being things like bit crusher, downsampler, etc.)
 - Try to remaster a song from my music collection by loading a flac file.
 - Upscaling a song
+- 
