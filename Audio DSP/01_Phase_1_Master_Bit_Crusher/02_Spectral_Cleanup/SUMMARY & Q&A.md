@@ -14,8 +14,8 @@
 # Questions
 1. Why is the white noise floor audible in lower bit depths? Is it because there isn't a lot of dynamic range?
 2. Is sweeping the errors to the high frequencies the only way to perform noise shaping?
-3. Are noise shaping mechanisms affected by bit depth? What about mid rise vs mid tread architectures? I am thinking that a lower bit depth means that the curve of us shaping the noise will be aggresive. For mid tread/mid rise, I am assuming that the slope (angle to the x-axis) will be sharper?
-4. In noise shaping, why are we using a high pass filter? Shouldn't we be using a low pass filter? Won't a high pass filter exaggerate the sounds? Plus, if we are sweeping the noise from low frequences to high frequencies, shouldn't the goal be to "clean up" the final sound in the higher frequencies?
+3. Are noise shaping mechanisms affected by bit depth? What about mid rise vs mid tread architectures? I am thinking that a lower bit depth means that the curve of us shaping the noise will be aggressive. For mid tread/mid rise, I am assuming that the slope (angle to the x-axis) will be sharper?
+4. In noise shaping, why are we using a high pass filter? Shouldn't we be using a low pass filter? Won't a high pass filter exaggerate the sounds? Plus, if we are sweeping the noise from low frequencies to high frequencies, shouldn't the goal be to "clean up" the final sound in the higher frequencies?
 5. Explain the use of the leaky integrator in terms of bit crusher (and all the other concepts covered before this). Why is that being used? Also explain the process of feedback and memory.
 6. Explain the relation between the high pass filter in noise shaping and the low pass filter in the IIR filter.
 7. What is the "zipper noise" in the IIR leaky integrator? What happens when the user turns the knob rapidly?

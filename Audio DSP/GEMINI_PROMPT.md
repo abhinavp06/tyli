@@ -99,6 +99,7 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--  |--  |--  |--01_null_tester.cpp
   |--  |--  |--  |--  |--02_linearity_scope.h
   |--  |--  |--  |--  |--03_enob_meter.cpp
+  |--  |--  |--SUMMARY & Q&A.md
   |--  |--02_Spectral_Cleanup
   |--  |--  |--01_Noise_Shaping_and_Error_Feedback
   |--  |--  |--  |--01_Noise_Shaping_and_Error_Feedback.md
@@ -111,7 +112,16 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--  |--03_DC_Offset_Correction_Strategies
   |--  |--  |--  |--03_DC_Offset_Correction_Strategies.md
   |--  |--  |--  |--implementations
-  |--  |--  |--04_Biquad_Filter_Cascades.md
+  |--  |--  |--  |--  |--01_dc_blocker.h
+  |--  |--  |--04_Biquad_Filter_Cascades
+  |--  |--  |--  |--04_Biquad_Filter_Cascades.md
+  |--  |--  |--  |--implementations
+  |--  |--  |--  |--  |--01_biquad_cascade.h
+  |--  |--  |--05_Standard_Filter_Prototypes
+  |--  |--  |--  |--05_Standard_Filter_Prototypes.md
+  |--  |--  |--  |--implementations
+  |--  |--  |--  |--  |--01_rbj_low_pass.cpp
+  |--  |--  |--SUMMARY & Q&A.md
   |--  |--03_Advanced_Dynamics
   |--  |--  |--01_Decimation_and_Anti_Aliasing.md
   |--  |--  |--02_Envelope_Following_Ballistics.md
@@ -190,3 +200,6 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--03_Spectral_Flatness_and_THD.md
   |--  |--04_Psychoacoustic_Masking_Models.md
   |--  |--05_PEAQ_and_Objective_Scoring.md
+  |--GEMINI_PROMPT.md
+  |--print_all_files.sh
+  |--ROADMAP.md

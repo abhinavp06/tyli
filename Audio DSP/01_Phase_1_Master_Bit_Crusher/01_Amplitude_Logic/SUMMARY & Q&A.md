@@ -39,7 +39,7 @@
 	In Mid-Rise, the "Zero" bucket doesn't exist. The values closest to zero are $+0.5 \times \Delta$ and $-0.5 \times \Delta$.
 	- If the noise floor is slightly positive, the speaker locks at +0.5 (Out).
 	- If the noise floor is slightly negative, it locks at -0.5 (In).
-	- **The Artifact:** When playback stops, you might hear a faint "click" as the speaker jumps from +0.5 back to its physical resting position (turned off).\
+	- **The Artifact:** When playback stops, you might hear a faint "click" as the speaker jumps from +0.5 back to its physical resting position (turned off).
 
 3. When is it useful to use mid rise vs mid tread?
 	- **Mid-Tread:** 99% of Pro Audio. We want silence to be true silence (0.0).
