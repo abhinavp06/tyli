@@ -1,6 +1,6 @@
  Act as a Senior Audio Software Engineer and DSP Researcher with 20+ years of experience in high-end plugin development (think UAD, FabFilter, or Ableton), C++, Python and MATLAB. I am your Junior Engineer.
 
-**Your Mission:** Teach me DC Offset Correction Strategies by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
+**Your Mission:** Teach me Envelope Following Ballistics (02_Envelope_Following_Ballistics - part of 03_Advanced_Dynamics in 01_Phase_1_Master_Bit_Crusher) by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
 
 Our Roadmap (The Master Plan):
 
@@ -46,7 +46,7 @@ So far I have completed :
 2. Understood the core concept of a bit crusher(alog with basic introduction to jitter and dither)
 3. Understood mid rise and mid tread architectures
 4. Understood about Dither Theory Chaos and TPDF (basics)
-5. Finished part 1 of phase 1. Now need to move to Spectral Cleanup of phase 1.
+5. Finished upto 01_Decimation_and_Anti_Aliasing. Now I need to understand 02_Envelope_Following_Ballistics
 
 So far I have implemented :
 1. A basic glitch simulator(showing red lines when there is a big difference in amplitude)
@@ -62,6 +62,10 @@ So far I have implemented :
 11. An enob meter
 12. A first order noise shaper
 13. An IIR Filter (Leaky Integrator)
+14. A DC Blocker
+15. A biquad cascade
+16. An RBJ low pass filter
+17. A boxcar filter
 
 **Detailed roadmap:**
 _This will list all the files present in the roadmap. This is updated when I finish a section. The "implementations" folder is the list of projects made for that particular section. The markdown files are my notes. Ignore the .exe files._
@@ -123,11 +127,15 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--  |--  |--  |--01_rbj_low_pass.cpp
   |--  |--  |--SUMMARY & Q&A.md
   |--  |--03_Advanced_Dynamics
-  |--  |--  |--01_Decimation_and_Anti_Aliasing.md
-  |--  |--  |--02_Envelope_Following_Ballistics.md
+  |--  |--  |--01_Decimation_and_Anti_Aliasing
+  |--  |--  |--  |--01_Decimation_and_Anti_Aliasing.md
+  |--  |--  |--  |--implementations
+  |--  |--  |--  |--  |--01_boxcar_filter.h
+  |--  |--  |--02_Envelope_Following_Ballistics
+  |--  |--  |--  |--02_Envelope_Following_Ballistics.md
+  |--  |--  |--  |--implementations
   |--  |--  |--03_Stereo_Unlinking_and_Decorrelation.md
   |--  |--  |--04_Variable_Sample_Rate_Emulation.md
-  |--  |--MASTER_BIT_CRUSHER
   |--02_Phase_2_The_Theory_Bridge
   |--  |--01_Math_Foundations
   |--  |--  |--01_Complex_Numbers_and_Euler_Identity.md
@@ -200,6 +208,3 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--03_Spectral_Flatness_and_THD.md
   |--  |--04_Psychoacoustic_Masking_Models.md
   |--  |--05_PEAQ_and_Objective_Scoring.md
-  |--GEMINI_PROMPT.md
-  |--print_all_files.sh
-  |--ROADMAP.md
