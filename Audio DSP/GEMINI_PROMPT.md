@@ -1,6 +1,6 @@
  Act as a Senior Audio Software Engineer and DSP Researcher with 20+ years of experience in high-end plugin development (think UAD, FabFilter, or Ableton), C++, Python and MATLAB. I am your Junior Engineer.
 
-**Your Mission:** Teach me Envelope Following Ballistics (02_Envelope_Following_Ballistics - part of 03_Advanced_Dynamics in 01_Phase_1_Master_Bit_Crusher) by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
+**Your Mission:** Teach me Stereo Unlinking and Decorrelation (03_Stereo_Unlinking_and_Decorrelation - part of 03_Advanced_Dynamics in 01_Phase_1_Master_Bit_Crusher) by balancing deep mathematical theory with industry-standard C++ practices. Suggest implementations of that can be done for this (following the same pattern as my previous parts of the roadmap which will be mentioned in the "detailed roadmap" section bellow)
 
 Our Roadmap (The Master Plan):
 
@@ -46,7 +46,7 @@ So far I have completed :
 2. Understood the core concept of a bit crusher(alog with basic introduction to jitter and dither)
 3. Understood mid rise and mid tread architectures
 4. Understood about Dither Theory Chaos and TPDF (basics)
-5. Finished upto 01_Decimation_and_Anti_Aliasing. Now I need to understand 02_Envelope_Following_Ballistics
+5. Finished upto 02_Envelope_Following_Ballistics. Now I need to understand 03_Stereo_Unlinking_and_Decorrelation
 
 So far I have implemented :
 1. A basic glitch simulator(showing red lines when there is a big difference in amplitude)
@@ -66,10 +66,12 @@ So far I have implemented :
 15. A biquad cascade
 16. An RBJ low pass filter
 17. A boxcar filter
+18. A simple envelope follower
+19. A dynamic crusher (linear and logarithmic)
 
 **Detailed roadmap:**
 _This will list all the files present in the roadmap. This is updated when I finish a section. The "implementations" folder is the list of projects made for that particular section. The markdown files are my notes. Ignore the .exe files._
-  |--01_Phase_1_Master_Bit_Crusher
+|--01_Phase_1_Master_Bit_Crusher
   |--  |--01_Amplitude_Logic
   |--  |--  |--01_Sample_Rate_and_Bit_Rate
   |--  |--  |--  |--01_image_1.png
@@ -134,8 +136,16 @@ _This will list all the files present in the roadmap. This is updated when I fin
   |--  |--  |--02_Envelope_Following_Ballistics
   |--  |--  |--  |--02_Envelope_Following_Ballistics.md
   |--  |--  |--  |--implementations
-  |--  |--  |--03_Stereo_Unlinking_and_Decorrelation.md
+  |--  |--  |--  |--  |--01_simple_envelope_follower.cpp
+  |--  |--  |--  |--  |--02_dynamic_crusher.cpp
+  |--  |--  |--  |--  |--03_attack_release_bass_visualisation.html
+  |--  |--  |--03_Stereo_Unlinking_and_Decorrelation
+  |--  |--  |--  |--03_Stereo_Unlinking_and_Decorrelation.md
+  |--  |--  |--  |--implementations
   |--  |--  |--04_Variable_Sample_Rate_Emulation.md
+  |--  |--MASTER_BIT_CRUSHER
+  |--  |--  |--implementations
+  |--  |--  |--README.md
   |--02_Phase_2_The_Theory_Bridge
   |--  |--01_Math_Foundations
   |--  |--  |--01_Complex_Numbers_and_Euler_Identity.md
