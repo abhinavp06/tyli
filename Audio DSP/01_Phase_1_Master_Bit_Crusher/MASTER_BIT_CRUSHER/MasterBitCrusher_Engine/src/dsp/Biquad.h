@@ -15,6 +15,7 @@ public:
     void makeHighPass(double sampleRate, double frequency, double q); // For DC Block
 
     double process(double input);
+    void reset();
 
 private:
     // State variables (z^-1, z^-2)
