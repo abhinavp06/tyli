@@ -1,4 +1,4 @@
-#include "CsvWriter.h"
+#include "csv_writer.h"
 #include <iostream>
 
 void CsvWriter::open(const std::string& fileName) {
