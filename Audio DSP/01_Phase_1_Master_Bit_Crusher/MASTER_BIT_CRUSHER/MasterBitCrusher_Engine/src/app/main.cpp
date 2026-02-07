@@ -2,10 +2,10 @@
 #include <string>
 #include "../utils/audio_file.h"
 #include "../dsp/filter_bank.h"
-#include "../dsp/Resampler.h"
-#include "../dsp/Quantizer.h"
-#include "../dsp/Dither.h"
-#include "../dsp/Dynamics.h"
+#include "../dsp/resampler.h"
+#include "../dsp/quantizer.h"
+#include "../dsp/dither.h"
+#include "../dsp/dynamics.h"
 
 struct Config {
     // Core settings
