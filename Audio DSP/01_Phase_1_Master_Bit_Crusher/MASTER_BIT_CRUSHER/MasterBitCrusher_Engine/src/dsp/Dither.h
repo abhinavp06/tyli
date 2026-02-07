@@ -11,13 +11,17 @@
  */
 class Dither {
 public:
-    void setAmplitude(double bits); // Auto-calcs based on 1 LSB
+    void setAmplitude(double bits);
     void setGating(bool enabled);
     void setNoiseShaping(bool enabled);
 
     double process(double inputQuantized, double inputRaw);
 
+    void reset();
+
 private:
-    double errorBuffer_ = 0.0; // For Noise Shaping
-    // TODO: Add PRNG state
+    double amplitude_ = 0.0;
+    double errorBuffer_ = 0.0;
+    bool gatingEnabled_ = false;
+    bool noiseShaperEnabled_ = false;
 };
