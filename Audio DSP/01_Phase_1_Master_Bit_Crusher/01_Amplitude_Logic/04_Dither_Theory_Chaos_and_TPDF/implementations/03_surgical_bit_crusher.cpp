@@ -29,12 +29,38 @@
 
 class BitCrusher {
 public:
+	/*
+	* This function takes in 3 arguments: block_size, bit_depth and jitter_amount
+	* These are the "knobs" that the user tweaks.
+	* block_size -> it is the downsampling factor (or rate divider)
+	* bit_depth -> the target bit depth
+	* jitter_amount -> 
+	*	i. the amount of "random noisy lo-fi character" to be added to the sound
+	*	ii. it helps in emulating the clock instabilities found in retro hardware
+	*	iii. more jitter means more chaos
+	*	iv. it increases distortion
+	* 
+	* levels -> if bit depth is 4, levels will be 15 (on one side) (since this is a mid tread architecture)
+	* step_size -> basically what percentage (if multiplied by 100) of 1 is a single level
+	* previous_block_size -> 
+	*	it is between 1 and the current block size since block size always has to be greater than 1
+	*	it is the rate divider - determines how many "real" samples we throw away for every 1 sample we keep
+	*	in simple terms, how long we will hold a value for in our jitter logic
+	* target_threshold ->
+	*	pretty much the same as previous_block_size except this actually stores the added value of the jitter offset as well
+	*	this is a separate variable because while we do want to add randomness to our hold duration, we do not want to forget the original block size selected by the user
+	*	we are adding randomness to the block_size; the role of this variable is to store the final output of randomness + block_size
+	*/
 	void update_parameters(float block_size, float bit_depth, float jitter_amount) {
-		previous_block_size = block_size;
-		levels = std::pow(2.0f, bit_depth) - 1;
+		levels = std::pow(2.0f, bit_depth) - 1.0f;
+		if (levels < 1.0f) levels = 1.0f;
 		step_size = 1.0f / levels;
+
 		jitter = jitter_amount;
+
 		previous_block_size = std::max(1.0f, block_size);
+
+		if (target_threshold < 1.0f) target_threshold = previous_block_size;
 	}
 
 	float add_dither(float input) {
@@ -66,11 +92,13 @@ public:
 	float process_sample(float input) {
 		phase_count += 1.0f;
 
-		float jitter_offset = ((static_cast<float>(fast_random() * INVERTED_U_MAX)) - 0.5f) * jitter;
-
-		if (phase_count >= (previous_block_size + jitter_offset)) {
+		if (phase_count >= target_threshold) {
 			hold_value = input;
 			phase_count = 0.0f;
+			float jitter_offset = ((static_cast<float>(fast_random() * INVERTED_U_MAX)) - 0.5f) * jitter;
+			target_threshold = previous_block_size + jitter_offset;
+
+			if (target_threshold < 1.0f) target_threshold = 1.0f;
 		}
 
 		/*
@@ -94,6 +122,7 @@ private:
 	float hold_value = 0.0f;
 	float phase_count = 0.0f;
 	float jitter = 0.0f;
+	float target_threshold = 1.0f;
 	// common
 	float previous_block_size = 0.0f;
 	float offset = 0.5f; // assuming mid tread architecture
