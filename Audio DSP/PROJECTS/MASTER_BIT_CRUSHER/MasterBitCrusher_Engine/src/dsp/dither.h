@@ -9,8 +9,10 @@
  * - 02_dither_gate (Gating logic)
  * - 01_first_order_noise_shaper (Error feedback)
  */
-class Dither {
+class Dither
+{
 public:
+    void setSeed(unsigned int seed);
     void setAmplitude(double bits);
     void setGating(bool enabled);
     void setNoiseShaping(bool enabled);
@@ -28,4 +30,6 @@ private:
     double gateThreshold_ = 1e-7; // ~140dB
     int silenceCounter_ = 0;
     static const int SILENCE_LIMIT = 512; // ~11ms at 44.1kHz
+    // Random generator (per-instance)
+    std::mt19937 gen_{12345};
 };

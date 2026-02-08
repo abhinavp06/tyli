@@ -2,44 +2,62 @@
 #include <cmath>
 #include <random>
 
-void Dither::setAmplitude(double bits) {
+void Dither::setSeed(unsigned int seed)
+{
+    gen_.seed(seed);
+}
+
+void Dither::setAmplitude(double bits)
+{
     double levels = std::pow(2.0, bits) - 1.0;
     double stepSize = 2.0 / levels;
-
     amplitude_ = stepSize;
 }
 
-void Dither::setGating(bool enabled) {
+void Dither::setGating(bool enabled)
+{
     gatingEnabled_ = enabled;
 }
 
-void Dither::setNoiseShaping(bool enabled) {
+void Dither::setNoiseShaping(bool enabled)
+{
     noiseShaperEnabled_ = enabled;
 }
 
-double Dither::process(double inputQuantized, double inputRaw) {
-    if (gatingEnabled_) {
-        if (std::abs(inputRaw) < gateThreshold_) {
+void Dither::setGateThreshold(double threshold)
+{
+    gateThreshold_ = threshold;
+}
+
+double Dither::process(double inputQuantized, double inputRaw)
+{
+    if (gatingEnabled_)
+    {
+        if (std::abs(inputRaw) < gateThreshold_)
+        {
             silenceCounter_++;
         }
-        else {
+        else
+        {
             silenceCounter_ = 0;
         }
 
-        if (silenceCounter_ >= SILENCE_LIMIT) {
+        if (silenceCounter_ >= SILENCE_LIMIT)
+        {
             return 0.0;
         }
     }
 
-    static std::mt19937 gen(12345);
-    static std::uniform_real_distribution<double> dist(0.0, 1.0);
+    // Use instance generator (not static)
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
 
-    double rand1 = dist(gen);
-    double rand2 = dist(gen);
+    double rand1 = dist(gen_);
+    double rand2 = dist(gen_);
 
     double tpdf = (rand1 + rand2 - 1.0) * amplitude_;
 
-    if (noiseShaperEnabled_) {
+    if (noiseShaperEnabled_)
+    {
         double error = inputQuantized - inputRaw;
         tpdf += errorBuffer_ * 0.5;
         errorBuffer_ = error;
@@ -48,6 +66,8 @@ double Dither::process(double inputQuantized, double inputRaw) {
     return tpdf;
 }
 
-void Dither::reset() {
+void Dither::reset()
+{
     errorBuffer_ = 0.0;
+    silenceCounter_ = 0;
 }
