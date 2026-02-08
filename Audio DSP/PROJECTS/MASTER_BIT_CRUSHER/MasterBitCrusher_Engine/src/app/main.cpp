@@ -17,12 +17,16 @@ struct Config {
     bool useBoxcarResampling = true;  // true = Boxcar, false = Naive
     bool enableDither = true;
     bool enableNoiseShaping = false;
+    bool enableNoiseGate = true;
 
     // Dynamics parameters
     double baseBitDepth = 4.0;      // Minimum bit depth when quiet
     double modulationDepth = 12.0;  // Maximum added bits when loud
     double attackMs = 5.0;
     double releaseMs = 200.0;
+
+    // Jitter
+    double jitterAmount = 0.0; // (0.0 = off, 1.0 = max)
 };
 
 int main(int argc, char* argv[]) {
@@ -64,6 +68,14 @@ int main(int argc, char* argv[]) {
     std::cin >> boxcarChoice;
     config.useBoxcarResampling = (boxcarChoice == 1);
 
+    std::cout << "Enable Noise Gate? (0=No, 1=Yes): ";
+    int gateChoice;
+    std::cin >> gateChoice;
+    config.enableNoiseGate = (gateChoice == 1);
+
+    std::cout << "Jitter Amount (0.0-1.0, 0=Off): ";
+    std::cin >> config.jitterAmount;
+
     std::cout << "\n--- PROCESSING ---" << std::endl;
 
     // Load audio
@@ -85,7 +97,7 @@ int main(int argc, char* argv[]) {
 
     Resampler resampler;
     resampler.setRateDivisor(config.rateDivisor);
-    resampler.setJitterAmount(0.0); // No jitter for now (can add later)
+    resampler.setJitterAmount(config.jitterAmount);
     resampler.setMode(config.useBoxcarResampling ? Resampler::Mode::Boxcar : Resampler::Mode::Naive);
 
     Quantizer quantizer;
@@ -93,6 +105,7 @@ int main(int argc, char* argv[]) {
 
     Dither dither;
     dither.setNoiseShaping(config.enableNoiseShaping);
+    dither.setGating(config.enableNoiseGate);
 
     EnvelopeFollower envelope;
     if (config.useDynamicBitDepth) {

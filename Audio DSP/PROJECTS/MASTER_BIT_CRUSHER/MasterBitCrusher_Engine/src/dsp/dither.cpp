@@ -18,6 +18,19 @@ void Dither::setNoiseShaping(bool enabled) {
 }
 
 double Dither::process(double inputQuantized, double inputRaw) {
+    if (gatingEnabled_) {
+        if (std::abs(inputRaw) < gateThreshold_) {
+            silenceCounter_++;
+        }
+        else {
+            silenceCounter_ = 0;
+        }
+
+        if (silenceCounter_ >= SILENCE_LIMIT) {
+            return 0.0;
+        }
+    }
+
     static std::mt19937 gen(12345);
     static std::uniform_real_distribution<double> dist(0.0, 1.0);
 

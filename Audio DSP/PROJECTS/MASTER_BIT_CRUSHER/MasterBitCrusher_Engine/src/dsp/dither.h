@@ -14,6 +14,7 @@ public:
     void setAmplitude(double bits);
     void setGating(bool enabled);
     void setNoiseShaping(bool enabled);
+    void setGateThreshold(double threshold);
 
     double process(double inputQuantized, double inputRaw);
 
@@ -24,4 +25,7 @@ private:
     double errorBuffer_ = 0.0;
     bool gatingEnabled_ = false;
     bool noiseShaperEnabled_ = false;
+    double gateThreshold_ = 1e-7; // ~140dB
+    int silenceCounter_ = 0;
+    static const int SILENCE_LIMIT = 512; // ~11ms at 44.1kHz
 };
