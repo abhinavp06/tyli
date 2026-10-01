@@ -27,8 +27,12 @@ VNC_PID=""
 trap 'kill ${VNC_PID:-} "$XVFB_PID" 2>/dev/null || true' EXIT
 sleep 1
 
-# -localhost: bind 127.0.0.1 only. -nopw is acceptable only because of that binding.
-x11vnc -display ":$DISPLAY_NUM" -localhost -rfbport "$VNC_PORT" -forever -shared -nopw -quiet -bg -o /dev/null >/dev/null 2>&1 &
+# -localhost: bind 127.0.0.1 only. A VNC password is used when ~/.vnc/tyli_passwd exists
+# (create it with: x11vnc -storepasswd <password> ~/.vnc/tyli_passwd). macOS Screen Sharing
+# insists on one. Only the first 8 characters of a VNC password count.
+AUTH=(-nopw)
+[[ -f "$HOME/.vnc/tyli_passwd" ]] && AUTH=(-rfbauth "$HOME/.vnc/tyli_passwd")
+x11vnc -display ":$DISPLAY_NUM" -localhost -rfbport "$VNC_PORT" -forever -shared "${AUTH[@]}" -quiet -bg -o /dev/null >/dev/null 2>&1 &
 VNC_PID=$!
 sleep 1
 

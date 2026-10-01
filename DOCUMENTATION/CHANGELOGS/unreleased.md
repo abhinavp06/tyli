@@ -30,6 +30,7 @@ Work that is done but not yet part of a version. The newest entries come first.
 **Known limitations / follow-ups**
 - The VM can't see the user's external HDDs. Real-drive testing needs the Windows build.
 - `-nopw` is acceptable only because of the localhost binding. A VNC password can be added if the VM ever gets other users.
+- **Update (same day):** the script now uses a VNC password when `~/.vnc/tyli_passwd` exists (created with `x11vnc -storepasswd`), because macOS Screen Sharing insists on one. It also keeps other users on the VM out. The password lives only on the VM, never in the repo.
 
 ### Restart: Qt 6.12 skeleton on hoardor, project docs, File Sync UI design (2026-10-01, branch `abhinavp06/FILE_SCANNER_INIT`)
 
