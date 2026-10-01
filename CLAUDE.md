@@ -42,6 +42,7 @@ CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines t
 src/                          # C++: main.cpp and the QML bridge (QObjects, list models)
 qml/                          # QML views (one file per screen or reusable component)
 tests/                        # Qt Test suites (bridge, models, QML smoke test)
+tools/                        # developer scripts (vnc_session.sh: see the UI from the VM over SSH)
 DOCUMENTATION/
   CHANGELOGS/                 # one file per version + unreleased.md (same rules as hoardor)
   application/
@@ -56,8 +57,12 @@ DOCUMENTATION/
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/opt/Qt/6.12.0/gcc_64
 cmake --build build -j
 ctest --test-dir build --output-on-failure
-QT_QPA_PLATFORM=offscreen ./build/tyli     # the VM has no display; the user runs it on Windows
+QT_QPA_PLATFORM=offscreen ./build/tyli     # headless run (tests, screenshots)
 ```
+
+**Seeing the UI from the VM:** `tools/vnc_session.sh` runs TYLI on a virtual X display (Xvfb) and shares it with `x11vnc` **on 127.0.0.1 only**. The user connects through SSH: `ssh -N -L 5900:127.0.0.1:5900 <user>@<vm>`, then points a VNC viewer at `localhost:5900`.
+- **Never use Qt's `-platform vnc`:** it ignores the address option and listens on every interface, and this VM has no firewall.
+- **The VM can't see the user's external drives.** It's only for testing with sample folders. Real-drive testing needs the Windows build.
 
 **Windows:**
 - **Requirements:** Visual Studio 2022 (the "Desktop development with C++" workload) and Qt 6.12 for `msvc2022_64`, installed with the Qt Online Installer or aqtinstall.

@@ -2,6 +2,35 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Seeing the UI from the VM: Xvfb + x11vnc on localhost, over SSH (2026-10-01, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The VM is a remote KVM server reached over SSH, with no display and no firewall. `tools/vnc_session.sh` runs TYLI on a virtual X display and shares it over VNC bound to `127.0.0.1` only. The user reaches it by SSH port forwarding, so nothing is exposed to the network.
+
+**Added**
+- `tools/vnc_session.sh`:
+  - starts `Xvfb :99` (`-nolisten tcp`)
+  - starts `x11vnc -localhost -rfbport 5900`
+  - runs TYLI on the `xcb` backend with Qt Quick's software renderer
+  - cleans everything up on exit
+  - port, display, screen size, and binary can be changed with environment variables
+- `CLAUDE.md`: how to use it, and the warning below.
+
+**Environment** (outside the repo)
+- apt packages `xvfb` and `x11vnc`.
+
+**Fixed / incident**
+- The first attempt used Qt's built-in VNC backend (`QT_QPA_PLATFORM=vnc:...:addr=127.0.0.1`). Qt **ignored the address** and listened on `*:5900`, and this VM has no firewall (`ufw` inactive, `INPUT ACCEPT`). For about 5 seconds, an unauthenticated VNC view of the skeleton window (one line of text, no user data) was reachable on the public IP. That backend must not be used here, and `CLAUDE.md` now says so.
+- **Verified:** with the new script, `x11vnc` listens only on `127.0.0.1:5900` and `[::1]:5900`, and nothing is left running afterwards.
+
+**Design decisions and trade-offs**
+- **Rejected:** SSH X11 forwarding (`ssh -X`). It needs an X server on Windows and is slow over the internet for Qt Quick.
+- **Rejected:** a remote desktop environment. Too heavy for this.
+- **Chosen:** VNC over an SSH tunnel. It works with any VNC viewer, and the only port involved is SSH's.
+
+**Known limitations / follow-ups**
+- The VM can't see the user's external HDDs. Real-drive testing needs the Windows build.
+- `-nopw` is acceptable only because of the localhost binding. A VNC password can be added if the VM ever gets other users.
+
 ### Restart: Qt 6.12 skeleton on hoardor, project docs, File Sync UI design (2026-10-01, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** TYLI restarts on `master` (reset by the user). This branch builds against hoardor from the sibling workspace folder, sets up the project docs (modeled on hoardor's), and designs the first feature: the File Sync UI. The UI design awaits the user's approval.
