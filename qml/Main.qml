@@ -1,0 +1,136 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Tyli
+
+// The window: top bar, then the sidebar and either a category's media or Settings.
+// A status line at the bottom shows results and errors.
+ApplicationWindow {
+    id: window
+    width: 1280
+    height: 800
+    visible: true
+    title: "TYLI"
+    color: Theme.background
+    font.family: Theme.fontFamily
+    font.pixelSize: Theme.fontSize
+
+    // Anything left unstyled (tooltips, the folder dialog on Linux) is dark too.
+    palette {
+        window: Theme.background
+        windowText: Theme.text
+        base: Theme.background
+        alternateBase: Theme.background
+        text: Theme.text
+        button: Theme.background
+        buttonText: Theme.text
+        brightText: Theme.accent
+        highlight: Theme.selection
+        highlightedText: Theme.accent
+        placeholderText: Theme.textFaint
+        toolTipBase: Theme.background
+        toolTipText: Theme.text
+        light: Theme.hairline
+        midlight: Theme.hairline
+        mid: Theme.textFaint
+        dark: Theme.hairline
+        shadow: Theme.background
+        link: Theme.accent
+    }
+
+    property int currentCategoryId: Library.categories.length > 0 ? Library.categories[0].id : -1
+    property bool settingsOpen: false
+    property bool sidebarCollapsed: false
+    readonly property var currentCategory: Library.categories.find(c => c.id === currentCategoryId)
+
+    function openSettings(page) {
+        settingsOpen = true
+        settings.currentPage = page
+    }
+
+    // A category that was deleted: fall back to the first one.
+    Connections {
+        target: Library
+        function onCategoriesChanged() {
+            if (!window.currentCategory)
+                window.currentCategoryId = Library.categories.length > 0 ? Library.categories[0].id : -1
+        }
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
+        visible: Library.ready
+
+        TopBar {
+            Layout.fillWidth: true
+            settingsOpen: window.settingsOpen
+            onToggleSidebar: window.sidebarCollapsed = !window.sidebarCollapsed
+            onSettingsRequested: window.settingsOpen ? (window.settingsOpen = false) : window.openSettings("library")
+            onSyncStatusClicked: window.openSettings("library")
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            Sidebar {
+                Layout.fillHeight: true
+                collapsed: window.sidebarCollapsed
+                currentCategoryId: window.settingsOpen ? -1 : window.currentCategoryId
+                onCategoryClicked: (id) => {
+                    window.currentCategoryId = id
+                    window.settingsOpen = false
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                CategoryView {
+                    anchors.fill: parent
+                    visible: !window.settingsOpen
+                    category: window.currentCategory
+                    onAddFolderRequested: window.openSettings("library")
+                }
+                SettingsView {
+                    id: settings
+                    anchors.fill: parent
+                    visible: window.settingsOpen
+                    focusedCategoryId: window.currentCategoryId
+                }
+            }
+        }
+
+        StatusLine {
+            Layout.fillWidth: true
+        }
+    }
+
+    // Shown instead of everything else when the library database can't be opened.
+    ColumnLayout {
+        anchors.centerIn: parent
+        width: Math.min(parent.width - 48, 640)
+        visible: !Library.ready
+        spacing: 12
+        Text {
+            text: "the library can't be opened"
+            color: Theme.error
+            font.pixelSize: Theme.fontSizeHeading
+            font.weight: Theme.weightBold
+        }
+        Text {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            color: Theme.text
+            text: Library.openError
+        }
+        Text {
+            Layout.fillWidth: true
+            wrapMode: Text.WrapAnywhere
+            color: Theme.textDim
+            text: "database: " + Library.databasePath
+        }
+    }
+}

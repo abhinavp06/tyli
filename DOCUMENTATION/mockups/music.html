@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TYLI mockup · music</title>
+<link rel="stylesheet" href="theme.css">
+<script src="live.js"></script>
+</head>
+<body>
+<style>
+  .file-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px 84px 64px 72px; gap: 16px; align-items: center; padding: 5px 12px; }
+  .file-row:hover { background: var(--hover); }
+  .file-head { display: grid; grid-template-columns: minmax(0, 1fr) 120px 84px 64px 72px; gap: 16px; padding: 0 12px 6px; }
+</style>
+<div class="window">
+  <header class="topbar">
+    <button class="ib" title="collapse or expand the sidebar" aria-label="toggle sidebar" onclick="this.closest('.window').classList.toggle('collapsed')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16"/></svg></button>
+    <span class="wordmark">tyli<span class="acc cursor">_</span></span>
+    <span class="spacer"></span>
+    <a class="sync-status" href="settings-library.html" title="sync status: open library settings"><div class="progress"><div class="seg"></div></div><span>syncing music (e:) · 5,120 files</span></a>
+    <a class="ib" href="settings-library.html" title="settings" aria-label="settings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></a>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+      <a class="nav on" href="music.html" title="music" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg><span class="text">music</span><span class="count">12,408</span></a>
+      <a class="nav" href="#" title="movies" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span class="text">movies</span><span class="count">3</span></a>
+      <a class="nav" href="#" title="shows" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12"/><path d="M8 3l4 4 4-4"/></svg><span class="text">shows</span><span class="count">0</span></a>
+      <a class="nav" href="#" title="books" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg><span class="text">books</span><span class="count">0</span></a>
+    </nav>
+    <main class="main">
+      <header class="header" style="align-items: center">
+        <h1>music</h1>
+        <span class="dim">12,408 files · 2 folders</span>
+      </header>
+      <div style="border-top: 1px solid var(--hairline); padding-top: 10px; min-height: 0; overflow: hidden">
+        <div class="file-head label"><span>file</span><span>folder</span><span style="text-align: right">size</span><span>kind</span><span></span></div>
+        <div class="file-row"><span class="ell">artist a/album 1/01 intro.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">34.2 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist a/album 1/02 the long road home.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">41.8 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist a/album 1/03 static.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">28.0 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist a/album 1/cover.jpg</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">1.1 mb</span><span class="dim">image</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist a/album 2/01 song.mp3</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">8.0 mb</span><span class="dim">audio</span><span class="warn">settling</span></div>
+        <div class="file-row"><span class="ell">artist a/album 2/02 another song.mp3</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">7.4 mb</span><span class="dim">audio</span><span class="warn">settling</span></div>
+        <div class="file-row"><span class="ell">artist b/live at the hall/01 opening.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">52.3 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist b/live at the hall/02 crowd.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">12.9 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist b/live at the hall/03 encore.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">48.1 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist b/live at the hall/folder.jpg</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">890 kb</span><span class="dim">image</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist c/singles/night drive.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">36.6 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist c/singles/low light.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">33.0 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">artist c/singles/signal.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">29.4 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">compilations/various/01 track one.m4a</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">9.2 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">compilations/various/02 track two.m4a</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">8.8 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">compilations/various/cover.png</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">2.3 mb</span><span class="dim">image</span><span class="warn"></span></div>
+        <div class="file-row"><span class="ell">soundtracks/film score/01 main title.flac</span><span class="dim ell">music (e:)</span><span class="dim" style="text-align: right">61.0 mb</span><span class="dim">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2019-05-02 show/01 opener.flac</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">58.4 mb</span><span class="faint">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2019-05-02 show/02 slow one.flac</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">44.0 mb</span><span class="faint">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2019-05-02 show/03 closer.flac</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">61.7 mb</span><span class="faint">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2021-11-12 show/01 intro.flac</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">12.2 mb</span><span class="faint">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2021-11-12 show/02 first.flac</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">39.5 mb</span><span class="faint">audio</span><span class="warn"></span></div>
+        <div class="file-row faint"><span class="ell">live/2021-11-12 show/cover.jpg</span><span class="faint ell">music (f:)</span><span class="faint" style="text-align: right">740 kb</span><span class="faint">image</span><span class="warn"></span></div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

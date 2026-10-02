@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TYLI mockup · settings · general</title>
+<link rel="stylesheet" href="theme.css">
+<script src="live.js"></script>
+</head>
+<body>
+<style>
+  .section { display: flex; flex-direction: column; gap: 10px; padding-bottom: 22px; border-bottom: 1px solid var(--hairline); }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .setting { display: grid; grid-template-columns: minmax(0, 1fr) 120px 32px 260px; gap: 16px; align-items: center; padding: 4px 0; }
+  .setting .field { text-align: right; width: 120px; }
+  .kind-row { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chip .x { color: var(--text-faint); cursor: pointer; }
+  .chip .x:hover { color: var(--error); }
+  .accent-swatch { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--hairline); background: var(--c); cursor: pointer; padding: 0; outline-offset: 3px; }
+  .accent-swatch.on { outline: 1px solid var(--c); }
+  .tok { display: inline-flex; align-items: center; gap: 8px; margin-right: 18px; }
+  .tok i { width: 14px; height: 14px; border: 1px solid var(--hairline); display: inline-block; }
+  .scroll { overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 22px; }
+</style>
+<div class="window">
+  <header class="topbar">
+    <button class="ib" title="collapse or expand the sidebar" aria-label="toggle sidebar" onclick="this.closest('.window').classList.toggle('collapsed')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16"/></svg></button>
+    <span class="wordmark">tyli<span class="acc cursor">_</span></span>
+    <span class="spacer"></span>
+    <a class="sync-status" href="settings-library.html"><span class="faint">synced 2 min ago</span></a>
+    <a class="ib on" href="settings-library.html" title="settings" aria-label="settings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></a>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+      <a class="nav" href="music.html" title="music" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg><span class="text">music</span><span class="count">12,408</span></a>
+      <a class="nav" href="#" title="movies" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span class="text">movies</span><span class="count">3</span></a>
+      <a class="nav" href="#" title="shows" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12"/><path d="M8 3l4 4 4-4"/></svg><span class="text">shows</span><span class="count">0</span></a>
+      <a class="nav" href="#" title="books" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg><span class="text">books</span><span class="count">0</span></a>
+    </nav>
+    <main class="main" style="gap: 16px">
+      <header class="header"><h1>settings</h1><span class="spacer"></span><span class="faint">changes save as you make them</span></header>
+      <div class="tabs">
+        <a class="tab" href="settings-library.html" style="text-decoration: none">library</a>
+        <a class="tab on" href="settings-general.html" style="text-decoration: none">general</a>
+      </div>
+      <div class="scroll">
+      <section class="section">
+        <div class="section-title">scanning <span class="faint" style="font-weight: 400; font-size: 13px">· which files count as media</span></div>
+        <div class="kind-row"><span class="dim">audio</span><div class="chips"><span class="chip">mp3<span class="x" title="remove .mp3">×</span></span><span class="chip">flac<span class="x" title="remove .flac">×</span></span><span class="chip">ogg<span class="x" title="remove .ogg">×</span></span><span class="chip">oga<span class="x" title="remove .oga">×</span></span><span class="chip">opus<span class="x" title="remove .opus">×</span></span><span class="chip">m4a<span class="x" title="remove .m4a">×</span></span><span class="chip">m4b<span class="x" title="remove .m4b">×</span></span><span class="chip">aac<span class="x" title="remove .aac">×</span></span><span class="chip">wav<span class="x" title="remove .wav">×</span></span><span class="chip">aiff<span class="x" title="remove .aiff">×</span></span><span class="chip">aif<span class="x" title="remove .aif">×</span></span><span class="chip">wma<span class="x" title="remove .wma">×</span></span><span class="chip">ape<span class="x" title="remove .ape">×</span></span><span class="chip">wv<span class="x" title="remove .wv">×</span></span><span class="chip">dsf<span class="x" title="remove .dsf">×</span></span><span class="chip">dff<span class="x" title="remove .dff">×</span></span><span class="chip">alac<span class="x" title="remove .alac">×</span></span><button class="pill icon-only" title="add an extension to audio" aria-label="add an extension to audio"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">video</span><div class="chips"><span class="chip">mkv<span class="x" title="remove .mkv">×</span></span><span class="chip">mp4<span class="x" title="remove .mp4">×</span></span><span class="chip">m4v<span class="x" title="remove .m4v">×</span></span><span class="chip">avi<span class="x" title="remove .avi">×</span></span><span class="chip">mov<span class="x" title="remove .mov">×</span></span><span class="chip">wmv<span class="x" title="remove .wmv">×</span></span><span class="chip">webm<span class="x" title="remove .webm">×</span></span><span class="chip">ts<span class="x" title="remove .ts">×</span></span><span class="chip">m2ts<span class="x" title="remove .m2ts">×</span></span><span class="chip">mpg<span class="x" title="remove .mpg">×</span></span><span class="chip">mpeg<span class="x" title="remove .mpeg">×</span></span><span class="chip">flv<span class="x" title="remove .flv">×</span></span><button class="pill icon-only" title="add an extension to video" aria-label="add an extension to video"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">text</span><div class="chips"><span class="chip">epub<span class="x" title="remove .epub">×</span></span><span class="chip">pdf<span class="x" title="remove .pdf">×</span></span><span class="chip">txt<span class="x" title="remove .txt">×</span></span><span class="chip">md<span class="x" title="remove .md">×</span></span><span class="chip">mobi<span class="x" title="remove .mobi">×</span></span><span class="chip">azw3<span class="x" title="remove .azw3">×</span></span><span class="chip">cbz<span class="x" title="remove .cbz">×</span></span><span class="chip">cbr<span class="x" title="remove .cbr">×</span></span><span class="chip">html<span class="x" title="remove .html">×</span></span><span class="chip">htm<span class="x" title="remove .htm">×</span></span><button class="pill icon-only" title="add an extension to text" aria-label="add an extension to text"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">image</span><div class="chips"><span class="chip">jpg<span class="x" title="remove .jpg">×</span></span><span class="chip">jpeg<span class="x" title="remove .jpeg">×</span></span><span class="chip">png<span class="x" title="remove .png">×</span></span><span class="chip">webp<span class="x" title="remove .webp">×</span></span><span class="chip">gif<span class="x" title="remove .gif">×</span></span><span class="chip">bmp<span class="x" title="remove .bmp">×</span></span><button class="pill icon-only" title="add an extension to image" aria-label="add an extension to image"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">subtitle</span><div class="chips"><span class="chip">srt<span class="x" title="remove .srt">×</span></span><span class="chip">ass<span class="x" title="remove .ass">×</span></span><span class="chip">ssa<span class="x" title="remove .ssa">×</span></span><span class="chip">vtt<span class="x" title="remove .vtt">×</span></span><span class="chip">sub<span class="x" title="remove .sub">×</span></span><span class="chip">idx<span class="x" title="remove .idx">×</span></span><button class="pill icon-only" title="add an extension to subtitle" aria-label="add an extension to subtitle"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">skip names</span><div class="chips"><span class="chip">$RECYCLE.BIN<span class="x" title="remove $RECYCLE.BIN">×</span></span><span class="chip">System Volume Information<span class="x" title="remove System Volume Information">×</span></span><span class="chip">Thumbs.db<span class="x" title="remove Thumbs.db">×</span></span><span class="chip">desktop.ini<span class="x" title="remove desktop.ini">×</span></span><span class="chip">FOUND.000<span class="x" title="remove FOUND.000">×</span></span><span class="chip">.DS_Store<span class="x" title="remove .DS_Store">×</span></span><span class="chip">.Trashes<span class="x" title="remove .Trashes">×</span></span><span class="chip">.Spotlight-V100<span class="x" title="remove .Spotlight-V100">×</span></span><span class="chip">.fseventsd<span class="x" title="remove .fseventsd">×</span></span><span class="chip">.TemporaryItems<span class="x" title="remove .TemporaryItems">×</span></span><span class="chip">.DocumentRevisions-V100<span class="x" title="remove .DocumentRevisions-V100">×</span></span><span class="chip">lost+found<span class="x" title="remove lost+found">×</span></span><span class="chip">@eaDir<span class="x" title="remove @eaDir">×</span></span><span class="chip">#recycle<span class="x" title="remove #recycle">×</span></span><span class="chip">#snapshot<span class="x" title="remove #snapshot">×</span></span><span class="chip">.snapshot<span class="x" title="remove .snapshot">×</span></span><span class="chip">.hoardor-root<span class="x" title="remove .hoardor-root">×</span></span><button class="pill icon-only" title="add a name to skip" aria-label="add a name to skip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+        <div class="kind-row"><span class="dim">skip prefixes</span><div class="chips"><span class="chip">._<span class="x" title="remove ._">×</span></span><span class="chip">.Trash-<span class="x" title="remove .Trash-">×</span></span><button class="pill icon-only" title="add a prefix to skip" aria-label="add a prefix to skip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div></div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">sync</div>
+        <div class="setting"><div><div>sync at startup</div><div class="dim">sync everything in the background when tyli starts</div></div><span class="check" style="text-align: right"><span class="dim">[ ]</span></span><span></span><span class="faint">default off</span></div>
+        <div class="setting"><div><div>settle window (s)</div><div class="dim">a file changed this recently is still being copied; checked again next sync</div></div><input class="field" value="10" aria-label="settle window (s)"><span style="width: 32px"></span><span class="faint">default 10 · 0–86400</span></div>
+        <div class="setting"><div><div>mass-removal guard (%)</div><div class="dim">hold removals above this share of a folder's files for your confirmation</div></div><input class="field" value="40" aria-label="mass-removal guard (%)"><button class="ib " title="reset to 25" aria-label="reset to 25"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2-5"/><path d="M4 3v5h5"/></svg></button><span class="faint">default 25 · 0–100</span></div>
+        <div class="setting"><div><div>relocation sample size</div><div class="dim">relocating a folder without a marker checks this many known files</div></div><input class="field" value="20" aria-label="relocation sample size"><span style="width: 32px"></span><span class="faint">default 20 · 0–10000</span></div>
+        <div class="setting"><div><div>relocation match (%)</div><div class="dim">share of those files that must match to accept the new location</div></div><input class="field invalid" value="150" aria-label="relocation match (%)"><button class="ib " title="reset to 80" aria-label="reset to 80"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12a7 7 0 1 0 2-5"/><path d="M4 3v5h5"/></svg></button><span class="err">must be between 0 and 100</span></div>
+        <div class="label" style="padding-top: 8px">advanced</div>
+        <div class="setting"><div><div>batch size (rows)</div><div class="dim">database writes commit after this many rows…</div></div><input class="field" value="2000" aria-label="batch size (rows)"><span style="width: 32px"></span><span class="faint">default 2000 · 1–1000000</span></div>
+        <div class="setting"><div><div>batch time (ms)</div><div class="dim">…or this many milliseconds, so other writes never wait long</div></div><input class="field" value="50" aria-label="batch time (ms)"><span style="width: 32px"></span><span class="faint">default 50 · 1–60000</span></div>
+        <div class="setting"><div><div>progress interval (files)</div><div class="dim">sync progress is reported every this many files</div></div><input class="field" value="500" aria-label="progress interval (files)"><span style="width: 32px"></span><span class="faint">default 500 · 1–1000000</span></div>
+      </section>
+
+      <section class="section" style="border-bottom: 0">
+        <div class="section-title">about</div>
+        <div class="dim">tyli 0.1.0 · hoardor 0.1.0 · library ~/.local/share/TYLI/library.db</div>
+      </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
