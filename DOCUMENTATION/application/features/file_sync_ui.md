@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Phases 1 and 2 built** (2026-10-02): bridge, model, all screens, and tests. Being tested by the user over VNC. Phase 3 (Windows, real drives) next. Approved 2026-10-01 |
+| Status | **Shipped in `v0.1.0`** (2026-10-02): phases 1–3 done. Bridge, model, screens, and tests built; restyled by the theme (`theme.md`); tested by the user over VNC and on Windows with the GitHub Actions build. Approved 2026-10-01 |
 | Branch | `abhinavp06/FILE_SCANNER_INIT` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.1.0`, together with hoardor `v0.1.0` |
 | hoardor feature | File Sync v1: `../hoardor/DOCUMENTATION/application/features/file_sync.md` |
@@ -225,6 +225,6 @@ class FolderFilesModel : public QAbstractListModel {
 
 1. **Bridge + tests:** `LibraryBridge`, `FolderFilesModel`, a `TYLI_DATA_DIR` data folder. **Built 2026-10-02.**
 2. **QML screens:** main window, section view, details dialog, Settings (4 sub-tabs), plus the smoke test with screenshots. **Built 2026-10-02**; the user is testing it over VNC.
-3. **Windows check by the user:** build on Windows and run against the real external drives. Also measure a cold-HDD sync and try playback stutter (hoardor OI-1) once playback exists.
+3. **Windows check by the user:** build on Windows and run against the real external drives. Also measure a cold-HDD sync and try playback stutter (hoardor OI-1) once playback exists. **Done 2026-10-02** with the GitHub Actions build (`tyli-windows`): the user's verdict was "it's perfect"; a real sync finished too fast to see the progress line. The cold-HDD measurement and the playback-stutter check wait for the player.
 
 Then both branches merge (hoardor `v0.1.0`, TYLI `v0.1.0`), and **media listing** starts on new branches.

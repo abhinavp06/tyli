@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Built in QML** (2026-10-02), from the approved mockups (round 2, trimmed to implemented features). Waiting for the user's review over VNC |
+| Status | **Shipped in `v0.1.0`** (2026-10-02): built in QML from the approved mockups (round 2, trimmed to implemented features), reviewed by the user over VNC and on Windows (the GitHub Actions build) |
 | Branch | `abhinavp06/FILE_SCANNER_INIT` (decided, §8) |
 | Ships in | TYLI `v0.1.0`, with the File Sync UI |
 | hoardor feature | none: UI only |
@@ -90,6 +90,7 @@ The user's notes on the first mockups, and what changed:
 ## 4b. Decisions (round 2, the user, 2026-10-02)
 
 1. **Albums need tags, so metadata comes next, on this same branch** (`abhinavp06/FILE_SCANNER_INIT`): a tag-reading feature in hoardor (its own feature doc, and a library such as TagLib to agree on), then the album view in TYLI.
+   - **Superseded (the user, 2026-10-02):** this branch merges as `v0.1.0` without metadata. Next comes media listing on new branches (Music grouped by album *folder*, Movies and Books as lists, Shows by show and season folders), then a first player draft, then metadata (ARCHITECTURE decision log).
 2. **Icons: our own simple stroke icons** (left to Claude; the user doesn't mind). They're a handful of 24×24 SVG paths, drawn to match the theme, with no dependency. An icon set can replace them later if the count grows a lot.
 3. **The mockups show only what's implemented.** The round-2 pages were committed as the agreed direction (`bc07914`), then trimmed to features that exist; features come back as they're built:
    - **Music** lists the category's files across its folders (file, folder, size, kind, settling; an offline folder's files are dimmed) instead of albums. Albums return with metadata.

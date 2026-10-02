@@ -11,7 +11,8 @@ The detailed history of TYLI. Each version has its own file, so no single file g
 
 | Version | Date | Highlights |
 |---|---|---|
-| [Unreleased](unreleased.md) | — | Restart on `master`: Qt 6.12 skeleton built against hoardor, project docs, File Sync UI design |
+| [Unreleased](unreleased.md) | — | Nothing yet |
+| [v0.1.0](v0.1.0.md) | 2026-10-02 | **File Sync UI + OLED theme**: Qt 6.12 app on hoardor `v0.1.0`, `Library` bridge, paged file lists, Settings → Library and General, OLED black + minimal green with its own controls and icons, live HTML mockups and VNC view, a Windows build on GitHub Actions |
 
 ## Versioning
 
