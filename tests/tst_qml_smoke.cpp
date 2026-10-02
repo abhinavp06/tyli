@@ -328,6 +328,20 @@ private slots:
         QVERIFY(qmlWarnings.isEmpty());
     }
 
+    void searchAcrossTheLibrary() {
+        showCategory("Music");
+        QVERIFY(window_->setProperty("searchText", "radio"));
+        QTRY_VERIFY(find("searchView") && find("searchView")->property("found").toInt() > 0);
+        screenshot("search");
+        QVERIFY(window_->setProperty("searchText", "arri"));  // a prefix of "Arrival"
+        QTRY_VERIFY(find("searchView")->property("found").toInt() > 0);
+        screenshot("search-movie");
+        QVERIFY(window_->setProperty("searchText", "zzzz"));
+        QTRY_COMPARE(find("searchView")->property("found").toInt(), 0);
+        QVERIFY(window_->setProperty("searchText", ""));
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
     void theSidebarCollapses() {
         QVERIFY(window_->setProperty("sidebarCollapsed", true));
         screenshot("sidebar-collapsed");

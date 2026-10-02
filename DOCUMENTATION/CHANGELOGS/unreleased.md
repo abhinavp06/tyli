@@ -2,6 +2,24 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Search bar (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:**
+- **The field:** a search field in the top bar (debounced 200 ms; Esc clears).
+- **While there's text,** a results page replaces the content: albums, artists, tracks, movies, and shows across every category, using hoardor's new `search` filter.
+- **Opening a result:** it switches to its category and opens the album, artist, movie, or show page. A track opens its album, since playing comes with the player.
+- **Matching:** every word as a prefix, accents ignored ("bjork" finds Björk).
+
+**Added / changed**
+- `qml/SearchView.qml` (new)
+- `qml/TopBar.qml` (the field), `qml/Main.qml` (`searchText`, the results page, opening a result)
+- `src/media_fields.cpp` (`search`), `src/library_bridge.*` (`categoryOfFolder`)
+- `CMakeLists.txt`
+
+**Tests:** the smoke test searches "radio" (albums, artist, tracks), "arri" (a movie by prefix), and "zzzz" (nothing), with screenshots. All 4 suites pass.
+
+**Note:** this was built without a mockup round, because the user asked for everything to be finished in one go. The screenshot is in `build/screenshots/search.png`.
+
 ### Albums appear while tags are read; quality choices kept and remembered (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** This answers the user's request to see albums as their tags are read, and their worry about copies changing during playback.

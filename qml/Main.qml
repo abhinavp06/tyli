@@ -41,6 +41,7 @@ ApplicationWindow {
     property int currentCategoryId: Library.categories.length > 0 ? Library.categories[0].id : -1
     property bool settingsOpen: false
     property bool sidebarCollapsed: false
+    property string searchText  // what the results page shows ("" = no search)
     readonly property var currentCategory: Library.categories.find(c => c.id === currentCategoryId)
 
     function openSettings(page) {
@@ -63,6 +64,7 @@ ApplicationWindow {
         visible: Library.ready
 
         TopBar {
+            id: topBar
             Layout.fillWidth: true
             settingsOpen: window.settingsOpen
             onToggleSidebar: window.sidebarCollapsed = !window.sidebarCollapsed
@@ -88,9 +90,25 @@ ApplicationWindow {
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                CategoryView {
+                // Search results while the top bar's field has text (debounced: hoardor runs a
+                // query per keystroke otherwise).
+                Timer { id: searchDelay; interval: 200; onTriggered: window.searchText = topBar.searchText.trim() }
+                Connections { target: topBar; function onSearchTextChanged() { searchDelay.restart() } }
+                SearchView {
                     anchors.fill: parent
-                    visible: !window.settingsOpen
+                    visible: window.searchText !== "" && !window.settingsOpen
+                    text: window.searchText
+                    onOpened: (categoryId, page, params) => {
+                        window.currentCategoryId = categoryId
+                        topBar.searchText = ""
+                        window.searchText = ""
+                        categoryView.open(page, params)
+                    }
+                }
+                CategoryView {
+                    id: categoryView
+                    anchors.fill: parent
+                    visible: !window.settingsOpen && window.searchText === ""
                     category: window.currentCategory
                     onAddFolderRequested: window.openSettings("library")
                     // The drive link on an album, movie, or show: that folder's category in Settings → Library.

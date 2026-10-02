@@ -15,6 +15,7 @@ std::optional<a::Field> audio(const QString& name) {
         {"bitrate", a::Field::Bitrate},   {"sampleRate", a::Field::SampleRate}, {"bitDepth", a::Field::BitDepth},
         {"codec", a::Field::Codec},       {"lossless", a::Field::Lossless},     {"added", a::Field::Added},
         {"category", a::Field::Category}, {"root", a::Field::Root},             {"entry", a::Field::Entry},
+        {"search", a::Field::Search},
     };
     for (const auto& [n, f] : names) {
         if (name == QLatin1String(n)) return f;
@@ -29,7 +30,7 @@ std::optional<v::Field> video(const QString& name) {
         {"season", v::Field::Season},     {"episode", v::Field::Episode},   {"duration", v::Field::Duration},
         {"height", v::Field::Height},     {"hdr", v::Field::Hdr},           {"videoCodec", v::Field::VideoCodec},
         {"added", v::Field::Added},       {"category", v::Field::Category}, {"root", v::Field::Root},
-        {"entry", v::Field::Entry},
+        {"entry", v::Field::Entry},       {"search", v::Field::Search},
     };
     for (const auto& [n, f] : names) {
         if (name == QLatin1String(n)) return f;

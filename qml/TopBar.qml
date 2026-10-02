@@ -9,6 +9,7 @@ Rectangle {
     id: bar
 
     property bool settingsOpen: false
+    property alias searchText: search.text
     signal toggleSidebar()
     signal settingsRequested()
     signal syncStatusClicked()
@@ -57,6 +58,18 @@ Rectangle {
                     onTriggered: cursor.opacity = cursor.opacity > 0 ? 0 : 1
                 }
             }
+        }
+
+        Item { Layout.preferredWidth: 24 }
+
+        // Search across the library; results replace the page while there's text (Esc clears).
+        TyField {
+            id: search
+            objectName: "searchField"
+            Layout.preferredWidth: 300
+            placeholderText: "search"
+            font.pixelSize: Theme.fontSizeSmall
+            Keys.onEscapePressed: text = ""
         }
 
         Item { Layout.fillWidth: true }

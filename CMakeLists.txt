@@ -83,6 +83,7 @@ qt_add_qml_module(tyli_ui
         qml/PlayButton.qml
         qml/QualityPicker.qml
         qml/SettingsView.qml
+        qml/SearchView.qml
         qml/ShowView.qml
         qml/Sidebar.qml
         qml/SortBar.qml

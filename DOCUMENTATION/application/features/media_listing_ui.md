@@ -155,6 +155,12 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
   - **The quality you pick is kept across refreshes and remembered** per album, movie, or show (`QSettings` `quality/…`). "Best by default" applies only when you haven't picked one.
   - When the player exists, the playing album's page will show which copy is playing.
 
+## 7c. Search (2026-10-02)
+
+- **The field:** the top bar's search field (debounced) shows `SearchView` in place of the page.
+- **Sections:** albums (`GroupModel` grouped by category, album artist, album), artists, tracks (`ItemModel`), movies, and shows, each filtered with `search`; up to 12 shown per section.
+- **A result** switches the sidebar to its category and opens its page there. A track opens its album.
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).

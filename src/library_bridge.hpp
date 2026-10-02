@@ -139,6 +139,7 @@ public:
     // {qualities: [{label, episodes, total}], episodes: [{season, episode, copies: [{label, item}]}]}
     Q_INVOKABLE QVariantMap showCopies(const QString& show, int categoryId = -1);
     Q_INVOKABLE QString folderLabel(int folderId) const { return folderName(qint64(folderId)); }
+    Q_INVOKABLE int categoryOfFolder(int folderId) const;
     Q_INVOKABLE QString thumbnail(qint64 entryId);
     // Which view a category opens: "music", "movies", "shows", or "none". The user's choice
     // (Settings → Library) or a default from its kinds and what it holds.

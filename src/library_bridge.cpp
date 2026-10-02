@@ -525,6 +525,14 @@ QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
     return {{"qualities", qualities}, {"episodes", episodes}};
 }
 
+int LibraryBridge::categoryOfFolder(int folderId) const {
+    for (const QVariant& f : folders_) {
+        const QVariantMap folder = f.toMap();
+        if (folder.value("id").toInt() == folderId) return folder.value("categoryId").toInt();
+    }
+    return -1;
+}
+
 QString LibraryBridge::thumbnail(qint64 entryId) { return thumbnails_ ? thumbnails_->url(entryId) : QString(); }
 
 QString LibraryBridge::categoryViewChoice(int categoryId) const {
