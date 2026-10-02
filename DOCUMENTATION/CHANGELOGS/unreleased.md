@@ -2,6 +2,28 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Theme design started: OLED black + minimal green; live HTML mockups in the repo (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The user asked for a minimal, hacker-like dark theme: pure black, with very little green, mostly in text. `features/theme.md` proposes it (palette, type, every control, how it's built), with the user's decisions: IBM Plex Mono bundled, a left sidebar instead of top tabs, and the same branch. Before any QML, the look is reviewed as HTML mockups, which live in the repo and reload in the user's browser as they're edited.
+
+**Added**
+- `DOCUMENTATION/application/features/theme.md` (Proposed): palette tokens with contrast ratios, type, the look of each control, the build plan (a `Theme` singleton, the Basic style, one small file per restyled control), edge cases, tests, decisions.
+- `DOCUMENTATION/mockups/`: `theme.css` (the palette as CSS variables plus shared styles), `live.js` (reloads a page when it or `theme.css` changes; adds a page switcher), and, after the user's first review (round 2), `music.html` (album list), `settings-library.html` (category pills, folders, sync, inline add), `settings-general.html` (appearance, scanning, sync, about), plus `index.html`. Round 1 had five pages (music section, settings folders/sync, dialogs, palette); the user's notes replaced them (theme.md §4a).
+- `tools/mockup_server.sh`: serves the mockups with Python's `http.server`, bound to `127.0.0.1` only (port `MOCKUP_PORT`, default 8000). The user reaches it through the SSH tunnel.
+- `CLAUDE.md`: the mockups folder and how to view them.
+
+**Design decisions and trade-offs**
+- **Mockups in the repo, as plain HTML** (the user's request), instead of an Artifact canvas: they're versioned next to the code and open in any browser. The first draft was a canvas; it's kept as a link in the theme doc but not updated.
+- **Live reload by polling `Last-Modified` once a second** (a `HEAD` request per watched file). There are no dependencies, and Python's `http.server` already sends the header. Rejected: a websocket live-reload server (an extra tool to install).
+- **The mockups load IBM Plex Mono from Google Fonts** for now. The app itself will bundle the font (theme.md §3), and the mockups can switch to that file once it's in the repo.
+
+- **Round 2 layout** (theme.md §4a), from the user's notes: a top bar with the sync status and a gear; a collapsible sidebar with icons; category views show media only (albums); Settings split into `library` (category pills, folders, sync, everything inline, no dialogs) and `general`; icons instead of text buttons; settings save as you change them.
+- **Considered and rejected (recorded in ARCHITECTURE):** turning TYLI into a local web server. It stays a Qt desktop app because browsers limit playback.
+
+**Known limitations / follow-ups**
+- The theme isn't implemented yet.
+- Next (the user, 2026-10-02): trim the mockups to implemented features; then metadata (tag reading in hoardor) on this branch, which the album view needs.
+
 ### File Sync UI built: bridge, paged file list, every screen, tests (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** Phases 1 and 2 of `features/file_sync_ui.md`. TYLI now drives hoardor File Sync v1 end to end: configure categories and folders, sync a section in the background with progress and Cancel, browse each folder's files (paged from SQLite), read what the last sync did, handle offline folders and held removals, and edit every hoardor setting. Uses hoardor's existing API only; hoardor is unchanged.

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TYLI mockup · music</title>
+<link rel="stylesheet" href="theme.css">
+<script src="live.js"></script>
+</head>
+<body>
+<style>
+  .album-row { display: grid; grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1.4fr) 60px 60px 80px; gap: 16px; align-items: center; padding: 6px 12px; }
+  .album-head { display: grid; grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1.4fr) 60px 60px 80px; gap: 16px; padding: 0 12px 6px; }
+  .cover { width: 40px; height: 40px; border: 1px solid var(--hairline); display: grid; place-items: center; color: var(--text-faint); }
+</style>
+<div class="window">
+  <header class="topbar">
+    <button class="ib" title="collapse or expand the sidebar" aria-label="toggle sidebar" onclick="this.closest('.window').classList.toggle('collapsed')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16"/></svg></button>
+    <span class="wordmark">tyli<span class="acc cursor">_</span></span>
+    <span class="spacer"></span>
+    <a class="sync-status" href="settings-library.html" title="sync status: open library settings"><div class="progress"><div class="seg"></div></div><span>syncing music (e:) · 5,120 files</span></a>
+    <a class="ib" href="settings-library.html" title="settings" aria-label="settings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></a>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+      <a class="nav on" href="music.html" title="music" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg><span class="text">music</span><span class="count">412</span></a>
+      <a class="nav" href="#" title="movies" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span class="text">movies</span><span class="count">214</span></a>
+      <a class="nav" href="#" title="shows" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12"/><path d="M8 3l4 4 4-4"/></svg><span class="text">shows</span><span class="count">38</span></a>
+      <a class="nav" href="#" title="books" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3zM21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg><span class="text">books</span><span class="count">87</span></a>
+    </nav>
+    <main class="main">
+      <header class="header" style="align-items: center">
+        <h1>music</h1>
+        <span class="dim">412 albums · 4,980 tracks</span>
+        <span class="spacer"></span>
+        <button class="ib " title="search albums" aria-label="search albums"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></button>
+        <button class="ib " title="sort: artist, album, year, recently added" aria-label="sort: artist, album, year, recently added"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M4 17l3 3 3-3M13 6h8M13 12h6M13 18h4"/></svg></button>
+        <button class="ib on" title="list view" aria-label="list view"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <button class="ib " title="cover grid" aria-label="cover grid"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg></button>
+      </header>
+      <div style="border-top: 1px solid var(--hairline); padding-top: 10px; min-height: 0; overflow: hidden">
+        <div class="album-head label"><span></span><span>album</span><span>artist</span><span>year</span><span style="text-align: right">tracks</span><span style="text-align: right">length</span></div>
+        <div class="album-row row selected"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell"><span class="acc">the long road home</span></span><span class="dim ell">artist a</span><span class="dim">2019</span><span class="dim" style="text-align: right">12</span><span class="dim" style="text-align: right">48:10</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">static</span><span class="dim ell">artist a</span><span class="dim">2016</span><span class="dim" style="text-align: right">10</span><span class="dim" style="text-align: right">41:32</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">live at the hall</span><span class="dim ell">artist b</span><span class="dim">2021</span><span class="dim" style="text-align: right">18</span><span class="dim" style="text-align: right">1:22:05</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">night drive</span><span class="dim ell">artist c</span><span class="dim">2023</span><span class="dim" style="text-align: right">9</span><span class="dim" style="text-align: right">36:44</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">low light</span><span class="dim ell">artist c</span><span class="dim">2020</span><span class="dim" style="text-align: right">11</span><span class="dim" style="text-align: right">44:01</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">signal</span><span class="dim ell">artist c</span><span class="dim">2018</span><span class="dim" style="text-align: right">8</span><span class="dim" style="text-align: right">33:20</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">various: summer</span><span class="dim ell">various artists</span><span class="dim">2015</span><span class="dim" style="text-align: right">24</span><span class="dim" style="text-align: right">1:31:12</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">film score</span><span class="dim ell">composer d</span><span class="dim">2012</span><span class="dim" style="text-align: right">21</span><span class="dim" style="text-align: right">1:05:47</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">first light</span><span class="dim ell">artist e</span><span class="dim">2010</span><span class="dim" style="text-align: right">10</span><span class="dim" style="text-align: right">39:58</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">harbor</span><span class="dim ell">artist f</span><span class="dim">2022</span><span class="dim" style="text-align: right">12</span><span class="dim" style="text-align: right">47:30</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">echoes in glass</span><span class="dim ell">artist g</span><span class="dim">2017</span><span class="dim" style="text-align: right">9</span><span class="dim" style="text-align: right">40:15</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">north</span><span class="dim ell">artist h</span><span class="dim">2014</span><span class="dim" style="text-align: right">11</span><span class="dim" style="text-align: right">45:06</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">paper rooms</span><span class="dim ell">artist i</span><span class="dim">2019</span><span class="dim" style="text-align: right">13</span><span class="dim" style="text-align: right">52:41</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">quiet machines</span><span class="dim ell">artist j</span><span class="dim">2024</span><span class="dim" style="text-align: right">8</span><span class="dim" style="text-align: right">31:09</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">red line</span><span class="dim ell">artist k</span><span class="dim">2011</span><span class="dim" style="text-align: right">10</span><span class="dim" style="text-align: right">38:27</span></div>
+        <div class="album-row row"><div class="cover"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg></div><span class="ell">satellite</span><span class="dim ell">artist l</span><span class="dim">2008</span><span class="dim" style="text-align: right">12</span><span class="dim" style="text-align: right">49:53</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

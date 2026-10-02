@@ -42,12 +42,13 @@ CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines t
 src/                          # C++: main.cpp, LibraryBridge (the QML singleton `Library`), FolderFilesModel
 qml/                          # QML views (one file per screen or reusable component)
 tests/                        # Qt Test suites (bridge, models, QML smoke test); screenshots land in build/screenshots/
-tools/                        # developer scripts (vnc_session.sh: see the UI from the VM over SSH)
+tools/                        # developer scripts (vnc_session.sh: the UI over VNC; mockup_server.sh: the HTML mockups)
 DOCUMENTATION/
   CHANGELOGS/                 # one file per version + unreleased.md (same rules as hoardor)
   application/
     ARCHITECTURE.md           # TYLI's architecture and decision log
     features/<feature>.md     # plan per feature: screens, bridge API, edge cases, tests, status
+  mockups/                    # HTML mockups of the UI (theme.css + one page per screen), reviewed before QML is written
 ```
 
 ## Build and test
@@ -63,6 +64,7 @@ QT_QPA_PLATFORM=offscreen ./build/tyli     # headless run (tests, screenshots)
 **Seeing the UI from the VM:** `tools/vnc_session.sh` runs TYLI on a virtual X display (Xvfb) and shares it with `x11vnc` **on 127.0.0.1 only**. The user connects through SSH: `ssh -N -L 5900:127.0.0.1:5900 <user>@<vm>`, then points a VNC viewer at `localhost:5900`.
 - **Live view while developing:** `tools/vnc_session.sh --watch` keeps the display and VNC up and restarts TYLI whenever `build/tyli` changes, so the user's viewer shows every rebuild within about 2 s. Run it detached so it outlives the agent session: `setsid nohup tools/vnc_session.sh --watch > ~/.vnc/tyli_session.log 2>&1 < /dev/null &`.
 - **From Windows:** `ssh -N -L 5900:127.0.0.1:5900 root@<vm>` in a second terminal, then TigerVNC Viewer (or RealVNC Viewer) at `localhost:5900`. On macOS use local port 5901 (`vnc://localhost:5901`), because Screen Sharing refuses `localhost:5900`.
+- **HTML mockups:** UI ideas are mocked up first in `DOCUMENTATION/mockups/` (plain HTML sharing `theme.css`, committed). `tools/mockup_server.sh` serves them on `127.0.0.1:8000`, and every page reloads itself when its file or `theme.css` changes, so the user watches edits live. The user adds `-L 8000:127.0.0.1:8000` to their SSH tunnel and opens `http://localhost:8000`. Run it detached: `setsid nohup tools/mockup_server.sh > ~/.vnc/mockup_server.log 2>&1 < /dev/null &`.
 - **Never use Qt's `-platform vnc`:** it ignores the address option and listens on every interface, and this VM has no firewall.
 - **The VM can't see the user's external drives.** It's only for testing with sample folders. Real-drive testing needs the Windows build.
 
