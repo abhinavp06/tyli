@@ -15,6 +15,9 @@ jobs:
       QT_VERSION: 6.12.0
       QT_ARCH: win64_msvc2022_64
       QT_DIR_NAME: msvc2022_64
+      # hoardor reads metadata with ffmpeg (LGPL, shared). A pinned BtbN build, checked by its SHA-256.
+      FFMPEG_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-01-13-06/ffmpeg-n8.1.3-14-g330caae0c1-win64-lgpl-shared-8.1.zip
+      FFMPEG_SHA256: bf545d8fee9bb6957c1f3dea0f384bf64edead407d763326dbbd2de1b04768a4
 
     steps:
       - name: Check out TYLI
@@ -49,6 +52,25 @@ jobs:
         shell: pwsh
         run: python tyli/.github/scripts/install_qt.py --version "$env:QT_VERSION" --arch "$env:QT_ARCH" --out "$env:RUNNER_TEMP/Qt" --addons qttasktree
 
+      - name: Cache ffmpeg
+        id: ffmpeg-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ffmpeg
+          key: ffmpeg-${{ env.FFMPEG_SHA256 }}
+
+      - name: Install ffmpeg
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $zip = "$env:RUNNER_TEMP\ffmpeg.zip"
+          Invoke-WebRequest -Uri $env:FFMPEG_URL -OutFile $zip
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:FFMPEG_SHA256) { throw "ffmpeg download has SHA-256 $hash, expected $env:FFMPEG_SHA256" }
+          Expand-Archive $zip -DestinationPath "$env:RUNNER_TEMP\ffmpeg-unpacked"
+          $top = Get-ChildItem "$env:RUNNER_TEMP\ffmpeg-unpacked" -Directory | Select-Object -First 1
+          Move-Item $top.FullName "$env:RUNNER_TEMP\ffmpeg"
+
       # Puts cl.exe, link.exe, and the Windows SDK on PATH (a "Developer Command Prompt").
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -56,7 +78,7 @@ jobs:
       # PowerShell, not Git Bash: Git Bash has its own link.exe that would shadow MSVC's linker.
       - name: Configure
         shell: pwsh
-        run: cmake -S tyli -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:RUNNER_TEMP/Qt/$env:QT_VERSION/$env:QT_DIR_NAME"
+        run: cmake -S tyli -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:RUNNER_TEMP/Qt/$env:QT_VERSION/$env:QT_DIR_NAME" "-DFFMPEG_ROOT=$env:RUNNER_TEMP/ffmpeg"
 
       - name: Build
         id: build
@@ -66,7 +88,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          $env:PATH = "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin;$env:PATH"
+          $env:PATH = "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin;$env:RUNNER_TEMP\ffmpeg\bin;$env:PATH"
           ctest --test-dir build --output-on-failure
 
       # Runs even when a test failed, so the exe can still be tried.
@@ -80,6 +102,12 @@ jobs:
           # The MSVC runtime next to the exe ("app-local"), so it runs without installing the VC++ redistributable.
           $crt = Get-ChildItem "$env:VCToolsRedistDir\x64" -Directory -Filter "Microsoft.VC*.CRT" | Select-Object -First 1
           if ($crt) { Copy-Item "$($crt.FullName)\*.dll" dist/ }
+          # ffmpeg's libraries hoardor links (avformat needs avcodec and avutil; avcodec needs swresample),
+          # with ffmpeg's license, as the LGPL asks.
+          foreach ($dll in "avformat-*.dll", "avcodec-*.dll", "avutil-*.dll", "swresample-*.dll") {
+            Copy-Item "$env:RUNNER_TEMP\ffmpeg\bin\$dll" dist/
+          }
+          Copy-Item "$env:RUNNER_TEMP\ffmpeg\LICENSE.txt" dist/ffmpeg-LICENSE.txt
           Get-ChildItem dist | Select-Object -First 40 Name
 
       - name: Upload

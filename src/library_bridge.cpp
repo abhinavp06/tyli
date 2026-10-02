@@ -275,7 +275,7 @@ QVariantMap LibraryBridge::settingLimits() const {
 
 QStringList LibraryBridge::fileKinds() const {
     using K = file::FileKind;
-    return kindNames({K::Audio, K::Video, K::Text, K::Image, K::Subtitle});
+    return kindNames({K::Audio, K::Video, K::Text, K::Image, K::Subtitle, K::Info});
 }
 
 QVariantMap LibraryBridge::categoryReports() const {
