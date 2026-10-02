@@ -2,6 +2,14 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### "Drives at a time" setting (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** hoardor now syncs and reads tags with one worker per physical drive. Settings → General → sync gains "drives at a time" (`parallelDevices`, 1–16, default 4; 1 = one drive at a time).
+
+**Files**
+- `src/library_bridge.cpp` (settings map, apply, limits)
+- `qml/GeneralSettings.qml`
+
 ### Reading tags is its own background state (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** hoardor now reads metadata as a separate job after the sync (see its changelog). TYLI follows:

@@ -103,6 +103,7 @@ QVariantMap settingsToMap(const file::Settings& s) {
         {"progressIntervalFiles", s.progress_interval_files},
         {"relocationSampleSize", s.relocation_sample_size},
         {"relocationMinMatchPercent", s.relocation_min_match_percent},
+        {"parallelDevices", s.parallel_devices},
     };
 }
 
@@ -135,6 +136,7 @@ QString applyMap(file::Settings& s, const QVariantMap& map) {
     number("progressIntervalFiles", s.progress_interval_files);
     number("relocationSampleSize", s.relocation_sample_size);
     number("relocationMinMatchPercent", s.relocation_min_match_percent);
+    number("parallelDevices", s.parallel_devices);
     return {};
 }
 
@@ -290,6 +292,7 @@ QVariantMap LibraryBridge::settingLimits() const {
         {"progressIntervalFiles", range(l::progress_interval_files)},
         {"relocationSampleSize", range(l::relocation_sample_size)},
         {"relocationMinMatchPercent", range(l::relocation_min_match_percent)},
+        {"parallelDevices", range(l::parallel_devices)},
     };
 }
 

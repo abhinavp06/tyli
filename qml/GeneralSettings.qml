@@ -254,6 +254,7 @@ Item {
                     Item { Layout.preferredWidth: Theme.controlHeight }
                     Text { Layout.preferredWidth: 280; text: "default " + (page.defaults.syncOnStartup ? "on" : "off"); color: Theme.textFaint }
                 }
+                NumberSetting { key: "parallelDevices"; title: "drives at a time"; help: "sync and tag reading run one worker per physical drive (never two on one disk); this many drives at once" }
                 NumberSetting { key: "settleWindowSeconds"; title: "settle window (s)"; help: "a file changed this recently is still being copied; checked again next sync" }
                 NumberSetting { key: "massRemovalThresholdPercent"; title: "mass-removal guard (%)"; help: "hold removals above this share of a folder's files for your confirmation" }
                 NumberSetting { key: "relocationSampleSize"; title: "relocation sample size"; help: "relocating a folder without a marker checks this many known files" }
