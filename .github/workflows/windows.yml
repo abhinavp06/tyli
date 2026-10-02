@@ -1,0 +1,94 @@
+name: Windows build
+
+# Builds TYLI on Windows (MSVC 2022, Qt 6.12) together with hoardor from its public
+# repository, runs the tests, and uploads a ready-to-run zip: tyli.exe plus the Qt
+# libraries and the MSVC runtime next to it. Download it from the run's "Artifacts".
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      QT_VERSION: 6.12.0
+      QT_ARCH: win64_msvc2022_64
+      QT_DIR_NAME: msvc2022_64
+
+    steps:
+      - name: Check out TYLI
+        uses: actions/checkout@v4
+        with:
+          path: tyli
+
+      # TYLI builds hoardor from the sibling folder (add_subdirectory(../hoardor)).
+      - name: Check out hoardor (the same branch name if it exists, otherwise master)
+        shell: bash
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          if git ls-remote --exit-code --heads https://github.com/abhinavp06/hoardor.git "$branch" > /dev/null; then
+            ref="$branch"
+          else
+            ref=master
+          fi
+          echo "hoardor branch: $ref"
+          git clone --depth 1 --branch "$ref" https://github.com/abhinavp06/hoardor.git hoardor
+
+      - name: Cache Qt
+        id: qt-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/Qt
+          key: qt-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}-v1
+
+      - name: Install Qt
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          python -m pip install --quiet aqtinstall
+          # qttasktree: a Qt 6.12 QML plugin depends on it on Linux; install it here too,
+          # and fall back to the plain install if Windows doesn't list that module.
+          python -m aqt install-qt windows desktop "$QT_VERSION" "$QT_ARCH" --outputdir "$RUNNER_TEMP/Qt" -m qttasktree \
+            || python -m aqt install-qt windows desktop "$QT_VERSION" "$QT_ARCH" --outputdir "$RUNNER_TEMP/Qt"
+
+      # Puts cl.exe, link.exe, and the Windows SDK on PATH (a "Developer Command Prompt").
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # PowerShell, not Git Bash: Git Bash has its own link.exe that would shadow MSVC's linker.
+      - name: Configure
+        shell: pwsh
+        run: cmake -S tyli -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:RUNNER_TEMP/Qt/$env:QT_VERSION/$env:QT_DIR_NAME"
+
+      - name: Build
+        id: build
+        shell: pwsh
+        run: cmake --build build --parallel
+
+      - name: Test
+        shell: pwsh
+        run: |
+          $env:PATH = "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin;$env:PATH"
+          ctest --test-dir build --output-on-failure
+
+      # Runs even when a test failed, so the exe can still be tried.
+      - name: Package
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item build/tyli.exe dist/
+          & "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin\windeployqt.exe" --release --no-translations --qmldir tyli/qml dist/tyli.exe
+          # The MSVC runtime next to the exe ("app-local"), so it runs without installing the VC++ redistributable.
+          $crt = Get-ChildItem "$env:VCToolsRedistDir\x64" -Directory -Filter "Microsoft.VC*.CRT" | Select-Object -First 1
+          if ($crt) { Copy-Item "$($crt.FullName)\*.dll" dist/ }
+          Get-ChildItem dist | Select-Object -First 40 Name
+
+      - name: Upload
+        if: always() && steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tyli-windows
+          path: dist/
+          retention-days: 14

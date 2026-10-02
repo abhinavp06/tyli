@@ -2,6 +2,34 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Windows build on GitHub Actions: a ready-to-run zip for the user's PC (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The user wants to try TYLI on their Windows PC. The VM can't build Windows Qt apps (cross-compiling would mean building all of Qt for Windows), so every push now builds TYLI on a GitHub Windows machine and uploads `tyli.exe` with everything it needs.
+
+**Added**
+- `.github/workflows/windows.yml`, on every push or by hand:
+  - checks out TYLI, and hoardor from its public repo into the sibling folder (same branch name if it exists, otherwise `master`)
+  - installs Qt 6.12 for `win64_msvc2022_64` with aqtinstall (with `qttasktree`, falling back to a plain install), cached between runs
+  - sets up MSVC (`ilammy/msvc-dev-cmd`), configures with Ninja in Release, builds, runs `ctest`
+  - packages `tyli.exe` with `windeployqt` (scanning `qml/` for the QML modules it needs) plus the MSVC runtime DLLs next to it, so nothing has to be installed
+  - uploads the artifact `tyli-windows` (kept 14 days), even when a test fails
+- `CLAUDE.md`: how to get the exe.
+- `ARCHITECTURE.md`: decision row (a Windows build workflow; full CI stays deferred).
+
+**Changed (portability, found while preparing the Windows build)**
+- `tests/CMakeLists.txt`: `/utf-8` for the test targets on MSVC (the tests hold non-ASCII strings, which MSVC would otherwise read in the ANSI code page).
+- `qml/GeneralSettings.qml`: no `Object.fromEntries` (newer JavaScript than Qt's engine reliably supports); a plain object instead.
+
+**Design decisions and trade-offs**
+- **Rejected:** cross-compiling on the VM (needs Qt built for Windows: hours, fragile); asking the user to install Visual Studio and Qt first (still possible, documented, for debugging).
+- **PowerShell for the build steps:** Git Bash ships its own `link.exe`, which can shadow MSVC's linker.
+- **App-local MSVC runtime** instead of the VC++ redistributable installer: unzip and run.
+
+**Known limitations / follow-ups**
+- First run of hoardor's Windows code paths (`file_info_windows.cpp`, `mount_points_windows.cpp`) under MSVC: the first workflow run may need fixes.
+- TYLI's repo is private, so Claude can't read the run logs from the VM (no GitHub CLI or token there). The user shares failures, or runs `gh auth login` on the VM.
+- The exe is unsigned (SmartScreen warning once).
+
 ### Theme and new layout built in QML (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** The approved mockups are now the real app: OLED black with minimal green, IBM Plex Mono, our own stroke icons, a top bar with the sync status and a gear, a collapsible icon sidebar, category views that list the category's files across its folders, and Settings split into Library (category pills; folders with inline details, relocate, removal confirmation, held removals, and an inline add row) and General (scanning chips, sync settings that save as you change them, about). No popups.

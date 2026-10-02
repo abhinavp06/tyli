@@ -69,7 +69,8 @@ QT_QPA_PLATFORM=offscreen ./build/tyli     # headless run (tests, screenshots)
 - **The VM can't see the user's external drives.** It's only for testing with sample folders. Real-drive testing needs the Windows build.
 
 **Windows:**
-- **Requirements:** Visual Studio 2022 (the "Desktop development with C++" workload) and Qt 6.12 for `msvc2022_64`, installed with the Qt Online Installer or aqtinstall.
+- **Without installing anything:** every push runs `.github/workflows/windows.yml` on GitHub (Windows, MSVC 2022, Qt 6.12, hoardor from its public repo, same branch name or `master`). It builds, runs the tests, and uploads the artifact `tyli-windows`: `tyli.exe` with Qt's libraries and the MSVC runtime. Download it from the run's page (repo → Actions → the run → Artifacts), unzip, run `tyli.exe`. It's unsigned, so SmartScreen asks once (More info → Run anyway).
+- **Requirements (building on Windows yourself):** Visual Studio 2022 (the "Desktop development with C++" workload) and Qt 6.12 for `msvc2022_64`, installed with the Qt Online Installer or aqtinstall.
 - **Layout:** keep the same workspace layout, with `hoardor` next to `tyli`.
 - **Build:**
   ```bat
