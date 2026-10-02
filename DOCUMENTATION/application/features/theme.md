@@ -91,7 +91,11 @@ The user's notes on the first mockups, and what changed:
 
 1. **Albums need tags, so metadata comes next, on this same branch** (`abhinavp06/FILE_SCANNER_INIT`): a tag-reading feature in hoardor (its own feature doc, and a library such as TagLib to agree on), then the album view in TYLI.
 2. **Icons: our own simple stroke icons** (left to Claude; the user doesn't mind). They're a handful of 24×24 SVG paths, drawn to match the theme, with no dependency. An icon set can replace them later if the count grows a lot.
-3. **The mockups show only what's implemented.** The round-2 pages were committed as the agreed direction; the next revision trims them to features that exist (and adds features back as they're built).
+3. **The mockups show only what's implemented.** The round-2 pages were committed as the agreed direction (`bc07914`), then trimmed to features that exist; features come back as they're built:
+   - **Music** lists the category's files across its folders (file, folder, size, kind, settling; an offline folder's files are dimmed) instead of albums. Albums return with metadata.
+   - **Settings → General** has no Appearance section (there's no accent setting), and Scanning shows hoardor's real defaults. Sync shows every hoardor setting, with batch size, batch time, and progress interval under "advanced".
+   - The sidebar counts are files per category.
+   - A flat list across folders needs a model that pages folder by folder (`Library::entries` per root, in folder order). That's a TYLI-side change; hoardor's API already allows it.
 
 ## 5. How it's built
 

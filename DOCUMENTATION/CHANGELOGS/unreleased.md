@@ -2,6 +2,25 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Mockups trimmed to implemented features; metadata is next (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The user approved the round-2 mockups (committed in the previous entry) and asked that the mockups show only what TYLI and hoardor can actually do. They also decided that metadata (tag reading) is the next step, on this branch, and left the icon choice to Claude.
+
+**Changed**
+- `DOCUMENTATION/mockups/music.html`: the category's files across its folders (file, folder, size, kind, settling; an offline folder's files dimmed) instead of albums, which need tags. No search, sort, or grid icons.
+- `DOCUMENTATION/mockups/settings-general.html`: Appearance removed (there's no accent setting). Scanning shows hoardor's real defaults (51 extensions, 17 ignored names, 2 prefixes). Sync lists every hoardor setting; batch size, batch time, and progress interval sit under "advanced". The page scrolls.
+- `DOCUMENTATION/mockups/settings-library.html`: the "added on" date removed (hoardor doesn't record it).
+- All pages: the sidebar counts are files per category.
+- `DOCUMENTATION/application/features/theme.md`: §4b decisions (metadata next on this branch; our own stroke icons; mockups show only implemented features, with what was trimmed).
+
+**Decisions**
+- **Icons:** our own 24×24 stroke icons, no dependency. Rejected for now: an icon set such as Lucide (more than we need today).
+- **Metadata on this branch** (the user): a hoardor feature doc for tag reading comes first, including the choice of tag library (TagLib suggested, LGPL; needs the user's OK).
+
+**Known limitations / follow-ups**
+- The flat file list in a category view needs a TYLI model that pages folder by folder (`Library::entries` per root). hoardor's API already allows it.
+- Next steps, in an order to confirm with the user: build the theme and the new layout in QML from the mockups; then metadata (hoardor), then the album view.
+
 ### Theme design started: OLED black + minimal green; live HTML mockups in the repo (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** The user asked for a minimal, hacker-like dark theme: pure black, with very little green, mostly in text. `features/theme.md` proposes it (palette, type, every control, how it's built), with the user's decisions: IBM Plex Mono bundled, a left sidebar instead of top tabs, and the same branch. Before any QML, the look is reviewed as HTML mockups, which live in the repo and reload in the user's browser as they're edited.
