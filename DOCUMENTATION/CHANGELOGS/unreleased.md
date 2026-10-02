@@ -2,6 +2,22 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Fix: the Windows build installs Qt 6.12 itself (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The first Windows run failed at "Install Qt": aqtinstall (3.3.0, the newest release) reported "Failed to locate XML data for Qt version '6.12.0'". From 6.12, Qt's online repository keeps each Windows compiler's packages in its own folder (`windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/`); aqtinstall still asks for the combined `qt6_6120/qt6_6120/Updates.xml`, which exists for Linux but not for Windows. That's why the Linux install on the VM worked.
+
+**Added**
+- `.github/scripts/install_qt.py`: reads that folder's `Updates.xml` (checked against its SHA-256), downloads the archives of the base package (`qt.qt6.6120.win64_msvc2022_64`: qtbase, qtsvg, qtdeclarative, qttools, …) and the requested add-ons (`qttasktree`), checks each against its SHA-1, and unpacks them with 7-Zip into `<out>/6.12.0/msvc2022_64/`, the layout aqtinstall produces. `--dry-run` lists the archives.
+
+**Changed**
+- `.github/workflows/windows.yml`: "Install Qt" runs the script instead of aqtinstall; the Qt cache key moves to `-v2`.
+
+**Found while checking**
+- In the per-compiler layout the archives hold paths like `bin/Qt6Core.dll` with no `6.12.0/msvc2022_64/` prefix, so the script unpacks into that folder itself. Checked by listing a real archive before pushing.
+
+**Known limitations / follow-ups**
+- Replace the script with aqtinstall once a release supports the new layout.
+
 ### Windows build on GitHub Actions: a ready-to-run zip for the user's PC (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** The user wants to try TYLI on their Windows PC. The VM can't build Windows Qt apps (cross-compiling would mean building all of Qt for Windows), so every push now builds TYLI on a GitHub Windows machine and uploads `tyli.exe` with everything it needs.
