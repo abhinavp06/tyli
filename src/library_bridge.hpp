@@ -52,6 +52,8 @@ class LibraryBridge : public QObject {
     // The latest report of each category, keyed by category id (as a string): {finishedAt, cancelled,
     // added, modified, removed, errors, folders: [report]}. Kept for this session.
     Q_PROPERTY(QVariantMap categoryReports READ categoryReports NOTIFY lastReportChanged)
+    // Each folder's latest report this session, keyed by folder id (as a string).
+    Q_PROPERTY(QVariantMap folderReports READ folderReports NOTIFY lastReportChanged)
     Q_PROPERTY(bool folderOperationRunning READ folderOperationRunning NOTIFY folderOperationRunningChanged)
 
 public:
@@ -69,7 +71,7 @@ public:
     static LibraryBridge* instance() { return instance_; }
     static LibraryBridge* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine);
 
-    // The UI thread's hoardor library, for FolderFilesModel. Null when not ready.
+    // The UI thread's hoardor library, for CategoryFilesModel. Null when not ready.
     hoardor::file::Library* library() { return library_ ? &*library_ : nullptr; }
 
     bool ready() const { return library_.has_value(); }
@@ -84,6 +86,7 @@ public:
     QVariantMap syncProgress() const { return syncProgress_; }
     QVariantMap lastReport() const { return lastReport_; }
     QVariantMap categoryReports() const;
+    QVariantMap folderReports() const;
     bool folderOperationRunning() const { return folderOperations_ > 0; }
 
     // Sync (in the background, on hoardor's SyncWorker).

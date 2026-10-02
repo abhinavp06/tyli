@@ -33,10 +33,12 @@ Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and any
 - **The library database** is `QStandardPaths::AppDataLocation/library.db`: on Windows `%APPDATA%\TYLI\library.db`, on Linux `~/.local/share/TYLI/library.db`. That's always internal storage, never a media drive (hoardor ARCHITECTURE §3).
 - **Override:** the environment variable `TYLI_DATA_DIR` changes the folder, for tests and for trying things without touching the real library.
 
-## 4. Look (Proposed)
+## 4. Look (Decided, 2026-10-02)
 
-- **Qt Quick Controls "Fusion" style:** it looks the same on every OS and follows the system's light or dark mode.
-- **Real visual design** (typography, artwork, layout polish) is a later feature. The first screens are functional, built to test hoardor on real drives.
+- **OLED black with minimal green** (`features/theme.md`): pure `#000000` everywhere, green only as text, thin lines, and small glyphs; IBM Plex Mono bundled; our own stroke icons; no popups (results go to a status line, everything else is inline).
+- **Qt Quick Controls "Basic" style, restyled by TYLI's own controls** (`qml/controls/`, built on `QtQuick.Templates`). Every color comes from `qml/Theme.qml`.
+- **TYLI is always dark;** it doesn't follow the OS's light mode.
+- **UI changes start as HTML mockups** in `DOCUMENTATION/mockups/`, reviewed by the user before any QML is written.
 
 ## 5. Testing (Proposed)
 
@@ -55,3 +57,4 @@ Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and any
 | 2026-10-01 | TYLI consumes hoardor with `add_subdirectory(../hoardor)` (path configurable through `TYLI_HOARDOR_DIR`) for side-by-side development. A pinned hoardor tag through `FetchContent` can replace it later. |
 | 2026-10-01 | C++ naming in TYLI follows Qt style (`camelCase` functions, properties, and signals), because almost everything is exposed to QML. hoardor keeps `snake_case`. |
 | 2026-10-02 | Considered turning TYLI into a local web server (C++ HTTP layer on hoardor + a browser UI) and decided to stay a Qt desktop app. The web option was easier for the UI and reachable from any device, but browsers limit playback (formats like ALAC/APE/DSD, MKV with HEVC/AC3/DTS, no bit-perfect output) unless the server transcodes. hoardor stays headless, so a server remains possible later. |
+| 2026-10-02 | The look is OLED black + minimal green (`features/theme.md`), on the Basic style with TYLI's own controls; Fusion is dropped. It replaces the Proposed "Fusion, follows the system's light or dark mode". |

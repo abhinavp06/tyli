@@ -2,6 +2,53 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Theme and new layout built in QML (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The approved mockups are now the real app: OLED black with minimal green, IBM Plex Mono, our own stroke icons, a top bar with the sync status and a gear, a collapsible icon sidebar, category views that list the category's files across its folders, and Settings split into Library (category pills; folders with inline details, relocate, removal confirmation, held removals, and an inline add row) and General (scanning chips, sync settings that save as you change them, about). No popups.
+
+**Added**
+- `qml/Theme.qml` (singleton): palette, font, sizes, metrics.
+- `qml/Icon.qml`: stroke icons as SVG paths drawn with Qt Quick Shapes, colored by binding.
+- `qml/controls/`: `TyIconButton`, `TyField`, `TyCheckBox`, `TyMenu`, `TyMenuItem`, `TyPill`, `TyProgress`, `TyScrollBar`, `TyTab` (on `QtQuick.Templates`).
+- `qml/TopBar.qml`, `qml/Sidebar.qml`, `qml/CategoryView.qml`, `qml/LibrarySettings.qml`, `qml/GeneralSettings.qml`, `qml/StatusLine.qml`.
+- `qml/fonts/`: IBM Plex Mono Regular and SemiBold, with the SIL Open Font License (`OFL.txt`), bundled as module resources.
+- `src/app_setup.hpp/.cpp`: `setupApplication()` (Basic style, bundled fonts, default font), used by `main()` and the smoke test.
+- `src/category_files_model.hpp/.cpp`: `CategoryFilesModel`, a category's files across its folders, paged folder by folder; reloads itself when folders change.
+- `tests/tst_category_files_model.cpp` (6 tests): 550 files across two folders in pages of 200 crossing the folder boundary, with no gaps or duplicates and in folder order; roles (including the folder's name and online state); an offline folder's files listed and marked offline; reloading by itself when a folder is added; switching categories; empty and unknown categories.
+
+**Changed**
+- `qml/Main.qml`, `qml/SettingsView.qml`, `qml/Format.js` (`categoryIcon`): the new layout.
+- `src/library_bridge.hpp/.cpp`: `folderReports` property.
+- `src/main.cpp`: `setupApplication()`, the app version (`TYLI_VERSION` from CMake).
+- `CMakeLists.txt`: the new QML files, `Theme.qml` as a singleton, the font resources, `TYLI_VERSION`.
+- `tests/tst_qml_smoke.cpp`: navigates the new layout (every category view, the collapsed sidebar, Settings → Library for all and for Music with a folder's details and the add row open, Settings → General, a new category appearing in the sidebar), and **fails when a screenshot is less than 80% pure black**, so a grey surface can't sneak back in.
+- `tests/CMakeLists.txt`: `tst_category_files_model` replaces `tst_folder_files_model`.
+- Docs: `features/theme.md` (status, §5a as built), `ARCHITECTURE.md` (§4 Look decided, decision row), `features/file_sync_ui.md` (screens superseded), `CLAUDE.md` (layout; `cmake --build build -j4`).
+
+**Removed**
+- `qml/SectionView.qml`, `qml/SyncDetailsDialog.qml`, `qml/FolderSettings.qml`, `qml/CategorySettings.qml`, `qml/ScanningSettings.qml`, `qml/SyncSettings.qml`, `src/folder_files_model.hpp/.cpp`, `tests/tst_folder_files_model.cpp`.
+
+**Design decisions and trade-offs**
+- **Controls on `QtQuick.Templates`**, rather than overriding the Basic style's parts one by one: every pixel comes from `Theme`, with no style defaults to fight.
+- **Icons as Shapes, not image files:** color and size are bindings, with no SVG files or color effects. `CurveRenderer` gives antialiased strokes on the GPU.
+- **A status line instead of dialogs** for results and errors, as the user asked for fewer popups.
+- **Rejected:** a custom Qt Quick Controls style plugin (more machinery than nine small files).
+
+**Bugs found while building (fixed)**
+- `CategoryView.qml` used `ScrollBar.vertical` without importing Qt Quick Controls ("Non-existent attached object").
+- Nested layouts with `Layout.fillWidth` didn't stretch, because none of their children asked to fill: a layout's maximum width comes from its children.
+
+**Incident**
+- `cmake --build build -j` (no number) started unlimited compile jobs and ran this 8 GB VM out of memory (the kernel killed `cc1plus`, and the session died). The build command in `CLAUDE.md` is now `-j4`.
+
+**Tests**
+- `ctest`: 3/3 suites pass (about 10 s). The build is clean with `-Wall -Wextra -Wpedantic`. The app starts offscreen without QML warnings. The screenshots were reviewed against the mockups.
+
+**Known limitations / follow-ups**
+- Waiting for the user's review over VNC.
+- The FolderDialog is Qt's own on Linux (dark through the palette) and native on Windows; not exercised by the tests.
+- Next: metadata (tag reading) in hoardor, then the album view.
+
 ### Mockups trimmed to implemented features; metadata is next (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** The user approved the round-2 mockups (committed in the previous entry) and asked that the mockups show only what TYLI and hoardor can actually do. They also decided that metadata (tag reading) is the next step, on this branch, and left the icon choice to Claude.

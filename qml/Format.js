@@ -35,3 +35,22 @@ function ago(ms) {
     const days = Math.floor(seconds / 86400)
     return days + (days === 1 ? " day ago" : " days ago")
 }
+
+// A category's icon: by its name when it's a familiar one, otherwise by the kinds it accepts.
+function categoryIcon(category) {
+    if (!category)
+        return "folder"
+    const byName = { music: "music", audio: "music", podcasts: "music", movies: "movies", films: "movies",
+                     shows: "shows", tv: "shows", series: "shows", books: "books", comics: "books", blogs: "books" }
+    const name = category.name.toLowerCase()
+    if (byName[name])
+        return byName[name]
+    const kinds = category.kinds || []
+    if (kinds.includes("audio"))
+        return "music"
+    if (kinds.includes("video"))
+        return "movies"
+    if (kinds.includes("text"))
+        return "books"
+    return "folder"
+}

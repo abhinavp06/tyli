@@ -37,26 +37,46 @@ qt_standard_project_setup(REQUIRES 6.12)
 # -----------------------------------------------------------------------------
 qt_add_library(tyli_ui STATIC)
 
+# Theme.qml is a singleton (one shared instance of the palette and sizes).
+set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_qml_module(tyli_ui
     URI Tyli
     VERSION 1.0
     # Tooling (qmllint) expects the module's build folder to end in its URI.
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/Tyli
     SOURCES
-        src/folder_files_model.cpp
-        src/folder_files_model.hpp
+        src/app_setup.cpp
+        src/app_setup.hpp
+        src/category_files_model.cpp
+        src/category_files_model.hpp
         src/library_bridge.cpp
         src/library_bridge.hpp
     QML_FILES
-        qml/CategorySettings.qml
-        qml/FolderSettings.qml
+        qml/CategoryView.qml
         qml/Format.js
+        qml/GeneralSettings.qml
+        qml/Icon.qml
+        qml/LibrarySettings.qml
         qml/Main.qml
-        qml/ScanningSettings.qml
-        qml/SectionView.qml
         qml/SettingsView.qml
-        qml/SyncDetailsDialog.qml
-        qml/SyncSettings.qml
+        qml/Sidebar.qml
+        qml/StatusLine.qml
+        qml/Theme.qml
+        qml/TopBar.qml
+        qml/controls/TyCheckBox.qml
+        qml/controls/TyField.qml
+        qml/controls/TyIconButton.qml
+        qml/controls/TyMenu.qml
+        qml/controls/TyMenuItem.qml
+        qml/controls/TyPill.qml
+        qml/controls/TyProgress.qml
+        qml/controls/TyScrollBar.qml
+        qml/controls/TyTab.qml
+    RESOURCES
+        qml/fonts/IBMPlexMono-Regular.ttf
+        qml/fonts/IBMPlexMono-SemiBold.ttf
+        qml/fonts/OFL.txt
 )
 
 target_include_directories(tyli_ui PUBLIC src)
@@ -70,6 +90,7 @@ qt_add_executable(tyli
 )
 
 target_link_libraries(tyli PRIVATE tyli_ui tyli_uiplugin)
+target_compile_definitions(tyli PRIVATE TYLI_VERSION="${PROJECT_VERSION}")
 
 set_target_properties(tyli PROPERTIES WIN32_EXECUTABLE ON MACOSX_BUNDLE ON)
 

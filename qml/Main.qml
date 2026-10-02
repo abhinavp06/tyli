@@ -3,75 +3,109 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Tyli
 
+// The window: top bar, then the sidebar and either a category's media or Settings.
+// A status line at the bottom shows results and errors.
 ApplicationWindow {
     id: window
     width: 1280
     height: 800
     visible: true
     title: "TYLI"
+    color: Theme.background
+    font.family: Theme.fontFamily
+    font.pixelSize: Theme.fontSize
 
-    function showMessage(title, text) {
-        messageDialog.title = title
-        messageDialog.text = text
-        messageDialog.open()
+    // Anything left unstyled (tooltips, the folder dialog on Linux) is dark too.
+    palette {
+        window: Theme.background
+        windowText: Theme.text
+        base: Theme.background
+        alternateBase: Theme.background
+        text: Theme.text
+        button: Theme.background
+        buttonText: Theme.text
+        brightText: Theme.accent
+        highlight: Theme.selection
+        highlightedText: Theme.accent
+        placeholderText: Theme.textFaint
+        toolTipBase: Theme.background
+        toolTipText: Theme.text
+        light: Theme.hairline
+        midlight: Theme.hairline
+        mid: Theme.textFaint
+        dark: Theme.hairline
+        shadow: Theme.background
+        link: Theme.accent
     }
 
-    function openSettings(subTab) {
-        settingsButton.checked = true
-        settings.currentIndex = subTab
+    property int currentCategoryId: Library.categories.length > 0 ? Library.categories[0].id : -1
+    property bool settingsOpen: false
+    property bool sidebarCollapsed: false
+    readonly property var currentCategory: Library.categories.find(c => c.id === currentCategoryId)
+
+    function openSettings(page) {
+        settingsOpen = true
+        settings.currentPage = page
     }
 
-    header: ToolBar {
+    // A category that was deleted: fall back to the first one.
+    Connections {
+        target: Library
+        function onCategoriesChanged() {
+            if (!window.currentCategory)
+                window.currentCategoryId = Library.categories.length > 0 ? Library.categories[0].id : -1
+        }
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
         visible: Library.ready
+
+        TopBar {
+            Layout.fillWidth: true
+            settingsOpen: window.settingsOpen
+            onToggleSidebar: window.sidebarCollapsed = !window.sidebarCollapsed
+            onSettingsRequested: window.settingsOpen ? (window.settingsOpen = false) : window.openSettings("library")
+            onSyncStatusClicked: window.openSettings("library")
+        }
+
         RowLayout {
-            anchors.fill: parent
+            Layout.fillWidth: true
+            Layout.fillHeight: true
             spacing: 0
 
-            TabBar {
-                id: tabs
-                objectName: "mainTabs"
-                Layout.fillWidth: true
-                Repeater {
-                    model: Library.categories
-                    TabButton {
-                        text: modelData.name
-                        width: implicitWidth + 24
-                        // A category tab always shows its section, even if Settings was open.
-                        onClicked: settingsButton.checked = false
-                    }
+            Sidebar {
+                Layout.fillHeight: true
+                collapsed: window.sidebarCollapsed
+                currentCategoryId: window.settingsOpen ? -1 : window.currentCategoryId
+                onCategoryClicked: (id) => {
+                    window.currentCategoryId = id
+                    window.settingsOpen = false
                 }
             }
-            ToolButton {
-                id: settingsButton
-                objectName: "settingsButton"
-                text: "⚙ Settings"
-                checkable: true
+
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                CategoryView {
+                    anchors.fill: parent
+                    visible: !window.settingsOpen
+                    category: window.currentCategory
+                    onAddFolderRequested: window.openSettings("library")
+                }
+                SettingsView {
+                    id: settings
+                    anchors.fill: parent
+                    visible: window.settingsOpen
+                    focusedCategoryId: window.currentCategoryId
+                }
             }
         }
-    }
 
-    // The sections and Settings are siblings rather than one StackLayout, so new
-    // categories can't change Settings' position.
-    StackLayout {
-        id: sections
-        anchors.fill: parent
-        visible: Library.ready && !settingsButton.checked
-        currentIndex: tabs.currentIndex
-        Repeater {
-            model: Library.categories
-            SectionView {
-                // A delegate with required properties gets its model data only through them.
-                required property var modelData
-                category: modelData
-                onOpenSettingsRequested: (subTab) => window.openSettings(subTab)
-            }
+        StatusLine {
+            Layout.fillWidth: true
         }
-    }
-
-    SettingsView {
-        id: settings
-        anchors.fill: parent
-        visible: Library.ready && settingsButton.checked
     }
 
     // Shown instead of everything else when the library database can't be opened.
@@ -80,43 +114,23 @@ ApplicationWindow {
         width: Math.min(parent.width - 48, 640)
         visible: !Library.ready
         spacing: 12
-        Label {
-            text: "The library can't be opened"
-            font.pixelSize: 20
-            font.bold: true
+        Text {
+            text: "the library can't be opened"
+            color: Theme.error
+            font.pixelSize: Theme.fontSizeHeading
+            font.weight: Theme.weightBold
         }
-        Label {
+        Text {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
+            color: Theme.text
             text: Library.openError
         }
-        Label {
+        Text {
             Layout.fillWidth: true
             wrapMode: Text.WrapAnywhere
-            opacity: 0.7
-            text: "Database: " + Library.databasePath
-        }
-    }
-
-    Dialog {
-        id: messageDialog
-        property alias text: messageLabel.text
-        anchors.centerIn: parent
-        width: Math.min(window.width - 80, 520)
-        modal: true
-        standardButtons: Dialog.Ok
-        Label {
-            id: messageLabel
-            width: parent.width
-            wrapMode: Text.Wrap
-        }
-    }
-
-    Connections {
-        target: Library
-        function onErrorOccurred(message) { window.showMessage("Something went wrong", message) }
-        function onFolderOperationFinished(ok, message) {
-            window.showMessage(ok ? "Done" : "That didn't work", message)
+            color: Theme.textDim
+            text: "database: " + Library.databasePath
         }
     }
 }

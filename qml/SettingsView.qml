@@ -1,33 +1,55 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
+import Tyli
 
-// Every hoardor setting, in four sub-tabs.
+// Settings: `library` (categories, folders, sync) and `general` (scanning, sync behavior, about).
 Item {
-    id: settingsView
+    id: view
+    objectName: "settingsView"
 
-    property alias currentIndex: subTabs.currentIndex
+    property string currentPage: "library"
+    property int focusedCategoryId: -1  // the category open in the main view; Library starts on it
+
+    onVisibleChanged: if (visible) library.selectedCategoryId = focusedCategoryId
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 0
-        TabBar {
-            id: subTabs
-            objectName: "settingsTabs"
-            Layout.fillWidth: true
-            TabButton { text: "Folders"; width: implicitWidth + 24 }
-            TabButton { text: "Categories"; width: implicitWidth + 24 }
-            TabButton { text: "Scanning"; width: implicitWidth + 24 }
-            TabButton { text: "Sync"; width: implicitWidth + 24 }
+        anchors.leftMargin: Theme.pageMargin
+        anchors.rightMargin: Theme.pageMargin
+        anchors.topMargin: 20
+        anchors.bottomMargin: 12
+        spacing: 14
+
+        Text {
+            text: "settings"
+            color: Theme.text
+            font.pixelSize: Theme.fontSizeTitle
+            font.weight: Theme.weightBold
         }
-        StackLayout {
+
+        Item {
+            Layout.fillWidth: true
+            implicitHeight: tabs.implicitHeight
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.hairline }
+            Row {
+                id: tabs
+                objectName: "settingsTabs"
+                TyTab { text: "library"; checked: view.currentPage === "library"; onClicked: view.currentPage = "library" }
+                TyTab { text: "general"; checked: view.currentPage === "general"; onClicked: view.currentPage = "general" }
+            }
+        }
+
+        LibrarySettings {
+            id: library
+            objectName: "librarySettings"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: subTabs.currentIndex
-            FolderSettings {}
-            CategorySettings {}
-            ScanningSettings {}
-            SyncSettings {}
+            visible: view.currentPage === "library"
+        }
+        GeneralSettings {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: view.currentPage === "general"
         }
     }
 }

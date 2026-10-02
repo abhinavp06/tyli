@@ -300,6 +300,12 @@ QVariantMap LibraryBridge::categoryReports() const {
     return out;
 }
 
+QVariantMap LibraryBridge::folderReports() const {
+    QVariantMap out;
+    for (auto it = folderReports_.cbegin(); it != folderReports_.cend(); ++it) out[QString::number(it.key())] = *it;
+    return out;
+}
+
 QString LibraryBridge::folderName(qint64 folderId) const {
     for (const QVariant& f : folders_) {
         const QVariantMap folder = f.toMap();

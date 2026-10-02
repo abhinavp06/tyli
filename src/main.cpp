@@ -1,8 +1,8 @@
+#include "app_setup.hpp"
 #include "library_bridge.hpp"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QQuickStyle>
 #include <QtQml/qqmlextensionplugin.h>
 
 // tyli_ui is a static library, so its QML plugin must be pulled in explicitly.
@@ -12,7 +12,8 @@ int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
     // The app-data folder is named after this: %APPDATA%\TYLI, ~/.local/share/TYLI.
     QGuiApplication::setApplicationName("TYLI");
-    QQuickStyle::setStyle("Fusion");
+    QGuiApplication::setApplicationVersion(TYLI_VERSION);
+    tyli::setupApplication();
 
     // Constructed before the QML engine and destroyed after it, so QML never sees it go away.
     tyli::LibraryBridge library(tyli::LibraryBridge::defaultDataDir());

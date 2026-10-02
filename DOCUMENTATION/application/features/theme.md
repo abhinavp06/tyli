@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Proposed** (2026-10-02). Font, navigation, and branch decided by the user (§8). An HTML mockup comes first for the user's feedback, before any implementation |
+| Status | **Built in QML** (2026-10-02), from the approved mockups (round 2, trimmed to implemented features). Waiting for the user's review over VNC |
 | Branch | `abhinavp06/FILE_SCANNER_INIT` (decided, §8) |
 | Ships in | TYLI `v0.1.0`, with the File Sync UI |
 | hoardor feature | none: UI only |
@@ -105,6 +105,19 @@ The user's notes on the first mockups, and what changed:
 - **`ApplicationWindow.palette`** is set from `Theme` as well, so anything left unstyled (menus, tooltips, the folder dialog) is dark rather than white.
 - **Font:** `qml/fonts/IBMPlexMono-{Regular,SemiBold}.ttf` in the QML module's resources, loaded with `FontLoader`. Its license file sits next to it.
 - **ARCHITECTURE §4 ("Look")** changes from "Fusion, follows the system's light or dark mode" to this theme, with a decision-log row.
+
+## 5a. As built (2026-10-02)
+
+- **`qml/Theme.qml`** (a singleton through `QT_QML_SINGLETON_TYPE`): the palette, font, sizes, and metrics. No color literal appears in any screen.
+- **`qml/Icon.qml`**: our stroke icons as SVG path strings drawn with Qt Quick Shapes (`PathSvg`), so an icon's color is just a binding. `Shape.CurveRenderer` antialiases them on the GPU without multisampling.
+- **`qml/controls/`**: `TyIconButton`, `TyField`, `TyCheckBox` (`[x]`), `TyMenu` + `TyMenuItem`, `TyPill`, `TyProgress`, `TyScrollBar`, `TyTab`, all built on `QtQuick.Templates` (behavior only, no look). Tabs and pills follow a bound `checked` property instead of toggling themselves.
+- **`src/app_setup.cpp`** (`setupApplication()`, used by `main()` and the QML smoke test): the Basic style, the bundled fonts (`qml/fonts/`, loaded from the module's resources), and IBM Plex Mono 13 px as the app's default font.
+- **Screens:** `Main.qml` (top bar, sidebar, category view or Settings, status line), `TopBar.qml`, `Sidebar.qml`, `CategoryView.qml`, `SettingsView.qml` → `LibrarySettings.qml` + `GeneralSettings.qml`, `StatusLine.qml`. The old `SectionView`, `SyncDetailsDialog`, and four Settings sub-tab files are gone.
+- **No popups:** results and errors go to `StatusLine` at the bottom (results clear after 8 s, errors stay until dismissed). Removal confirmations, adding and relocating folders, and editing categories all happen inline.
+- **Category view = `CategoryFilesModel`** (C++), which replaced `FolderFilesModel`: it pages through the category's folders one after another (keyset paging per folder) and reloads by itself when the folders change.
+- **The bridge gained `folderReports`** (each folder's latest report, keyed by id) for the inline last-sync details.
+- **Category names show in lowercase** (they're labels); folder names, paths, and file names show exactly as they are.
+- **Category icons** come from the name when it's a familiar one (music, movies, shows, books, …), otherwise from the accepted kinds (`Format.categoryIcon`).
 
 ## 6. Edge cases
 

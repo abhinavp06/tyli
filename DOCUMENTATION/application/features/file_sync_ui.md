@@ -23,6 +23,8 @@ A working UI over hoardor's File Sync v1, so the user can test it on real drives
 
 ## 2. Screens
 
+> **Superseded on 2026-10-02:** the screens were rebuilt with the theme and the new layout (`features/theme.md` §4a, §5a): folders, sync, and reports moved into Settings → Library; the category view lists the category's files (`CategoryFilesModel`, which replaced `FolderFilesModel`). The bridge API below still holds, plus `folderReports`. The wireframes below are kept for history.
+
 ### 2.1 Main window
 
 One tab per category, in hoardor's order, plus **Settings** at the end. Categories added in Settings appear as new tabs right away.
