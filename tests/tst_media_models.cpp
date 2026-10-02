@@ -112,6 +112,39 @@ private slots:
         QVERIFY(!albums.error().isEmpty());
     }
 
+    void newContentIsInsertedInPlace() {
+        // Two albums read so far; a third appears mid-pass, and one gets more tracks.
+        for (const QString& f : {"A/One/1.flac", "A/One/2.flac", "C/Three/1.flac", "B/Two/1.flac"}) writeFile(media("Music/" + f));
+        QVERIFY(addFolder(*bridge_, categoryId(*bridge_, "Music"), media("Music"), "Music").first);
+        QVERIFY(!sync(*bridge_, -1).isEmpty());
+        const auto seedOnly = [&](const QStringList& paths) {
+            seedAudio(bridge_->databasePath(), [&](const hoardor::file::Entry& e) -> std::optional<hoardor::audio::TrackInfo> {
+                const QString path = QString::fromStdString(e.relative_path);
+                if (!paths.contains(path)) return std::nullopt;
+                const QStringList parts = path.split('/');
+                return track(parts[0].toStdString(), parts[1].toStdString(), 1, QFileInfo(parts[2]).baseName().toInt(), "s", 2000);
+            });
+        };
+        seedOnly({"A/One/1.flac", "C/Three/1.flac"});
+        GroupModel albums;
+        albums.setGroupBy({"albumArtist", "album"});
+        waitForReload();
+        QCOMPARE(albums.rowCount(), 2);
+
+        QSignalSpy resets(&albums, &QAbstractItemModel::modelReset);
+        QSignalSpy inserted(&albums, &QAbstractItemModel::rowsInserted);
+        QSignalSpy changed(&albums, &QAbstractItemModel::dataChanged);
+        seedOnly({"A/One/2.flac", "B/Two/1.flac"});
+        emit bridge_->contentChanged();
+        QCOMPARE(resets.count(), 0);  // no reset: the view keeps its scroll position
+        QCOMPARE(inserted.count(), 1);
+        QCOMPARE(albums.rowCount(), 3);
+        QCOMPARE(albums.get(1).value("values").toStringList(), (QStringList{"B", "Two"}));  // in its sorted place
+        QCOMPARE(albums.get(0).value("count").toInt(), 2);                                // "One" grew
+        QVERIFY(changed.count() >= 1);
+        QCOMPARE(albums.total(), 3);
+    }
+
     void groupsPageAsTheViewScrolls() {
         for (int i = 0; i < 300; ++i) writeFile(media(QStringLiteral("Music/a%1/1.flac").arg(i)));
         QVERIFY(addFolder(*bridge_, categoryId(*bridge_, "Music"), media("Music"), "Music").first);

@@ -2,6 +2,25 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Albums appear while tags are read; quality choices kept and remembered (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** This answers the user's request to see albums as their tags are read, and their worry about copies changing during playback.
+- **Live updates:** the bridge emits `contentChanged` at most every 2.5 s during a metadata pass, and rebuilds thumbnails every 15 s.
+- **`GroupModel::refresh()`:** re-reads the loaded range and inserts, updates, moves, or removes rows, never a reset, so grids fill in where you are.
+- **Album, movie, and show pages:** keep the picked quality across refreshes and remember it per item. An album page mid-read says "reading tags · this album may still grow".
+- **Rule for the player:** it queues specific files, so new copies never change what's playing (`features/media_listing_ui.md` §7b, ARCHITECTURE decision row).
+
+**Files**
+- `src/group_model.{hpp,cpp}` (`refresh`, `keyOf`, `page(cursor, error)`)
+- `src/library_bridge.{hpp,cpp}` (`liveRefresh_`, thumbnail passes during reading)
+- `qml/AlbumView.qml`, `qml/MovieView.qml`, `qml/ShowView.qml`
+- tests and docs
+
+**Tests**
+- `tst_media_models.newContentIsInsertedInPlace`: no reset, one insert in sorted place, a grown album updated, the total right.
+- The smoke test checks that a picked quality survives a refresh.
+- All 4 suites pass.
+
 ### "Drives at a time" setting (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** hoardor now syncs and reads tags with one worker per physical drive. Settings → General → sync gains "drives at a time" (`parallelDevices`, 1–16, default 4; 1 = one drive at a time).

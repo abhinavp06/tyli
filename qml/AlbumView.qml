@@ -12,7 +12,10 @@ ColumnLayout {
     property var owner
     readonly property var params: owner.route.params.album !== undefined ? owner.route.params : ({ albumArtist: "", album: "" })
     property var copies: Library.albumCopies(params.albumArtist, params.album, owner.categoryId)
-    property int copyIndex: 0
+    // The quality you picked for this album (remembered), else the best copy.
+    readonly property string qualityKey: "quality/album/" + encodeURIComponent(params.albumArtist + "\u001f" + params.album)
+    property string chosen: Library.preference(qualityKey, "")
+    readonly property int copyIndex: Math.max(0, copies.findIndex(c => c.label === chosen))
     readonly property var copy: copies[copyIndex] || ({ tracks: [], label: "", trackCount: 0, totalTracks: 0 })
     readonly property var tracks: copy.tracks
     readonly property var first: tracks.length > 0 ? tracks[0] : null
@@ -89,6 +92,12 @@ ColumnLayout {
                 text: Format.plural(page.copy.trackCount, "track") + (page.copy.complete ? "" : " of " + page.copy.totalTracks)
                       + " · " + Format.duration(page.length) + (page.discs > 1 ? " · " + page.discs + " discs" : "")
             }
+            Text {
+                visible: Library.reading
+                text: "reading tags · this album may still grow"
+                color: Theme.textFaint
+                font.pixelSize: Theme.fontSizeSmall
+            }
             Row {
                 spacing: 6
                 visible: page.first !== null
@@ -107,7 +116,10 @@ ColumnLayout {
                 objectName: "qualityPicker"
                 options: page.copies.map(c => ({ label: c.label, detail: (c.complete ? Format.plural(c.trackCount, "track") : c.trackCount + " of " + c.totalTracks + " tracks") + " · " + Format.bytes(c.size) }))
                 currentIndex: page.copyIndex
-                onPicked: (index) => page.copyIndex = index
+                onPicked: (index) => {
+                    page.chosen = page.copies[index].label
+                    Library.setPreference(page.qualityKey, page.chosen)
+                }
             },
             PlayButton { tip: "play album" }
         ]

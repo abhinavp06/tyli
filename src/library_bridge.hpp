@@ -165,7 +165,8 @@ signals:
     void syncFinished(const QVariantMap& report);
     void metadataProgressChanged();
     void metadataFinished(const QVariantMap& report);  // {read, failed, skipped, cancelled}
-    // What the library holds changed (a sync or a metadata pass finished): models reload.
+    // What the library holds changed (a sync finished; tags were read, every few seconds
+    // during a pass and at its end): models refresh in place.
     void contentChanged();
     void trackColumnsChanged();
     void categoryViewsChanged();
@@ -216,6 +217,8 @@ private:
     QVariantMap lastReport_;
     QHash<qint64, QVariantMap> folderReports_;  // the latest report per folder
     QTimer idleTimer_;
+    QTimer liveRefresh_;            // while tags are read: contentChanged every few seconds
+    qint64 lastThumbnailPass_ = 0;  // ms since the epoch
     int folderOperations_ = 0;
     QVariantMap metadataProgress_;
 };

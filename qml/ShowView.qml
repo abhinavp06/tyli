@@ -13,7 +13,9 @@ ColumnLayout {
     property var owner
     readonly property var params: owner.route.params.show !== undefined ? owner.route.params : ({ show: "" })
     property var info: Library.showCopies(params.show, owner.categoryId)
-    property int qualityIndex: 0
+    readonly property string qualityKey: "quality/show/" + encodeURIComponent(params.show)
+    property string chosen: Library.preference(qualityKey, "")
+    readonly property int qualityIndex: Math.max(0, (info.qualities || []).findIndex(q => q.label === chosen))
     readonly property string quality: info.qualities && info.qualities[qualityIndex] ? info.qualities[qualityIndex].label : ""
     readonly property var seasons: Format.unique((info.episodes || []).map(e => e.season))
     property int seasonIndex: 0
@@ -104,7 +106,10 @@ ColumnLayout {
                 objectName: "qualityPicker"
                 options: (page.info.qualities || []).map(q => ({ label: q.label, detail: q.episodes === q.total ? "all " + q.total + " episodes" : q.episodes + " of " + q.total + " episodes" }))
                 currentIndex: page.qualityIndex
-                onPicked: (index) => page.qualityIndex = index
+                onPicked: (index) => {
+                    page.chosen = page.info.qualities[index].label
+                    Library.setPreference(page.qualityKey, page.chosen)
+                }
             },
             PlayButton { tip: "play the next episode" }
         ]

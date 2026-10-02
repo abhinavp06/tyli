@@ -268,7 +268,11 @@ private slots:
         QCOMPARE(options.size(), 2);
         QCOMPARE(options[0].toMap().value("label").toString(), QStringLiteral("24/96 FLAC"));  // best first
         screenshot("album");
-        QVERIFY(picker->setProperty("currentIndex", 1));
+        QVERIFY(QMetaObject::invokeMethod(picker, "picked", Q_ARG(int, 1)));  // as a click in the menu would
+        QTRY_COMPARE(find("albumView")->property("copyIndex").toInt(), 1);
+        emit bridge_->contentChanged();  // new content (tags read): the choice stays
+        QTest::qWait(50);
+        QCOMPARE(find("albumView")->property("copyIndex").toInt(), 1);
         screenshot("album-16-44");
         QVERIFY(qmlWarnings.isEmpty());
     }

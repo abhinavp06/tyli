@@ -162,6 +162,10 @@ LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent) : QObject(
     // the worker clears its running flag, so the callback alone can't say "all done".
     idleTimer_.setInterval(100);
     connect(&idleTimer_, &QTimer::timeout, this, &LibraryBridge::checkIdle);
+    // Albums and movies appear while their tags are read, not only at the end of a pass.
+    liveRefresh_.setSingleShot(true);
+    liveRefresh_.setInterval(2500);
+    connect(&liveRefresh_, &QTimer::timeout, this, &LibraryBridge::contentChanged);
     open(dataDir);
 }
 
@@ -418,6 +422,13 @@ void LibraryBridge::onMetadataProgress(const hoardor::master::MetadataProgress& 
     metadataProgress_ = {{"done", qint64(progress.done)}, {"total", qint64(progress.total)},
                          {"perSecond", seconds > 0.5 ? qRound(progress.done / seconds) : 0}};
     emit metadataProgressChanged();
+    if (!liveRefresh_.isActive()) liveRefresh_.start();
+    // New albums get their covers during the pass too (the cache skips what it already has).
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (thumbnails_ && now - lastThumbnailPass_ > 15000) {
+        lastThumbnailPass_ = now;
+        thumbnails_->rebuild();
+    }
 }
 
 void LibraryBridge::onMetadataFinished(const hoardor::master::MetadataReport& report) {
@@ -425,6 +436,7 @@ void LibraryBridge::onMetadataFinished(const hoardor::master::MetadataReport& re
     emit metadataProgressChanged();
     emit metadataFinished({{"read", qint64(report.read)}, {"failed", qint64(report.failed)},
                            {"skipped", qint64(report.skipped)}, {"cancelled", report.cancelled}});
+    liveRefresh_.stop();
     emit contentChanged();
     if (thumbnails_) thumbnails_->rebuild();  // the drives are awake now
 }

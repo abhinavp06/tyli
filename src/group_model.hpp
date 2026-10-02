@@ -83,7 +83,11 @@ private:
     void scheduleReload();
     void reload();
     int countGroups() const;
-    std::optional<std::vector<Row>> page(QString& error);
+    std::optional<std::vector<Row>> page(std::optional<hoardor::core::Cursor>& cursor, QString& error);
+    // New content (a sync, tags read): re-read the loaded range and apply the differences
+    // (insert, update, move, remove), so the view keeps its place instead of resetting.
+    void refresh();
+    static QString keyOf(const Row& row) { return row.values.join(QChar(0x1F)); }
 
     QString engine_ = QStringLiteral("audio");
     QStringList groupBy_;

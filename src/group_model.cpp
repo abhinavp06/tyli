@@ -4,6 +4,7 @@
 #include "media_fields.hpp"
 #include "thumbnail_cache.hpp"
 
+#include <QSet>
 #include <QTimer>
 
 namespace tyli {
@@ -13,7 +14,7 @@ namespace video = hoardor::video;
 
 GroupModel::GroupModel(QObject* parent) : QAbstractListModel(parent) {
     if (auto* bridge = LibraryBridge::instance()) {
-        connect(bridge, &LibraryBridge::contentChanged, this, &GroupModel::scheduleReload);
+        connect(bridge, &LibraryBridge::contentChanged, this, &GroupModel::refresh);
         if (auto* thumbnails = bridge->thumbnails()) {
             connect(thumbnails, &ThumbnailCache::changed, this, [this] {
                 if (!rows_.empty()) emit dataChanged(index(0), index(int(rows_.size()) - 1), {ThumbnailRole});
@@ -82,6 +83,69 @@ void GroupModel::reload() {
     emit countChanged();
 }
 
+void GroupModel::refresh() {
+    if (reloadPending_ || groupBy_.isEmpty()) return;  // a full reload is coming anyway
+    if (rows_.empty()) {
+        reload();
+        return;
+    }
+    // The same range again, from the start.
+    std::vector<Row> fresh;
+    std::optional<hoardor::core::Cursor> cursor;
+    const std::size_t wanted = std::max<std::size_t>(rows_.size(), PageSize);
+    QString error;
+    while (fresh.size() < wanted) {
+        auto rows = page(cursor, error);
+        if (!rows) return;  // keep what's shown; the next refresh tries again
+        for (auto& r : *rows) fresh.push_back(std::move(r));
+        if (!cursor) break;
+    }
+    total_ = countGroups();
+
+    // Old rows that are gone.
+    QSet<QString> freshKeys;
+    for (const Row& r : fresh) freshKeys.insert(keyOf(r));
+    for (int i = int(rows_.size()) - 1; i >= 0; --i) {
+        if (freshKeys.contains(keyOf(rows_[std::size_t(i)]))) continue;
+        beginRemoveRows({}, i, i);
+        rows_.erase(rows_.begin() + i);
+        endRemoveRows();
+    }
+    // Walk the fresh order: keep, update, move, or insert.
+    for (std::size_t i = 0; i < fresh.size(); ++i) {
+        const QString key = keyOf(fresh[i]);
+        if (i < rows_.size() && keyOf(rows_[i]) == key) {
+            rows_[i] = fresh[i];
+            emit dataChanged(index(int(i)), index(int(i)));
+            continue;
+        }
+        std::size_t found = i + 1;
+        while (found < rows_.size() && keyOf(rows_[found]) != key) ++found;
+        if (found < rows_.size()) {
+            beginMoveRows({}, int(found), int(found), {}, int(i));
+            Row moved = std::move(rows_[found]);
+            rows_.erase(rows_.begin() + std::ptrdiff_t(found));
+            rows_.insert(rows_.begin() + std::ptrdiff_t(i), std::move(moved));
+            endMoveRows();
+            rows_[i] = fresh[i];
+            emit dataChanged(index(int(i)), index(int(i)));
+        } else {
+            beginInsertRows({}, int(i), int(i));
+            rows_.insert(rows_.begin() + std::ptrdiff_t(i), fresh[i]);
+            endInsertRows();
+        }
+    }
+    // Rows past the fresh range (fewer groups than before).
+    if (rows_.size() > fresh.size()) {
+        beginRemoveRows({}, int(fresh.size()), int(rows_.size()) - 1);
+        rows_.resize(fresh.size());
+        endRemoveRows();
+    }
+    next_ = cursor;
+    atEnd_ = !next_.has_value();
+    emit countChanged();
+}
+
 int GroupModel::countGroups() const {
     auto* bridge = LibraryBridge::instance();
     if (!bridge || !bridge->ready()) return 0;
@@ -120,7 +184,7 @@ Order groupOrder(const QString& name) {
 
 }
 
-std::optional<std::vector<GroupModel::Row>> GroupModel::page(QString& error) {
+std::optional<std::vector<GroupModel::Row>> GroupModel::page(std::optional<hoardor::core::Cursor>& cursor, QString& error) {
     auto* bridge = LibraryBridge::instance();
     if (!bridge || !bridge->ready()) return std::vector<Row>{};
     std::vector<Row> out;
@@ -139,7 +203,7 @@ std::optional<std::vector<GroupModel::Row>> GroupModel::page(QString& error) {
                 error = QStringLiteral("unknown filter field");
                 return std::nullopt;
             }
-        auto result = bridge->videos()->groups(by, *filter, groupOrder<video::GroupOrder>(order_), descending_, next_, PageSize);
+        auto result = bridge->videos()->groups(by, *filter, groupOrder<video::GroupOrder>(order_), descending_, cursor, PageSize);
         if (!result) {
                 error = QString::fromStdString(result.error().message);
                 return std::nullopt;
@@ -158,7 +222,7 @@ std::optional<std::vector<GroupModel::Row>> GroupModel::page(QString& error) {
             r.coverEntry = g.poster_entry ? g.poster_entry : g.embedded_poster_entry;
             out.push_back(std::move(r));
         }
-        next_ = result->next;
+        cursor = result->next;
     } else {
         std::vector<audio::Field> by;
         for (const auto& name : groupBy_) {
@@ -174,7 +238,7 @@ std::optional<std::vector<GroupModel::Row>> GroupModel::page(QString& error) {
                 error = QStringLiteral("unknown filter field");
                 return std::nullopt;
             }
-        auto result = bridge->tracks()->groups(by, *filter, groupOrder<audio::GroupOrder>(order_), descending_, next_, PageSize);
+        auto result = bridge->tracks()->groups(by, *filter, groupOrder<audio::GroupOrder>(order_), descending_, cursor, PageSize);
         if (!result) {
                 error = QString::fromStdString(result.error().message);
                 return std::nullopt;
@@ -191,7 +255,7 @@ std::optional<std::vector<GroupModel::Row>> GroupModel::page(QString& error) {
             r.coverEntry = g.cover_entry;
             out.push_back(std::move(r));
         }
-        next_ = result->next;
+        cursor = result->next;
     }
     return out;
 }
@@ -203,7 +267,7 @@ bool GroupModel::canFetchMore(const QModelIndex& parent) const { return !parent.
 void GroupModel::fetchMore(const QModelIndex& parent) {
     if (parent.isValid() || atEnd_) return;
     QString error;
-    auto rows = page(error);
+    auto rows = page(next_, error);
     if (!rows) {
         atEnd_ = true;
         error_ = error;

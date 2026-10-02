@@ -12,7 +12,9 @@ ColumnLayout {
     property var owner
     readonly property var params: owner.route.params.title !== undefined ? owner.route.params : ({ title: "", year: 0 })
     property var copies: Library.movieCopies(params.title, params.year, owner.categoryId)
-    property int copyIndex: 0
+    readonly property string qualityKey: "quality/movie/" + encodeURIComponent(params.title + "\u001f" + params.year)
+    property string chosen: Library.preference(qualityKey, "")
+    readonly property int copyIndex: Math.max(0, copies.findIndex(c => c.label === chosen))
     readonly property var item: copies[copyIndex] ? copies[copyIndex].item : null
 
     Connections {
@@ -105,7 +107,10 @@ ColumnLayout {
                 objectName: "qualityPicker"
                 options: page.copies.map(c => ({ label: c.label, detail: Format.bytes(c.item.size) + (c.item.online ? "" : " · offline") }))
                 currentIndex: page.copyIndex
-                onPicked: (index) => page.copyIndex = index
+                onPicked: (index) => {
+                    page.chosen = page.copies[index].label
+                    Library.setPreference(page.qualityKey, page.chosen)
+                }
             },
             PlayButton { tip: "play" }
         ]

@@ -143,6 +143,18 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
   - **Tests:** the planned `tst_thumbnail_cache` is part of `tst_media_models`.
 - **Tests:** `tst_copy_grouper` (6), `tst_media_models` (7), `tst_library_bridge`, and `tst_qml_smoke`. The smoke test visits every new page over seeded metadata and checks the copies and the quality pickers.
 
+## 7b. While tags are read; copies and playback (2026-10-02, the user's questions)
+
+- **Progressive listing:**
+  - During a metadata pass the bridge emits `contentChanged` at most every 2.5 s, and once at the end. Thumbnails are rebuilt every 15 s during the pass.
+  - `GroupModel::refresh()` re-reads the loaded range and applies the differences (insert, update, move, remove), never a reset, so a grid fills in where you are instead of jumping to the top.
+  - Files are read root by root in scan order (folder by folder), so an album usually completes within a second of its first track.
+  - An album page opened mid-read says "reading tags · this album may still grow".
+- **Copies and playback (rules):**
+  - **The player plays specific files (entry ids), never "an album".** A copy found later changes what the album page offers, never what's playing or queued.
+  - **The quality you pick is kept across refreshes and remembered** per album, movie, or show (`QSettings` `quality/…`). "Best by default" applies only when you haven't picked one.
+  - When the player exists, the playing album's page will show which copy is playing.
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).
