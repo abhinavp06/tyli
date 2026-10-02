@@ -2,6 +2,29 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Media library UI v1: models, copy grouping, thumbnails, and every screen (work in progress) (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** TYLI's side of Media library v1, built on hoardor's audio and video engines.
+- **C++:**
+  - `GroupModel` / `ItemModel`: generic, paged models over hoardor's queries
+  - `copy_grouper`: quality options, best first
+  - `ThumbnailCache`: 300 px JPEGs made after each metadata pass; art can come from embedded pictures, or an image next to any of an album's tracks
+  - `media_fields`: QML field names
+  - bridge: metadata progress, `contentChanged`, album/movie/show copies, category views, preferences, track columns, `notice`
+- **QML:** music (albums sorted by added ↓/↑, a–z, by artist, year), album, artist, genre, year, movies, movie, director, shows, and show pages. Shared sort bar, header, cover grid, quality picker, track list (disc headings, columns from preferences).
+- **Removed:** `CategoryFilesModel` and its test (the old flat file list).
+
+**Tests:** 4 suites passing on Linux.
+- `tst_copy_grouper` (6 tests)
+- `tst_media_models` (7 tests), including the fix for a total that read 0 when a small list ended during the model reset
+- `tst_library_bridge`
+- `tst_qml_smoke`: every new page, on seeded metadata, with screenshots
+
+**Left:**
+- Settings: the track-columns section and the per-category view choice
+- the feature doc's as-built section
+- the Windows check with the real library
+
 ### Media library UI designed (draft v2): metadata-driven views, copies and quality, new mockups (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** The user reviewed draft v1 (file-name lists). They asked for:

@@ -93,6 +93,13 @@ ApplicationWindow {
                     visible: !window.settingsOpen
                     category: window.currentCategory
                     onAddFolderRequested: window.openSettings("library")
+                    // The drive link on an album, movie, or show: that folder's category in Settings → Library.
+                    onFolderSettingsRequested: (folderId) => {
+                        const folder = Library.folders.find(f => f.id === folderId)
+                        window.openSettings("library")
+                        if (folder)
+                            settings.showCategory(folder.categoryId)
+                    }
                 }
                 SettingsView {
                     id: settings

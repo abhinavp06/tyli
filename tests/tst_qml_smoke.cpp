@@ -1,12 +1,14 @@
 #include "app_setup.hpp"
 #include "library_bridge.hpp"
 #include "test_support.hpp"
+#include "thumbnail_cache.hpp"
 
 #include <QDir>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QtQml/qqmlextensionplugin.h>
@@ -34,8 +36,9 @@ void collectWarnings(QtMsgType type, const QMessageLogContext& context, const QS
 
 }  // namespace
 
-// Loads Main.qml offscreen over a seeded library, visits every tab and Settings
-// sub-tab, and saves a screenshot of each to build/screenshots/ for review.
+// Loads Main.qml offscreen over a seeded library (files on disk, made-up metadata),
+// visits every category, media page, and Settings page, and saves a screenshot of each
+// to build/screenshots/ for review.
 class TestQmlSmoke : public QObject {
     Q_OBJECT
 
@@ -87,27 +90,128 @@ private:
         return object;
     }
 
+    // A QML function on a named object (e.g. CategoryView.open(page, params)).
+    void call(const char* objectName, const char* function, const QVariant& a = {}, const QVariant& b = {}) {
+        QObject* object = find(objectName);
+        QVERIFY(object);
+        if (!a.isValid()) QVERIFY(QMetaObject::invokeMethod(object, function));
+        else QVERIFY(QMetaObject::invokeMethod(object, function, Q_ARG(QVariant, a), Q_ARG(QVariant, b)));
+    }
+
+    void showCategory(const QString& name) {
+        QVERIFY(window_->setProperty("settingsOpen", false));
+        QVERIFY(window_->setProperty("currentCategoryId", categoryId(*bridge_, name)));
+        QTest::qWait(50);
+    }
+
+    static void writeImage(const QString& path, QColor color) {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QImage image(64, 96, QImage::Format_RGB32);
+        image.fill(color);
+        QVERIFY(image.save(path));
+    }
+
 private slots:
     void initTestCase() {
         setupApplication();
+        QStandardPaths::setTestModeEnabled(true);  // QSettings (sort choices, columns) go to a test location
         previousHandler = qInstallMessageHandler(collectWarnings);
 
         bridge_ = std::make_unique<LibraryBridge>(data_.path());
         LibraryBridge::setInstance(bridge_.get());
         QVERIFY(bridge_->ready());
 
-        // A seeded library: two music folders (one goes offline, one has held removals), one film folder.
-        writeTree(media_.filePath("Music"), 450);
+        // Music: curated albums (one in two qualities, one with a cover image), plus a bulk folder
+        // whose removals get held, and a folder that goes offline.
+        const QStringList albums{"Radiohead/A Moon Shaped Pool", "Radiohead/A Moon Shaped Pool [24-96]", "Radiohead/In Rainbows",
+                                 "Björk/Homogenic", "Massive Attack/Mezzanine", "Pink Floyd/The Dark Side of the Moon"};
+        for (const QString& album : albums) {
+            for (int i = 1; i <= 6; ++i) writeFile(media_.filePath(QStringLiteral("Music/%1/%2.flac").arg(album).arg(i, 2, 10, QLatin1Char('0'))));
+        }
+        writeImage(media_.filePath("Music/Radiohead/A Moon Shaped Pool/cover.png"), QColor(150, 110, 60));
+        writeTree(media_.filePath("Music/bulk"), 300);
         writeTree(media_.filePath("Drive/Live"), 10);
-        writeFile(media_.filePath("Films/Film (2020)/Film.mkv"), 4096);
-        writeFile(media_.filePath("Films/Film (2020)/Film.en.srt"), 64);
+        // Movies (one in two qualities, with a poster) and a show with two seasons.
+        writeFile(media_.filePath("Films/Arrival (2016)/Arrival 1080p.mkv"), 4096);
+        writeFile(media_.filePath("Films/Arrival (2016)/Arrival 2160p.mkv"), 8192);
+        writeImage(media_.filePath("Films/Arrival (2016)/poster.png"), QColor(40, 70, 120));
+        writeFile(media_.filePath("Films/Heat (1995)/Heat.mkv"), 4096);
+        for (const char* episode : {"Season 1/Dark S01E01.mkv", "Season 1/Dark S01E02.mkv", "Season 1/Dark S01E03.mkv",
+                                    "Season 2/Dark S02E01.mkv", "Season 2/Dark S02E02.mkv"}) {
+            writeFile(media_.filePath(QStringLiteral("TV/Dark/") + QLatin1String(episode)), 2048);
+        }
+        writeImage(media_.filePath("TV/Dark/poster.png"), QColor(30, 30, 30));
+
         const int music = categoryId(*bridge_, "Music");
         QVERIFY(addFolder(*bridge_, music, media_.filePath("Music"), "Music (E:)").first);
         QVERIFY(addFolder(*bridge_, music, media_.filePath("Drive/Live"), "Live (F:)").first);
         QVERIFY(addFolder(*bridge_, categoryId(*bridge_, "Movies"), media_.filePath("Films"), "Films").first);
+        QVERIFY(addFolder(*bridge_, categoryId(*bridge_, "Shows"), media_.filePath("TV"), "TV").first);
         QVERIFY(!sync(*bridge_, -1).isEmpty());
+
+        // Metadata, as the metadata pass would store it.
+        seedAudio(bridge_->databasePath(), [](const hoardor::file::Entry& e) -> std::optional<hoardor::audio::TrackInfo> {
+            const QString path = QString::fromStdString(e.relative_path);
+            const QStringList parts = path.split('/');
+            if (parts.size() != 3 || parts[0] == "bulk") return std::nullopt;
+            const bool hires = parts[1].endsWith("[24-96]");
+            const std::string album = QString(parts[1]).remove(" [24-96]").toStdString();
+            const int number = QFileInfo(parts[2]).baseName().toInt();
+            const int year = album == "A Moon Shaped Pool" ? 2016 : album == "In Rainbows" ? 2007 : album == "Homogenic" ? 1997
+                           : album == "Mezzanine" ? 1998 : 1973;
+            return track(parts[0].toStdString(), album, number <= 3 ? 1 : 2, number, "Track " + std::to_string(number), year,
+                         hires ? 24 : 16, hires ? 96000 : 44100);
+        });
+        seedVideo(bridge_->databasePath(), [](const hoardor::file::Entry& e, const std::vector<hoardor::file::Entry>& companions)
+                                               -> std::optional<std::pair<hoardor::video::VideoInfo, qint64>> {
+            hoardor::video::VideoInfo v;
+            const QString path = QString::fromStdString(e.relative_path);
+            qint64 poster = 0;
+            for (const auto& c : companions) {
+                if (QString::fromStdString(c.relative_path).endsWith("poster.png")) poster = c.id;
+            }
+            v.duration_ms = 3'000'000;
+            v.width = 1920;
+            v.height = 1080;
+            v.video_codec = "h264";
+            if (path.startsWith("Arrival")) {
+                v.title = "Arrival";
+                v.year = 2016;
+                v.genres = {"Science Fiction", "Drama"};
+                v.directors = {"Denis Villeneuve"};
+                v.plot = "A linguist works with the military to communicate with alien lifeforms.";
+                v.source = hoardor::video::Source::Nfo;
+                if (path.contains("2160p")) {
+                    v.width = 3840;
+                    v.height = 2160;
+                    v.hdr = "HDR10";
+                    v.video_codec = "hevc";
+                }
+            } else if (path.startsWith("Heat")) {
+                v.title = "Heat";
+                v.year = 1995;
+                v.directors = {"Michael Mann"};
+            } else {
+                v.type = hoardor::video::Type::Episode;
+                v.show = "Dark";
+                v.season = path.contains("Season 2") ? 2 : 1;
+                v.episode = QFileInfo(path).baseName().right(2).toInt();
+                v.title = "Episode " + std::to_string(v.episode);
+                v.year = 2017;
+                v.genres = {"Mystery"};
+                v.directors = {"Baran bo Odar"};
+            }
+            return std::make_pair(v, poster);
+        });
+        // Thumbnails, as after a metadata pass (synchronously here).
+        const auto made = ThumbnailCache::build(bridge_->thumbnails()->folder(), bridge_->databasePath());
+        QVERIFY2(made.made >= 3, qPrintable(QStringLiteral("made %1 failed %2 files %3").arg(made.made).arg(made.failed).arg(QDir(bridge_->thumbnails()->folder()).entryList(QDir::Files).join(","))));  // the album cover and two posters
+        emit bridge_->thumbnails()->changed();
+        emit bridge_->contentChanged();
+
+        // Held removals in Music (bulk), and the live folder goes offline.
         for (int i = 0; i < 200; ++i) {
-            QFile::remove(media_.filePath(QStringLiteral("Music/album %1/track %2.flac").arg(i / 100).arg(i, 5, 10, QLatin1Char('0'))));
+            QFile::remove(media_.filePath(QStringLiteral("Music/bulk/album %1/track %2.flac").arg(i / 100).arg(i, 5, 10, QLatin1Char('0'))));
         }
         QVERIFY(QDir().rename(media_.filePath("Drive"), media_.filePath("Unplugged")));
         QVERIFY(!sync(*bridge_, music).isEmpty());
@@ -134,11 +238,89 @@ private slots:
             QVERIFY(window_->setProperty("currentCategoryId", category.value("id")));
             screenshot("category-" + category.value("name").toString().toLower());
         }
-        // Music's files, across its two folders (one offline), page from the database.
-        QVERIFY(window_->setProperty("currentCategoryId", categoryId(*bridge_, "Music")));
-        QObject* fileList = find("fileList");
-        QVERIFY(fileList);
-        QTRY_VERIFY(fileList->property("count").toInt() > 0);
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    void musicAlbumsInEverySort() {
+        showCategory("Music");
+        QObject* grid = find("albumGrid");
+        QVERIFY(grid);
+        QTRY_COMPARE(grid->property("count").toInt(), 5);  // the two copies of one album are one card
+        for (const char* sort : {"az", "year", "artist", "added"}) {
+            setState("musicView", "sortKey", sort);
+            screenshot(QStringLiteral("music-sort-%1").arg(sort));
+        }
+        setState("musicView", "sortKey", "artist");
+        QObject* sections = find("artistSections");
+        QVERIFY(sections);
+        QTRY_COMPARE(sections->property("count").toInt(), 4);
+        setState("musicView", "sortKey", "added");
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    void anAlbumWithTwoQualities() {
+        showCategory("Music");
+        call("categoryView", "open", "album", QVariantMap{{"albumArtist", "Radiohead"}, {"album", "A Moon Shaped Pool"}, {"crumb", "A Moon Shaped Pool"}});
+        QTRY_VERIFY(find("albumView"));
+        QObject* picker = find("qualityPicker");
+        QVERIFY(picker);
+        const QVariantList options = picker->property("options").toList();
+        QCOMPARE(options.size(), 2);
+        QCOMPARE(options[0].toMap().value("label").toString(), QStringLiteral("24/96 FLAC"));  // best first
+        screenshot("album");
+        QVERIFY(picker->setProperty("currentIndex", 1));
+        screenshot("album-16-44");
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    void artistGenreAndYearPages() {
+        showCategory("Music");
+        call("categoryView", "open", "artist", QVariantMap{{"name", "Radiohead"}, {"crumb", "Radiohead"}});
+        QTRY_VERIFY(find("artistView"));
+        screenshot("artist");
+        call("categoryView", "open", "genre", QVariantMap{{"value", "Art Rock"}, {"crumb", "Art Rock"}});
+        QTRY_VERIFY(find("musicFilterView"));
+        screenshot("genre");
+        call("categoryView", "open", "year", QVariantMap{{"value", 2016}, {"crumb", "2016"}});
+        screenshot("year");
+        call("categoryView", "back");
+        call("categoryView", "back");
+        QTRY_VERIFY(find("artistView"));
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    void moviesAMovieAndADirector() {
+        showCategory("Movies");
+        QObject* grid = find("posterGrid");
+        QVERIFY(grid);
+        QTRY_COMPARE(grid->property("count").toInt(), 2);  // Arrival's two copies are one card
+        screenshot("movies");
+        call("categoryView", "open", "movie", QVariantMap{{"title", "Arrival"}, {"year", 2016}, {"crumb", "Arrival"}});
+        QTRY_VERIFY(find("movieView"));
+        const QVariantList options = find("qualityPicker")->property("options").toList();
+        QCOMPARE(options.size(), 2);
+        QVERIFY(options[0].toMap().value("label").toString().startsWith("2160p"));
+        screenshot("movie");
+        call("categoryView", "open", "director", QVariantMap{{"name", "Denis Villeneuve"}, {"crumb", "Denis Villeneuve"}});
+        QTRY_VERIFY(find("personView"));
+        screenshot("director");
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    void showsAndAShow() {
+        showCategory("Shows");
+        QObject* grid = find("posterGrid");
+        QVERIFY(grid);
+        QTRY_COMPARE(grid->property("count").toInt(), 1);
+        screenshot("shows");
+        call("categoryView", "open", "show", QVariantMap{{"show", "Dark"}, {"crumb", "Dark"}});
+        QTRY_VERIFY(find("showView"));
+        QObject* episodes = find("episodeList");
+        QVERIFY(episodes);
+        QTRY_COMPARE(episodes->property("count").toInt(), 3);  // season 1
+        screenshot("show");
+        setState("showView", "seasonIndex", 1);
+        QTRY_COMPARE(episodes->property("count").toInt(), 2);
         QVERIFY(qmlWarnings.isEmpty());
     }
 

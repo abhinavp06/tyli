@@ -48,22 +48,49 @@ qt_add_qml_module(tyli_ui
     SOURCES
         src/app_setup.cpp
         src/app_setup.hpp
-        src/category_files_model.cpp
-        src/category_files_model.hpp
+        src/copy_grouper.cpp
+        src/copy_grouper.hpp
+        src/group_model.cpp
+        src/group_model.hpp
+        src/item_model.cpp
+        src/item_model.hpp
         src/library_bridge.cpp
         src/library_bridge.hpp
+        src/media_fields.cpp
+        src/media_fields.hpp
+        src/thumbnail_cache.cpp
+        src/thumbnail_cache.hpp
     QML_FILES
+        qml/AlbumBrowser.qml
+        qml/AlbumView.qml
+        qml/ArtistView.qml
+        qml/BrowseHeader.qml
         qml/CategoryView.qml
+        qml/CoverCard.qml
+        qml/CoverGrid.qml
+        qml/CoverImage.qml
         qml/Format.js
         qml/GeneralSettings.qml
+        qml/HeroHeader.qml
         qml/Icon.qml
         qml/LibrarySettings.qml
+        qml/LinkText.qml
         qml/Main.qml
+        qml/MovieView.qml
+        qml/MusicFilterView.qml
+        qml/MusicView.qml
+        qml/PersonView.qml
+        qml/PlayButton.qml
+        qml/QualityPicker.qml
         qml/SettingsView.qml
+        qml/ShowView.qml
         qml/Sidebar.qml
+        qml/SortBar.qml
         qml/StatusLine.qml
         qml/Theme.qml
         qml/TopBar.qml
+        qml/TrackList.qml
+        qml/VideoGridView.qml
         qml/controls/TyCheckBox.qml
         qml/controls/TyField.qml
         qml/controls/TyIconButton.qml

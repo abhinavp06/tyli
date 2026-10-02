@@ -82,6 +82,9 @@ Rectangle {
                     font.pixelSize: Theme.fontSizeSmall
                     color: Library.syncing ? Theme.textDim : Theme.textFaint
                     text: {
+                        const m = Library.metadataProgress
+                        if (Library.syncing && m.total !== undefined)
+                            return "reading tags · " + Format.count(m.done) + " / " + Format.count(m.total)
                         if (Library.syncing) {
                             const p = Library.syncProgress
                             return p.folderName === undefined ? "starting sync…"

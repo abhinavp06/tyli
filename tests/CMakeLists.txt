@@ -15,5 +15,6 @@ function(tyli_add_test name)
 endfunction()
 
 tyli_add_test(tst_library_bridge)
-tyli_add_test(tst_category_files_model)
+tyli_add_test(tst_copy_grouper)
+tyli_add_test(tst_media_models)
 tyli_add_test(tst_qml_smoke)

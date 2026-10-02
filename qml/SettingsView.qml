@@ -11,6 +11,7 @@ Item {
     property int focusedCategoryId: -1  // the category open in the main view; Library starts on it
 
     onVisibleChanged: if (visible) library.selectedCategoryId = focusedCategoryId
+    function showCategory(categoryId) { library.selectedCategoryId = categoryId }
 
     ColumnLayout {
         anchors.fill: parent

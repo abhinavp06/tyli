@@ -56,5 +56,13 @@ Rectangle {
         target: Library
         function onErrorOccurred(message) { line.show(message, true) }
         function onFolderOperationFinished(ok, message) { line.show(message, !ok) }
+        function onNotice(message) { line.show(message, false) }
+        function onMetadataFinished(report) {
+            if (report.read + report.failed === 0)
+                return
+            line.show("read " + report.read + (report.read === 1 ? " file" : " files")
+                      + (report.failed > 0 ? " · " + report.failed + " unreadable" : "")
+                      + (report.cancelled ? " · stopped, the rest waits for the next sync" : ""), false)
+        }
     }
 }

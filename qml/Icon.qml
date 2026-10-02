@@ -34,7 +34,13 @@ Item {
         close: "M6 6l12 12 M18 6L6 18",
         flag: "M5 21V4h11l-2 4 2 4H5",
         reset: "M5 12a7 7 0 1 0 2-5 M4 3v5h5",
-        warning: "M12 4l9 16H3z M12 10v4 M12 16.5v1"
+        warning: "M12 4l9 16H3z M12 10v4 M12 16.5v1",
+        back: "M15 5l-7 7 7 7",
+        play: "M7 4l13 8-13 8z",
+        disc: "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M9.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0",
+        drive: "M3 7h18v10H3z M7 12h.01 M11 12h6",
+        heart: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+        playlist: "M4 6h12 M4 11h12 M4 16h7 M17 14v6 M14 17h6"
     })
 
     Shape {
