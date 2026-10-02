@@ -67,7 +67,7 @@ Rectangle {
             Layout.preferredHeight: Theme.controlHeight
             Layout.preferredWidth: statusRow.implicitWidth + 16
             color: statusArea.containsMouse ? Theme.hover : "transparent"
-            visible: Library.syncing || Library.lastReport.finishedAt !== undefined
+            visible: Library.syncing || Library.reading || Library.lastReport.finishedAt !== undefined
             Row {
                 id: statusRow
                 anchors.centerIn: parent
@@ -75,16 +75,20 @@ Rectangle {
                 TyProgress {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 140
-                    visible: Library.syncing
+                    visible: Library.syncing || Library.reading
+                    // A scan's total is unknown; reading tags counts down a known list.
+                    indeterminate: Library.syncing || Library.metadataProgress.total === undefined
+                    value: Library.metadataProgress.total ? Library.metadataProgress.done / Library.metadataProgress.total : 0
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     font.pixelSize: Theme.fontSizeSmall
-                    color: Library.syncing ? Theme.textDim : Theme.textFaint
+                    color: Library.syncing || Library.reading ? Theme.textDim : Theme.textFaint
                     text: {
                         const m = Library.metadataProgress
-                        if (Library.syncing && m.total !== undefined)
-                            return "reading tags · " + Format.count(m.done) + " / " + Format.count(m.total)
+                        if (!Library.syncing && Library.reading)
+                            return m.total === undefined ? "reading tags…"
+                                 : "reading tags · " + Format.count(m.done) + " / " + Format.count(m.total) + (m.perSecond > 0 ? " · " + m.perSecond + "/s" : "")
                         if (Library.syncing) {
                             const p = Library.syncProgress
                             return p.folderName === undefined ? "starting sync…"

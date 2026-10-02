@@ -240,7 +240,7 @@ void LibraryBridge::open(const QString& dataDir) {
     reloadFolders();
     reloadSettings();
     if (!worker_->idle()) {  // "sync at startup" queued a global sync
-        setSyncing(true);
+        setSyncing(worker_->syncing());
         idleTimer_.start();
     }
 }
@@ -403,9 +403,17 @@ void LibraryBridge::onFinished(std::optional<file::CategoryId> scope, const file
     emit contentChanged();
 }
 
+void LibraryBridge::setReading(bool reading) {
+    if (reading_ == reading) return;
+    reading_ = reading;
+    emit readingChanged();
+}
+
 void LibraryBridge::onMetadataProgress(const hoardor::master::MetadataProgress& progress) {
-    if (!syncing_) return;
-    metadataProgress_ = {{"done", qint64(progress.done)}, {"total", qint64(progress.total)}};
+    setReading(true);
+    const double seconds = progress.elapsed_ms / 1000.0;
+    metadataProgress_ = {{"done", qint64(progress.done)}, {"total", qint64(progress.total)},
+                         {"perSecond", seconds > 0.5 ? qRound(progress.done / seconds) : 0}};
     emit metadataProgressChanged();
 }
 
@@ -418,16 +426,21 @@ void LibraryBridge::onMetadataFinished(const hoardor::master::MetadataReport& re
     if (thumbnails_) thumbnails_->rebuild();  // the drives are awake now
 }
 
+// Polled while hoardor's worker has jobs: a sync, then (as its own job) reading metadata.
 void LibraryBridge::checkIdle() {
-    if (worker_ && !worker_->idle()) return;
-    idleTimer_.stop();
-    syncProgress_.clear();
-    emit syncProgressChanged();
-    if (!metadataProgress_.isEmpty()) {
+    const bool syncing = worker_ && worker_->syncing();
+    const bool reading = worker_ && worker_->reading();
+    if (!syncing && !syncProgress_.isEmpty()) {
+        syncProgress_.clear();
+        emit syncProgressChanged();
+    }
+    if (!reading && !metadataProgress_.isEmpty()) {
         metadataProgress_.clear();
         emit metadataProgressChanged();
     }
-    setSyncing(false);
+    setSyncing(syncing);
+    setReading(reading);
+    if (!syncing && !reading) idleTimer_.stop();
 }
 
 // ---------------------------------------------------------------- Media pages

@@ -2,6 +2,20 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Reading tags is its own background state (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** hoardor now reads metadata as a separate job after the sync (see its changelog). TYLI follows:
+- **`Library.syncing`** is true only during the sync itself.
+- **`Library.reading`** (new) is true while tags are being read.
+- **`metadataProgress`** gains `perSecond`.
+- **The top bar** shows "reading tags · 1,204 / 14,902 · 85/s" with a filling progress line once the sync is done. A new sync request pauses the reading, and it resumes afterwards.
+
+**Files**
+- `src/library_bridge.hpp/.cpp` (`reading`, `setReading`, `checkIdle` polls `syncing()` / `reading()`)
+- `qml/TopBar.qml`
+
+**Tests:** all 4 suites pass.
+
 ### Media library UI v1 finished: Settings controls and docs (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** This completes the work in progress from the entry below.

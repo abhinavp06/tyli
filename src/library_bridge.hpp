@@ -49,6 +49,8 @@ class LibraryBridge : public QObject {
     Q_PROPERTY(QVariantMap settingLimits READ settingLimits CONSTANT)
     Q_PROPERTY(QStringList fileKinds READ fileKinds CONSTANT)
     Q_PROPERTY(bool syncing READ syncing NOTIFY syncingChanged)
+    // Reading metadata (after a sync, as its own background job; a new sync pauses it).
+    Q_PROPERTY(bool reading READ reading NOTIFY readingChanged)
     // {folderIndex (1-based), folderCount, folderId, folderName, files, errors}; empty when not syncing.
     Q_PROPERTY(QVariantMap syncProgress READ syncProgress NOTIFY syncProgressChanged)
     // The last finished sync: {categoryId (-1 = everything), cancelled, finishedAt, folders: [report]}.
@@ -59,7 +61,7 @@ class LibraryBridge : public QObject {
     // Each folder's latest report this session, keyed by folder id (as a string).
     Q_PROPERTY(QVariantMap folderReports READ folderReports NOTIFY lastReportChanged)
     Q_PROPERTY(bool folderOperationRunning READ folderOperationRunning NOTIFY folderOperationRunningChanged)
-    // Reading metadata after a sync: {done, total}; empty when not reading.
+    // Reading metadata: {done, total, perSecond}; empty when not reading.
     Q_PROPERTY(QVariantMap metadataProgress READ metadataProgress NOTIFY metadataProgressChanged)
     // UI preferences (QSettings): which columns a track list shows, in order.
     Q_PROPERTY(QStringList trackColumns READ trackColumns WRITE setTrackColumns NOTIFY trackColumnsChanged)
@@ -95,6 +97,7 @@ public:
     QVariantMap settingLimits() const;
     QStringList fileKinds() const;
     bool syncing() const { return syncing_; }
+    bool reading() const { return reading_; }
     QVariantMap syncProgress() const { return syncProgress_; }
     QVariantMap lastReport() const { return lastReport_; }
     QVariantMap categoryReports() const;
@@ -155,6 +158,7 @@ signals:
     void foldersChanged();
     void settingsChanged();
     void syncingChanged();
+    void readingChanged();
     void syncProgressChanged();
     void lastReportChanged();
     void folderOperationRunningChanged();
@@ -177,6 +181,7 @@ private:
     void reloadFolders();
     void reloadSettings();
     void setSyncing(bool syncing);
+    void setReading(bool reading);
     void onProgress(const hoardor::file::SyncProgress& progress);
     void onFinished(std::optional<hoardor::file::CategoryId> scope, const hoardor::file::SyncReport& report);
     void checkIdle();
@@ -206,6 +211,7 @@ private:
     QVariantList folders_;
     QVariantMap settings_;
     bool syncing_ = false;
+    bool reading_ = false;
     QVariantMap syncProgress_;
     QVariantMap lastReport_;
     QHash<qint64, QVariantMap> folderReports_;  // the latest report per folder
