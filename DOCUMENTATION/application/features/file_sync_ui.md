@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Proposed**: awaiting the user's approval |
+| Status | **Approved** (2026-10-01; the user asked for it to be built after seeing the skeleton over VNC). **Phase 1 not started yet**: the first attempt was interrupted before any file was written |
 | Branch | `abhinavp06/FILE_SCANNER_INIT` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.1.0`, together with hoardor `v0.1.0` |
 | hoardor feature | File Sync v1: `../hoardor/DOCUMENTATION/application/features/file_sync.md` |
@@ -191,7 +191,19 @@ class FolderFilesModel : public QAbstractListModel {
   - fail on any QML warning
   - save a screenshot of each view to `build/screenshots/` for review
 
-## 6. Phases (on this branch)
+## 6. Build structure (planned, not built yet)
+
+- **`CMakeLists.txt` gets a static library `tyli_ui`** that is the QML module (`qt_add_qml_module(tyli_ui URI Tyli ...)`). It holds the bridge sources (`src/library_bridge.*`, `src/folder_files_model.*`) and every QML file (`Main`, `SectionView`, `SyncDetailsDialog`, `SettingsView`, `FolderSettings`, `CategorySettings`, `ScanningSettings`, `SyncSettings`, `Format.js`).
+- **Both the app (`tyli`) and the tests link `tyli_ui` and `tyli_uiplugin`,** so the tests load the real screens. That needs `Q_IMPORT_QML_PLUGIN(TyliPlugin)` in `main.cpp` and in the tests' main.
+- **`Qt6::Concurrent`** is added for the folder operations that touch a drive. `Qt6::Test` is added for the tests. `TYLI_BUILD_TESTS` (default ON when TYLI is top-level) controls `tests/`.
+- **`LibraryBridge` is a `QML_SINGLETON`** whose static `create()` returns the instance `main()` constructed. `main()` controls its lifetime and data folder, and the instance has C++ ownership.
+- **Sync state:**
+  - `syncing` turns true when `requestSync` is accepted.
+  - While syncing, a short timer polls `SyncWorker::idle()`, because the "finished" callback runs before the worker clears its "running" flag.
+  - Reports are kept per folder (`folderReports`).
+- **Settings:** `saveSettings` passes the map to hoardor's `save_settings`, which validates it (`file::validate`), and shows hoardor's message on refusal. The ranges aren't duplicated in QML.
+
+## 7. Phases (on this branch)
 
 1. **Bridge + tests:** `LibraryBridge`, `FolderFilesModel`, a `TYLI_DATA_DIR` data folder.
 2. **QML screens:** main window, section view, details dialog, Settings (4 sub-tabs), plus the smoke test with screenshots.

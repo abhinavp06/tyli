@@ -2,6 +2,20 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### File Sync UI design approved; build not started (2026-10-02, branch `abhinavp06/FILE_SCANNER_INIT`)
+
+**Summary:** The user approved building the File Sync UI as designed (`features/file_sync_ui.md`) after seeing the skeleton over VNC. The first build step (restructuring `CMakeLists.txt` into a `tyli_ui` QML module) was interrupted when the session ended, before any file was written. The planned structure is recorded in the feature doc, §6.
+
+**Changed**
+- `DOCUMENTATION/application/features/file_sync_ui.md`: status Approved; new §6 "Build structure (planned)".
+
+**Next**
+1. Phase 1: `LibraryBridge` + `FolderFilesModel` + Qt tests.
+2. Phase 2: QML screens + smoke test with screenshots.
+3. Restart `tools/vnc_session.sh` so the user can click through it (password in `~/.vnc/tyli_passwd` on the VM).
+4. The user tests, then both repos' `abhinavp06/FILE_SCANNER_INIT` merge to `master` (hoardor `v0.1.0`, TYLI `v0.1.0`).
+5. Media listing starts on new branches in both repos.
+
 ### Seeing the UI from the VM: Xvfb + x11vnc on localhost, over SSH (2026-10-01, branch `abhinavp06/FILE_SCANNER_INIT`)
 
 **Summary:** The VM is a remote KVM server reached over SSH, with no display and no firewall. `tools/vnc_session.sh` runs TYLI on a virtual X display and shares it over VNC bound to `127.0.0.1` only. The user reaches it by SSH port forwarding, so nothing is exposed to the network.
