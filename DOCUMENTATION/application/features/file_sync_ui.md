@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Approved** (2026-10-01; the user asked for it to be built after seeing the skeleton over VNC). **Phase 1 not started yet**: the first attempt was interrupted before any file was written |
+| Status | **Phases 1 and 2 built** (2026-10-02): bridge, model, all screens, and tests. Being tested by the user over VNC. Phase 3 (Windows, real drives) next. Approved 2026-10-01 |
 | Branch | `abhinavp06/FILE_SCANNER_INIT` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.1.0`, together with hoardor `v0.1.0` |
 | hoardor feature | File Sync v1: `../hoardor/DOCUMENTATION/application/features/file_sync.md` |
@@ -143,6 +143,15 @@ class FolderFilesModel : public QAbstractListModel {
 }
 ```
 
+**As built (2026-10-02), additions to the sketch above:**
+- `ready`, `openError`, `databasePath` (constant): the error screen when the database can't be opened.
+- `settingLimits` (hoardor's `file::limits` table as `{name: {min, max}}`) and `fileKinds`: QML takes ranges and kind names from hoardor instead of repeating them.
+- `categoryReports`: each folder's latest report grouped by the folder's current category (`{added, modified, removed, errors, cancelled, finishedAt, folders}`), which the section's summary bar shows. Reports are kept for the session only.
+- `folderOperationRunning`: drives the busy indicator while `addFolder` / `relocateFolder` run.
+- `requestSync` returns `bool` (false = already queued or running). `addFolder` / `relocateFolder` take a `QString` that is either a `file://` URL (folder dialog) or a typed path. `localPath(QUrl)` turns a dialog's URL into a path to show.
+- `FolderFilesModel` also has a `count` property (rows loaded so far) and a `PageSize` of 200. It reads through `LibraryBridge::instance()->library()`.
+- Paths go to `std::filesystem::path` through `QString::toStdU16String()`, so non-ASCII folder names work on Windows (a narrow `std::string` would be read in the ANSI code page there).
+
 - **Connections:** `LibraryBridge` owns the UI thread's hoardor `Database` and `Library`, and a `master::SyncWorker` (its own connection, its own thread). `SyncWorker` callbacks are forwarded to the UI thread with `QMetaObject::invokeMethod(this, ..., Qt::QueuedConnection)`.
 - **Drive-touching operations** (`addFolder`, `relocateFolder`): run with `QThreadPool` on a short-lived `Database` + `Library`, and finish with `folderOperationFinished`.
 - **Database location:** see ARCHITECTURE §3 (`TYLI_DATA_DIR` overrides it).
@@ -191,7 +200,7 @@ class FolderFilesModel : public QAbstractListModel {
   - fail on any QML warning
   - save a screenshot of each view to `build/screenshots/` for review
 
-## 6. Build structure (planned, not built yet)
+## 6. Build structure (built 2026-10-02)
 
 - **`CMakeLists.txt` gets a static library `tyli_ui`** that is the QML module (`qt_add_qml_module(tyli_ui URI Tyli ...)`). It holds the bridge sources (`src/library_bridge.*`, `src/folder_files_model.*`) and every QML file (`Main`, `SectionView`, `SyncDetailsDialog`, `SettingsView`, `FolderSettings`, `CategorySettings`, `ScanningSettings`, `SyncSettings`, `Format.js`).
 - **Both the app (`tyli`) and the tests link `tyli_ui` and `tyli_uiplugin`,** so the tests load the real screens. That needs `Q_IMPORT_QML_PLUGIN(TyliPlugin)` in `main.cpp` and in the tests' main.
@@ -201,12 +210,19 @@ class FolderFilesModel : public QAbstractListModel {
   - `syncing` turns true when `requestSync` is accepted.
   - While syncing, a short timer polls `SyncWorker::idle()`, because the "finished" callback runs before the worker clears its "running" flag.
   - Reports are kept per folder (`folderReports`).
+- **QML module output** goes to `build/qml/Tyli` (`OUTPUT_DIRECTORY`), as Qt's tooling expects.
+- **Screens as built:**
+  - The category tabs are a `TabBar`; **Settings** is a separate checkable button at the right, and the sections and Settings are sibling views. That keeps Settings' position fixed when categories are added.
+  - Folder pickers are a text field plus **Browse…** (Qt Quick `FolderDialog`), so a path can also be typed.
+  - The "still being copied" mark is the word "settling" (the `⧗` glyph is missing from common fonts).
+  - The file list is in database order (scan order, by entry id). Sorting arrives with media listing.
+  - "Keep for now" on the held-removals banner hides it for the session; the removals stay held in hoardor.
 - **Settings:** `saveSettings` passes the map to hoardor's `save_settings`, which validates it (`file::validate`), and shows hoardor's message on refusal. The ranges aren't duplicated in QML.
 
 ## 7. Phases (on this branch)
 
-1. **Bridge + tests:** `LibraryBridge`, `FolderFilesModel`, a `TYLI_DATA_DIR` data folder.
-2. **QML screens:** main window, section view, details dialog, Settings (4 sub-tabs), plus the smoke test with screenshots.
+1. **Bridge + tests:** `LibraryBridge`, `FolderFilesModel`, a `TYLI_DATA_DIR` data folder. **Built 2026-10-02.**
+2. **QML screens:** main window, section view, details dialog, Settings (4 sub-tabs), plus the smoke test with screenshots. **Built 2026-10-02**; the user is testing it over VNC.
 3. **Windows check by the user:** build on Windows and run against the real external drives. Also measure a cold-HDD sync and try playback stutter (hoardor OI-1) once playback exists.
 
 Then both branches merge (hoardor `v0.1.0`, TYLI `v0.1.0`), and **media listing** starts on new branches.

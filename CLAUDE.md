@@ -38,10 +38,10 @@ A snappy, low-memory, fully offline home for the user's whole media and writing 
 
 ```
 CLAUDE.md                     # this file
-CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines the tyli app
-src/                          # C++: main.cpp and the QML bridge (QObjects, list models)
+CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines tyli_ui (the QML module) and the tyli app
+src/                          # C++: main.cpp, LibraryBridge (the QML singleton `Library`), FolderFilesModel
 qml/                          # QML views (one file per screen or reusable component)
-tests/                        # Qt Test suites (bridge, models, QML smoke test)
+tests/                        # Qt Test suites (bridge, models, QML smoke test); screenshots land in build/screenshots/
 tools/                        # developer scripts (vnc_session.sh: see the UI from the VM over SSH)
 DOCUMENTATION/
   CHANGELOGS/                 # one file per version + unreleased.md (same rules as hoardor)
@@ -61,6 +61,8 @@ QT_QPA_PLATFORM=offscreen ./build/tyli     # headless run (tests, screenshots)
 ```
 
 **Seeing the UI from the VM:** `tools/vnc_session.sh` runs TYLI on a virtual X display (Xvfb) and shares it with `x11vnc` **on 127.0.0.1 only**. The user connects through SSH: `ssh -N -L 5900:127.0.0.1:5900 <user>@<vm>`, then points a VNC viewer at `localhost:5900`.
+- **Live view while developing:** `tools/vnc_session.sh --watch` keeps the display and VNC up and restarts TYLI whenever `build/tyli` changes, so the user's viewer shows every rebuild within about 2 s. Run it detached so it outlives the agent session: `setsid nohup tools/vnc_session.sh --watch > ~/.vnc/tyli_session.log 2>&1 < /dev/null &`.
+- **From Windows:** `ssh -N -L 5900:127.0.0.1:5900 root@<vm>` in a second terminal, then TigerVNC Viewer (or RealVNC Viewer) at `localhost:5900`. On macOS use local port 5901 (`vnc://localhost:5901`), because Screen Sharing refuses `localhost:5900`.
 - **Never use Qt's `-platform vnc`:** it ignores the address option and listens on every interface, and this VM has no firewall.
 - **The VM can't see the user's external drives.** It's only for testing with sample folders. Real-drive testing needs the Windows build.
 
