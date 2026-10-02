@@ -242,6 +242,37 @@ Item {
             }
         }
 
+        // ---- Which view the category opens (a TYLI preference; "automatic" decides from its files)
+        Row {
+            objectName: "viewChoice"
+            visible: page.selectedCategory !== undefined && !page.editingCategory
+            spacing: 16
+            property string choice: page.selectedCategory ? Library.categoryViewChoice(page.selectedCategory.id) : ""
+            Connections {
+                target: Library
+                function onCategoryViewsChanged() { parent.choice = page.selectedCategory ? Library.categoryViewChoice(page.selectedCategory.id) : "" }
+            }
+            Text { text: "view"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Repeater {
+                model: [{ key: "", label: "automatic" }, { key: "music", label: "music" }, { key: "movies", label: "movies" }, { key: "shows", label: "shows" }]
+                Text {
+                    required property var modelData
+                    readonly property bool on: parent.choice === modelData.key
+                    text: modelData.label
+                    color: on ? Theme.accent : choiceArea.containsMouse ? Theme.text : Theme.textDim
+                    font.pixelSize: Theme.fontSizeSmall
+                    MouseArea {
+                        id: choiceArea
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Library.setCategoryView(page.selectedCategory.id, modelData.key)
+                    }
+                }
+            }
+        }
+
         // ---- Editing the category (inline)
         RowLayout {
             visible: page.editingCategory

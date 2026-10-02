@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Draft v2, awaiting the user's approval** (2026-10-02). Reworked after the user's review of draft v1 (file-name listing). The mockups are ready, and nothing is built yet |
+| Status | **Built** (2026-10-02, phases 2–3); waiting for the user's check on Windows (phase 4). Design approved 2026-10-02 (draft v2) |
 | Branch | `abhinavp06/MEDIA_LISTING` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.2.0`, together with hoardor `v0.2.0` |
 | hoardor feature | Media library v1: `../hoardor/DOCUMENTATION/application/features/media_listing.md` (metadata with ffmpeg, the `audio`/`video` engines, generic filter/order/group queries) |
@@ -115,6 +115,33 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 2. After hoardor's phases 1–4: `CopyGrouper`, the models, `ThumbnailCache`, and tests.
 3. Shared components and screens, Settings additions, the smoke test.
 4. The user's check on Windows with the real library (the GitHub Actions zip; ffmpeg's DLLs ship in it).
+
+## 7a. As built (2026-10-02)
+
+- **C++** (`src/`):
+  - `media_fields` (QML field names → hoardor fields and filters)
+  - `group_model`, `item_model`
+  - `copy_grouper`, `thumbnail_cache`
+  - the bridge: `albumCopies`, `movieCopies`, `showCopies`, `thumbnail`, `categoryView` / `categoryViewChoice` / `setCategoryView`, `preference` / `setPreference`, `trackColumns`, `metadataProgress`, and the signals `contentChanged`, `metadataFinished`, `notice`
+  - `CategoryFilesModel` is removed.
+- **QML** (`qml/`):
+  - shared pieces: `CategoryView` (routing with a back stack and breadcrumbs), `BrowseHeader`, `SortBar`, `CoverGrid`, `CoverCard`, `CoverImage`, `HeroHeader`, `QualityPicker`, `PlayButton`, `LinkText`, `TrackList`
+  - screens: `AlbumBrowser`, `MusicView`, `MusicFilterView` (genre or year), `AlbumView`, `ArtistView`, `VideoGridView` (movies or shows, also their genre and year pages), `MovieView`, `ShowView`, `PersonView` (director)
+- **Settings:**
+  - **Library:** under a selected category, "view: automatic · music · movies · shows".
+  - **General:** "track columns": length, bit rate, bit depth / sample rate, file type, size, channels.
+- **Deviations from §3–§6:**
+  - **Album art:** the cache looks next to any of an album's tracks, not only the cover track. Copies of one album can sit in different folders, and only one may have `cover.jpg`.
+  - **Thumbnail names:** `<entry>-<mtime>.jpg`, the mtime coming from the database, so a lookup never touches a drive.
+  - **A grid's total** is counted before the model reset. A view fetches its first page during the reset, and a small list then ends at once; reading the end state after the reset made the total 0.
+  - **Disc headings** are rows in the track list, because ListView sections don't work on JS arrays.
+  - **List helpers:** lists from C++ have no `flatMap` in QML, hence `Format.flatten` and `Format.unique`.
+  - **Not built yet (TODO in the UI):**
+    - a track click shows a status-line notice instead of the queue prompt (the player)
+    - liked and playlist icons are placeholders
+    - viewed and progress markers come with the player
+  - **Tests:** the planned `tst_thumbnail_cache` is part of `tst_media_models`.
+- **Tests:** `tst_copy_grouper` (6), `tst_media_models` (7), `tst_library_bridge`, and `tst_qml_smoke`. The smoke test visits every new page over seeded metadata and checks the copies and the quality pickers.
 
 ## 8. Open items
 

@@ -2,6 +2,21 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Media library UI v1 finished: Settings controls and docs (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** This completes the work in progress from the entry below.
+- **Settings → Library:** a "view" choice per category (automatic / music / movies / shows).
+- **Settings → General:** "track columns" (length and bit rate by default).
+- **Docs:** `features/media_listing_ui.md` has its as-built section, and `CLAUDE.md` lists the new sources.
+
+**Files**
+- `qml/LibrarySettings.qml`, `qml/GeneralSettings.qml`
+- `DOCUMENTATION/application/features/media_listing_ui.md`, `CLAUDE.md`, `DOCUMENTATION/CHANGELOGS/unreleased.md`
+
+**Tests:** all 4 suites pass. The smoke test's Settings screenshots show the new controls.
+
+**Left:** the user's check on Windows with the real library.
+
 ### Media library UI v1: models, copy grouping, thumbnails, and every screen (work in progress) (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** TYLI's side of Media library v1, built on hoardor's audio and video engines.

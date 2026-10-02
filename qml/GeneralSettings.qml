@@ -266,6 +266,42 @@ Item {
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
 
+            // ---- Track columns (album pages)
+            ColumnLayout {
+                objectName: "trackColumns"
+                Layout.fillWidth: true
+                spacing: 8
+                RowLayout {
+                    SectionTitle { text: "track columns" }
+                    Text { Layout.fillWidth: true; text: "· what an album's track list shows, besides # and title"; color: Theme.textFaint }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 22
+                    Repeater {
+                        model: Library.allTrackColumns
+                        Row {
+                            required property string modelData
+                            spacing: 8
+                            TyCheckBox {
+                                checked: Library.trackColumns.includes(modelData)
+                                onToggled: Library.trackColumns = checked ? Library.trackColumns.concat([modelData])
+                                                                          : Library.trackColumns.filter(c => c !== modelData)
+                                Accessible.name: modelData
+                            }
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: ({ length: "length", bitrate: "bit rate", quality: "bit depth / sample rate", type: "file type",
+                                         size: "size", channels: "channels" })[modelData]
+                                color: Theme.text
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
+
             // ---- About
             ColumnLayout {
                 Layout.fillWidth: true
