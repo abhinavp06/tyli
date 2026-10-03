@@ -613,6 +613,18 @@ private slots:
 
         auto* clear = qobject_cast<QQuickItem*>(find("clearSearch"));
         QVERIFY(clear && clear->isVisible());
+        // Hovered, its background stays inside the field's outline (the user, 2026-10-03).
+        field->forceActiveFocus();
+        QTest::mouseMove(window_, clear->mapToScene(QPointF(clear->width() / 2, clear->height() / 2)).toPoint());
+        QTRY_VERIFY(clear->property("hovered").toBool());
+        const QRectF button = clear->mapRectToScene(QRectF(0, 0, clear->width(), clear->height()));
+        const QRectF outline = field->mapRectToScene(QRectF(0, 0, field->width(), field->height()));
+        QVERIFY(button.right() <= outline.right() - 2 && button.top() >= outline.top() + 2 && button.bottom() <= outline.bottom() - 2);
+        const QImage shot = window_->grabWindow();
+        for (int y = int(outline.top()) + 1; y < int(outline.bottom()) - 1; ++y) {  // the right edge: one color, top to bottom
+            QCOMPARE(shot.pixelColor(int(outline.right()) - 1, y), shot.pixelColor(int(outline.right()) - 1, int(outline.top()) + 1));
+        }
+        screenshot("search-clear-hovered");
         QTest::mouseClick(window_, Qt::LeftButton, {}, clear->mapToScene(QPointF(clear->width() / 2, clear->height() / 2)).toPoint());
         QCOMPARE(field->property("text").toString(), QString());
         QCOMPARE(window_->property("searchText").toString(), QString());   // at once, no typing delay

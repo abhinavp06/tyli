@@ -2,6 +2,20 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The search field's × no longer covers its outline (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user noticed that hovering the × drew its grey background over the right edge of the field's green outline. The button sat flush right and was sized 2 px short of the field's height, so it covered the 1 px outline on the right.
+- **Fixed:** it's inset by 3 px, with 6 px less height, so a 2 px black gap stays between its hover background and the outline on every side. The text's right padding follows.
+- **Checked:** no other icon button sits inside a bordered box. The others are in rows or headers.
+
+**Tests:** `tst_qml_smoke::searchFromSettingsAndClear` hovers the × and checks two things:
+- the button stays at least 2 px inside the outline on each side
+- the outline's right column is one color from top to bottom in the grabbed window
+
+Both checks fail on the old layout. Screenshot: `search-clear-hovered`.
+
+**Files:** `qml/TopBar.qml`, `tests/tst_qml_smoke.cpp`
+
 ### CI: test videos made with ffmpeg's own encoder (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** On Windows, `tst_media_models::videoPostersFromPlexThenFrames` failed with "Unknown encoder 'libx264'". The runner's ffmpeg tool is the LGPL build, and x264 is GPL.

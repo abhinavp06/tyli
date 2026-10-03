@@ -74,16 +74,19 @@ Rectangle {
             Layout.preferredWidth: Theme.px(300)
             placeholderText: "search"
             font.pixelSize: Theme.fontSizeSmall
-            rightPadding: clearButton.visible ? clearButton.width : Theme.px(10)
+            rightPadding: clearButton.visible ? clearButton.width + clearButton.anchors.rightMargin + Theme.px(4) : Theme.px(10)
             Keys.onEscapePressed: text = ""
 
             TyIconButton {
                 id: clearButton
                 objectName: "clearSearch"
+                // Inset, so its hover background never covers the field's outline (1 px, green
+                // with focus): a 2 px black gap stays on every side.
                 anchors.right: parent.right
+                anchors.rightMargin: 3
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.height - 2
-                height: parent.height - 2
+                width: parent.height - 6
+                height: parent.height - 6
                 iconName: "close"
                 tip: "clear the search"
                 visible: search.text !== ""
