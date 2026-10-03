@@ -143,6 +143,13 @@
   - a space-bar toggle outside the video page
   - showing which copy plays on an album with several qualities
 
+## 5a2. Subtitles on by default (2026-10-03, the user)
+
+- **The rule:** a video starts with subtitles: a track in the preferred languages, else the first full one (not a "forced" one, which only covers foreign-language lines), embedded or a `.srt` next to the file. hoardor picks it when the file loads (`Settings::subtitles_on`, hoardor `features/player.md`).
+- **Turning them off** on the video page keeps them off for that file.
+- **The video page's subtitle menu** marks forced tracks "forced".
+- **Not built yet:** a switch and preferred languages in Settings.
+
 ## 5b. Picture quality: how to look (2026-10-03)
 
 - **The finding:** the grain the user saw is mpv's dithering on an 8-bit surface; TYLI's own path adds nothing (hoardor `features/player.md` §10b).
