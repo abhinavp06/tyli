@@ -3,10 +3,12 @@
 #include "app_setup.hpp"
 #include "copy_grouper.hpp"
 #include "item_model.hpp"
+#include "media_fields.hpp"
 #include "thumbnail_cache.hpp"
 
 #include <QDateTime>
 #include <QDir>
+#include <QSet>
 #include <QFutureWatcher>
 #include <QJSEngine>
 #include <QSettings>
@@ -430,7 +432,7 @@ void LibraryBridge::onMetadataProgress(const hoardor::master::MetadataProgress& 
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     if (thumbnails_ && now - lastThumbnailPass_ > 15000) {
         lastThumbnailPass_ = now;
-        thumbnails_->rebuild();
+        thumbnails_->rebuild(false);  // no frames while tags are read: they'd compete for the drive
     }
 }
 
@@ -509,6 +511,52 @@ QVariantList LibraryBridge::movieCopies(const QString& title, int year, int cate
     return out;
 }
 
+QVariantList LibraryBridge::moreMovies(const QString& title, int year, int categoryId, int perRow) {
+    if (!videos_ || perRow <= 0) return {};
+    namespace v = hoardor::video;
+    const auto base = [&] {
+        v::Filter f{{{v::Field::Type, v::Value{std::int64_t{1}}}}};
+        if (categoryId >= 0) f.all.push_back({v::Field::Category, v::Value{std::int64_t{categoryId}}});
+        return f;
+    };
+    // This movie's directors and genres, over all its copies, in the order first seen.
+    v::Filter mine = base();
+    mine.all.push_back({v::Field::Title, v::Value{title.toStdString()}});
+    mine.all.push_back({v::Field::Year, v::Value{std::int64_t{year}}});
+    QStringList directors, genres;
+    for (const auto& item : fetchAll<v::Item>([&](const auto& after) { return videos_->items(mine, {}, after, 200); })) {
+        for (const auto& d : item.directors) if (!directors.contains(qstr(d))) directors << qstr(d);
+        for (const auto& g : item.genres) if (!genres.contains(qstr(g))) genres << qstr(g);
+    }
+    // A movie is "title + year", ignoring case, like a card.
+    const auto keyOf = [](const QString& t, const QString& y) { return t.toCaseFolded() + QChar(0x1f) + y; };
+    QSet<QString> shown{keyOf(title, QString::number(year))};
+    const std::vector<v::Field> card{v::Field::Title, v::Field::Year};
+    QVariantList rows;
+    const auto addRow = [&](const QString& kind, const QString& name, v::Field field, v::GroupOrder order) {
+        v::Filter f = base();
+        f.all.push_back({field, v::Value{name.toStdString()}});
+        // Enough to fill a row after skipping the ones already shown.
+        auto page = videos_->groups(card, f, order, true, std::nullopt, std::size_t(perRow + shown.size()));
+        if (!page) return;
+        QVariantList movies;
+        for (const auto& g : page->items) {
+            if (movies.size() >= perRow) break;
+            const QString key = keyOf(qstr(g.values[0]), qstr(g.values[1]));
+            if (shown.contains(key)) continue;
+            shown.insert(key);
+            movies << QVariantMap{{"values", QStringList{qstr(g.values[0]), qstr(g.values[1])}}, {"coverEntry", fields::videoCover(g)},
+                                  {"online", g.any_online}, {"maxHeight", g.max_height}, {"hdr", g.any_hdr}};
+        }
+        if (movies.isEmpty()) return;
+        const auto total = videos_->group_count(card, f);
+        rows << QVariantMap{{"kind", kind}, {"name", name}, {"others", qint64(total ? *total : 0) - 1}, {"movies", movies}};
+    };
+    for (const QString& d : directors) addRow(QStringLiteral("director"), d, v::Field::Director, v::GroupOrder::Year);
+    for (const QString& g : genres) addRow(QStringLiteral("genre"), g, v::Field::Genre, v::GroupOrder::AddedLast);
+    return rows;
+}
+
 QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
     if (!videos_) return {};
     namespace v = hoardor::video;
@@ -525,7 +573,103 @@ QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
         for (const auto& c : e.copies) list << QVariantMap{{"label", c.label}, {"item", itemToMap(c.item)}};
         episodes << QVariantMap{{"season", e.season}, {"episode", e.episode}, {"copies", list}};
     }
-    return {{"qualities", qualities}, {"episodes", episodes}};
+    // The show's poster, as on its card (any copy's, Plex's, or a frame): for pages opened
+    // without one (a link, a season).
+    qint64 cover = 0;
+    const std::vector<v::Field> by{v::Field::Show};
+    if (auto g = videos_->groups(by, filter, v::GroupOrder::Values, false, std::nullopt, 1); g && !g->items.empty()) {
+        cover = fields::videoCover(g->items.front());
+    }
+    return {{"qualities", qualities}, {"episodes", episodes}, {"coverEntry", cover}};
+}
+
+namespace {
+
+// One search on its own connection (search() runs it on Qt's thread pool). Counts and the
+// first rows of each section: the results page shows 12 of each (24 artists).
+QVariantMap runSearch(const QString& databasePath, const QString& text) {
+    namespace a = hoardor::audio;
+    namespace v = hoardor::video;
+    QVariantMap out;
+    auto database = hoardor::db::Database::open(std::filesystem::path(databasePath.toStdU16String()));
+    if (!database) return out;
+    auto tracks = a::Library::open(*database);
+    auto videos = v::Library::open(*database);
+    if (!tracks || !videos) return out;
+    const std::string words = text.toStdString();
+    const auto strings = [](const std::vector<std::string>& values) {
+        QStringList list;
+        for (const auto& value : values) list << QString::fromStdString(value);
+        return list;
+    };
+    const auto audioSection = [&](const std::vector<a::Field>& by, std::size_t limit) {
+        const a::Filter filter{{{a::Field::Search, a::Value{words}}}};
+        QVariantList items;
+        if (auto page = tracks->groups(by, filter, a::GroupOrder::Values, false, std::nullopt, limit)) {
+            for (const auto& g : page->items) {
+                items << QVariantMap{{"values", strings(g.values)}, {"count", qint64(g.tracks)}, {"yearMax", g.year_max},
+                                     {"coverEntry", qint64(g.cover_entry)}, {"online", g.any_online}};
+            }
+        }
+        const auto total = tracks->group_count(by, filter);
+        return QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    };
+    const auto videoSection = [&](const std::vector<v::Field>& by, std::int64_t type) {
+        const v::Filter filter{{{v::Field::Search, v::Value{words}}, {v::Field::Type, v::Value{type}}}};
+        QVariantList items;
+        if (auto page = videos->groups(by, filter, v::GroupOrder::Values, false, std::nullopt, 12)) {
+            for (const auto& g : page->items) {
+                items << QVariantMap{{"values", strings(g.values)}, {"count", qint64(g.items)}, {"yearMin", g.year_min},
+                                     {"coverEntry", fields::videoCover(g)},
+                                     {"online", g.any_online}};
+            }
+        }
+        const auto total = videos->group_count(by, filter);
+        return QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    };
+    out["albums"] = audioSection({a::Field::Category, a::Field::AlbumArtist, a::Field::Album}, 12);
+    out["artists"] = audioSection({a::Field::Category, a::Field::AlbumArtist}, 24);
+    {
+        const a::Filter filter{{{a::Field::Search, a::Value{words}}}};
+        QVariantList items;
+        const std::vector<a::Order> byTitle{{a::Field::Title}};
+        if (auto page = tracks->tracks(filter, byTitle, std::nullopt, 12)) {
+            for (const auto& t : page->items) {
+                items << QVariantMap{{"entryId", qint64(t.entry_id)}, {"title", QString::fromStdString(t.title)},
+                                     {"album", QString::fromStdString(t.album)}, {"albumArtist", QString::fromStdString(t.album_artist)},
+                                     {"rootId", qint64(t.root_id)}, {"online", bool(t.root_online)}};
+            }
+        }
+        const auto total = tracks->count(filter);
+        out["tracks"] = QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    }
+    out["movies"] = videoSection({v::Field::Category, v::Field::Title, v::Field::Year}, 1);
+    out["shows"] = videoSection({v::Field::Category, v::Field::Show}, 2);
+    return out;
+}
+
+}
+
+void LibraryBridge::search(const QString& text) {
+    searchWanted_ = text;
+    if (searchRunning_ || text.isEmpty()) return;   // a running search asks for the latest text when it ends
+    searchRunning_ = true;
+    emit searchingChanged();
+    auto future = QtConcurrent::run([path = databasePath_, text] { return runSearch(path, text); });
+    auto* watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, text] {
+        const QVariantMap results = watcher->result();
+        watcher->deleteLater();
+        searchRunning_ = false;
+        if (searchWanted_ == text) {
+            emit searchingChanged();
+            emit searchFinished(text, results);
+        } else {
+            search(searchWanted_);   // overtaken while running: answer the latest text instead
+            if (!searchRunning_) emit searchingChanged();
+        }
+    });
+    watcher->setFuture(future);
 }
 
 int LibraryBridge::categoryOfFolder(int folderId) const {

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.23)
 
 project(
     tyli
-    VERSION 0.2.0
+    VERSION 0.3.0
     LANGUAGES CXX
 )
 
@@ -24,7 +24,7 @@ add_subdirectory(${TYLI_HOARDOR_DIR} ${CMAKE_BINARY_DIR}/hoardor)
 # -----------------------------------------------------------------------------
 # On this VM: -DCMAKE_PREFIX_PATH=/opt/Qt/6.12.0/gcc_64
 # On Windows: -DCMAKE_PREFIX_PATH=C:/Qt/6.12.0/msvc2022_64
-find_package(Qt6 6.12 REQUIRED COMPONENTS Quick QuickControls2 Concurrent)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Quick QuickControls2 Concurrent OpenGL)
 # Qt's recommended defaults: AUTOMOC (generates the QObject glue code), policies for 6.12.
 qt_standard_project_setup(REQUIRES 6.12)
 
@@ -58,8 +58,14 @@ qt_add_qml_module(tyli_ui
         src/library_bridge.hpp
         src/media_fields.cpp
         src/media_fields.hpp
+        src/player_bridge.cpp
+        src/player_bridge.hpp
+        src/queue_model.cpp
+        src/queue_model.hpp
         src/thumbnail_cache.cpp
         src/thumbnail_cache.hpp
+        src/video_item.cpp
+        src/video_item.hpp
     QML_FILES
         qml/AlbumBrowser.qml
         qml/AlbumView.qml
@@ -67,8 +73,10 @@ qt_add_qml_module(tyli_ui
         qml/BrowseHeader.qml
         qml/CategoryView.qml
         qml/CoverCard.qml
+        qml/CardFlow.qml
         qml/CoverGrid.qml
         qml/CoverImage.qml
+        qml/ExpandedPlayer.qml
         qml/Format.js
         qml/GeneralSettings.qml
         qml/HeroHeader.qml
@@ -81,10 +89,17 @@ qt_add_qml_module(tyli_ui
         qml/MusicView.qml
         qml/PersonView.qml
         qml/PlayButton.qml
+        qml/PlayerBar.qml
         qml/QualityPicker.qml
+        qml/QueueList.qml
+        qml/QueuePage.qml
+        qml/QueuePrompt.qml
         qml/SettingsView.qml
         qml/SearchView.qml
+        qml/SeekLine.qml
         qml/ShowView.qml
+        qml/ShowState.qml
+        qml/SeasonView.qml
         qml/Sidebar.qml
         qml/SortBar.qml
         qml/StatusLine.qml
@@ -92,6 +107,7 @@ qt_add_qml_module(tyli_ui
         qml/TopBar.qml
         qml/TrackList.qml
         qml/VideoGridView.qml
+        qml/VideoPage.qml
         qml/controls/TyCheckBox.qml
         qml/controls/TyField.qml
         qml/controls/TyIconButton.qml
@@ -108,7 +124,7 @@ qt_add_qml_module(tyli_ui
 )
 
 target_include_directories(tyli_ui PUBLIC src)
-target_link_libraries(tyli_ui PUBLIC Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent hoardor)
+target_link_libraries(tyli_ui PUBLIC Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::OpenGL hoardor)
 
 # -----------------------------------------------------------------------------
 # App

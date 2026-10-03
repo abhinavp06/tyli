@@ -12,6 +12,7 @@ Item {
     property bool poster: false  // 2:3 instead of square
     property string title
     property string subtitle
+    property real progress: 0    // how much you've watched (0–1): a green line under the art
     signal activated()
 
     implicitWidth: Theme.px(150)
@@ -31,6 +32,15 @@ Item {
             border.width: 1
             border.color: Theme.accent
             visible: area.containsMouse
+        }
+        Rectangle {
+            objectName: "watchedLine"
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Theme.lineWidth
+            color: Theme.hairline
+            visible: card.progress > 0
+            Rectangle { width: parent.width * Math.min(1, card.progress); height: parent.height; color: Theme.accent }
         }
     }
     Text {

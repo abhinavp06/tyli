@@ -98,6 +98,10 @@ ListView {
                 }
             }
         }
+        // Read here so every row follows likes and what plays.
+        readonly property bool playing: row.modelData.entryId !== undefined && row.modelData.entryId === Player.entryId
+        readonly property bool liked: Player.revision >= 0 && row.modelData.entryId !== undefined && Player.isLiked(row.modelData.entryId)
+
         Component {
             id: track
             Rectangle {
@@ -108,12 +112,23 @@ ListView {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.px(16)
                     leftPadding: Theme.px(12)
-                    Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.track > 0 ? row.modelData.track : ""; color: Theme.textDim }
+                    Item {
+                        width: Theme.px(28)
+                        height: parent.height
+                        Text {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !row.playing
+                            text: row.modelData.track > 0 ? row.modelData.track : ""
+                            color: Theme.textDim
+                        }
+                        Icon { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: row.playing; name: "play"; size: Theme.px(12); color: Theme.accent }
+                    }
                     Text {
                         width: list.titleWidth
                         text: row.modelData.title
                         elide: Text.ElideRight
-                        color: !row.modelData.online ? Theme.textFaint : row.modelData.fromName ? Theme.textDim : Theme.text
+                        color: row.playing ? Theme.accent : !row.modelData.online ? Theme.textFaint : row.modelData.fromName ? Theme.textDim : Theme.text
                     }
                     Repeater {
                         model: list.columns
@@ -125,10 +140,20 @@ ListView {
                             color: Theme.textDim
                         }
                     }
-                    // White outlines; liking fills the heart with Theme.accent once liked songs exist
-                    // (the user, 2026-10-03), so it follows the theme.
-                    Icon { name: "heart"; size: Theme.px(14); color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
-                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+                    // A white outline; liked: filled with Theme.accent, so it follows the theme
+                    // (the user, 2026-10-03). The playlist icon waits for playlists.
+                    Item {
+                        width: Theme.px(22)
+                        height: parent.height
+                        Icon {
+                            anchors.centerIn: parent
+                            name: "heart"
+                            size: Theme.px(14)
+                            filled: row.liked
+                            color: row.liked || heartArea.containsMouse ? Theme.accent : Theme.text
+                        }
+                    }
+                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
                 }
                 MouseArea {
                     id: area
@@ -136,6 +161,17 @@ ListView {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: list.trackClicked(row.modelData)
+                }
+                // Over the row's own click: the heart likes, it doesn't play.
+                MouseArea {
+                    id: heartArea
+                    objectName: "heart-" + row.modelData.entryId
+                    x: Theme.px(12) + Theme.px(28) + list.titleWidth + list.columns.reduce((w, c) => w + list.columnWidth(c) + Theme.px(16), 0) + Theme.px(16 * 2)
+                    width: Theme.px(22)
+                    height: parent.height
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Player.setLiked(row.modelData.entryId, !row.liked)
                 }
             }
         }

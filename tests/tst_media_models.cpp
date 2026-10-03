@@ -9,6 +9,7 @@
 #include "thumbnail_cache.hpp"
 
 #include <QImage>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
@@ -228,6 +229,7 @@ private slots:
         const QVariantMap show = bridge_->showCopies("Dark");
         QCOMPARE(show.value("episodes").toList().size(), 2);
         QCOMPARE(show.value("qualities").toList().size(), 1);
+        QVERIFY(show.value("coverEntry").toLongLong() > 0);   // its card's cover (here: its first episode, for a frame)
 
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Music")), QStringLiteral("music"));
         QCOMPARE(bridge_->categoryView(movies), QStringLiteral("movies"));
@@ -280,6 +282,123 @@ private slots:
         QCOMPARE(ThumbnailCache::build(folder, bridge_->databasePath()).removed, 1);
     }
 
+    // A movie without art of its own: Plex's poster, else a frame from the video (hoardor
+    // features/posters.md); frames only in passes that allow them, a failed frame tried once.
+    void videoPostersFromPlexThenFrames() {
+        const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+        if (ffmpeg.isEmpty()) QSKIP("the ffmpeg tool isn't installed");
+        QDir().mkpath(media("Films/Heat"));
+        QCOMPARE(QProcess::execute(ffmpeg, {"-y", "-loglevel", "error", "-f", "lavfi", "-t", "2", "-i", "testsrc=size=640x360:rate=25",
+                                            "-c:v", "mpeg4", "-q:v", "5", "-pix_fmt", "yuv420p", media("Films/Heat/Heat.mkv")}),
+                 0);
+        writeFile(media("Films/Arrival/Arrival.mkv"));  // junk: only Plex can help
+        writeFile(media("Films/Junk/Junk.mkv"));        // junk Plex doesn't know: no poster at all
+        const int movies = categoryId(*bridge_, "Movies");
+        QVERIFY(addFolder(*bridge_, movies, media("Films"), "Films").first);
+        QVERIFY(!sync(*bridge_, -1).isEmpty());
+        seedVideo(bridge_->databasePath(), [](const hoardor::file::Entry& e, const std::vector<hoardor::file::Entry>&)
+                                               -> std::optional<std::pair<hoardor::video::VideoInfo, qint64>> {
+            hoardor::video::VideoInfo v;
+            v.title = QFileInfo(QString::fromStdString(e.relative_path)).completeBaseName().toStdString();
+            v.year = 2000;
+            return std::make_pair(v, qint64(0));
+        });
+
+        // A fake Plex: it knows Arrival (as Plex saw it, on another drive letter) and has its poster.
+        const QString plex = data_->filePath("Plex Media Server");
+        QVERIFY(QDir().mkpath(plex + "/Plug-in Support/Databases"));
+        {
+            auto db = hoardor::db::Database::open((plex + "/Plug-in Support/Databases/com.plexapp.plugins.library.db").toStdU16String());
+            QVERIFY(db.has_value());
+            QVERIFY(db->exec("CREATE TABLE metadata_items (id INTEGER PRIMARY KEY, parent_id INTEGER, metadata_type INTEGER, hash TEXT, user_thumb_url TEXT);"
+                             "CREATE TABLE media_items (id INTEGER PRIMARY KEY, metadata_item_id INTEGER);"
+                             "CREATE TABLE media_parts (id INTEGER PRIMARY KEY, media_item_id INTEGER, file TEXT);"
+                             "INSERT INTO metadata_items VALUES (1, NULL, 1, 'abc', 'metadata://posters/p1');"
+                             "INSERT INTO media_items VALUES (1, 1);"
+                             "INSERT INTO media_parts VALUES (1, 1, 'Q:\\Films\\Arrival\\Arrival.mkv');"));
+        }
+        const QString bundle = plex + "/Metadata/Movies/a/bc.bundle/Contents/_combined/posters";
+        QVERIFY(QDir().mkpath(bundle));
+        QImage art(200, 300, QImage::Format_RGB888);
+        art.fill(Qt::darkGreen);
+        QVERIFY(art.save(bundle + "/p1", "PNG"));
+
+        const QString folder = data_->filePath("thumbnails");
+        ThumbnailCache::Options options;
+        options.plexFolder = plex;
+        options.frames = false;  // as while tags are read
+        auto r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.fromPlex, 1);
+        QCOMPARE(r.made, 1);
+        QCOMPARE(r.failed, 0);       // Heat and Junk wait for a pass with frames
+        QCOMPARE(r.plexMissed.size(), 2);
+
+        options.plexMissed = r.plexMissed;
+        options.frames = true;
+        r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.fromFrames, 1);  // Heat
+        QCOMPARE(r.made, 1);
+        QCOMPARE(r.failed, 1);      // Junk: not a video
+        QCOMPARE(r.failedFrames.size(), 1);
+
+        options.failedFrames = r.failedFrames;
+        r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.made + r.failed, 0);  // nothing redone, the failure not retried
+        QCOMPARE(QDir(folder).entryList(QDir::Files).size(), 2);
+
+        GroupModel cards;
+        cards.setEngine("video");
+        cards.setGroupBy({"title", "year"});
+        cards.setFilter({{"type", 1}});
+        waitForReload();
+        emit bridge_->thumbnails()->changed();
+        int withArt = 0;
+        for (int i = 0; i < cards.rowCount(); ++i) withArt += !cards.get(i).value("thumbnail").toString().isEmpty();
+        QCOMPARE(cards.rowCount(), 3);
+        QCOMPARE(withArt, 2);
+    }
+
+    // A movie page's "more by <director>" / "more in <genre>" rows (mockup movie-album.html).
+    void moreByTheDirectorAndInTheGenres() {
+        for (const char* f : {"A", "B", "C", "D", "E"}) writeFile(media(QStringLiteral("Films/%1/%1.mkv").arg(f)));
+        const int movies = categoryId(*bridge_, "Movies");
+        QVERIFY(addFolder(*bridge_, movies, media("Films"), "Films").first);
+        QVERIFY(!sync(*bridge_, -1).isEmpty());
+        seedVideo(bridge_->databasePath(), [](const hoardor::file::Entry& e, const std::vector<hoardor::file::Entry>&)
+                                               -> std::optional<std::pair<hoardor::video::VideoInfo, qint64>> {
+            hoardor::video::VideoInfo v;
+            const QString name = QFileInfo(QString::fromStdString(e.relative_path)).completeBaseName();
+            v.title = name.toStdString();
+            v.year = 2000 + (name.at(0).unicode() - 'A');   // A 2000 … E 2004
+            if (name == "A") { v.directors = {"X"}; v.genres = {"G1", "G2"}; }
+            if (name == "B") { v.directors = {"X"}; v.genres = {"G1"}; }
+            if (name == "C") v.genres = {"G1"};
+            if (name == "D") { v.directors = {"Y"}; v.genres = {"G2"}; }
+            return std::make_pair(v, qint64(0));
+        });
+        const QVariantList rows = bridge_->moreMovies("A", 2000, movies, 4);
+        QCOMPARE(rows.size(), 3);
+        const auto row = [&](int i) { return rows[i].toMap(); };
+        const auto titles = [&](int i) {
+            QStringList out;
+            for (const QVariant& m : row(i).value("movies").toList()) out << m.toMap().value("values").toStringList().first();
+            return out;
+        };
+        QCOMPARE(row(0).value("kind").toString(), QStringLiteral("director"));
+        QCOMPARE(row(0).value("name").toString(), QStringLiteral("X"));
+        QCOMPARE(titles(0), QStringList{"B"});                 // never A itself
+        QCOMPARE(row(0).value("others").toInt(), 1);
+        QCOMPARE(row(1).value("name").toString(), QStringLiteral("G1"));
+        QCOMPARE(titles(1), QStringList{"C"});                 // B is already in the row above
+        QCOMPARE(row(1).value("others").toInt(), 2);           // B and C
+        QCOMPARE(row(2).value("name").toString(), QStringLiteral("G2"));
+        QCOMPARE(titles(2), QStringList{"D"});
+        // perRow limits each row; a movie with nothing related has no rows.
+        const QVariantList one = bridge_->moreMovies("A", 2000, movies, 1);
+        QCOMPARE(one.size(), 3);
+        QVERIFY(bridge_->moreMovies("E", 2004, movies, 4).isEmpty());
+    }
+
     void scrollSpeedIsAPreferenceAppliedAtOnce() {
         QCOMPARE(bridge_->scrollSpeed(), DefaultScrollSpeedPercent);
         QCOMPARE(wheelSpeed(), 2.0);
@@ -311,6 +430,34 @@ private slots:
         QCOMPARE(descending.toBool(), false);
         QCOMPARE(bridge_->preference("sort/music", "added").toString(), QStringLiteral("year"));
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Movies")), QStringLiteral("shows"));
+    }
+
+    // Search runs off the UI thread and answers only the latest text (a 50k-track library took
+    // about 0.5 s per keystroke on the UI thread).
+    void searchAnswersOnlyTheLatestText() {
+        seedMusic();
+        QSignalSpy finished(bridge_.get(), &LibraryBridge::searchFinished);
+        bridge_->search("son");
+        bridge_->search("song");     // typed on before the first finished
+        bridge_->search("song 2");
+        QTRY_VERIFY(!finished.isEmpty() && !bridge_->searching());
+        QTest::qWait(100);
+        QCOMPARE(finished.count(), 1);   // the older texts were dropped, not answered
+        QCOMPARE(finished.first().at(0).toString(), QStringLiteral("song 2"));
+        const QVariantMap results = finished.first().at(1).toMap();
+        const QVariantMap tracks = results.value("tracks").toMap();
+        QCOMPARE(tracks.value("total").toInt(), 4);   // "Song 2" in A/One, its hi-res copy, A/Two, B/Three
+        QCOMPARE(tracks.value("items").toList().size(), 4);
+        QCOMPARE(tracks.value("items").toList().first().toMap().value("title").toString(), QStringLiteral("Song 2"));
+        const QVariantMap albums = results.value("albums").toMap();
+        QCOMPARE(albums.value("total").toInt(), 3);
+        QCOMPARE(albums.value("items").toList().first().toMap().value("values").toStringList().value(2), QStringLiteral("One"));
+        QCOMPARE(results.value("movies").toMap().value("total").toInt(), 0);
+        // An empty text answers nothing (and drops a running search).
+        finished.clear();
+        bridge_->search("");
+        QTest::qWait(100);
+        QVERIFY(finished.isEmpty());
     }
 
     void trackColumnsArePreferences() {

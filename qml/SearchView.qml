@@ -14,16 +14,30 @@ Item {
     property string text
     signal opened(int categoryId, string page, var params)
 
-    readonly property var audioFilter: ({ search: view.text })
-    readonly property int shown: 12  // per section
+    readonly property int shown: 12  // per section (artists: twice as many)
+    readonly property int minLength: 2   // one letter matches most of a library: too slow, never useful
 
-    GroupModel { id: albums; engine: "audio"; groupBy: ["category", "albumArtist", "album"]; filter: view.audioFilter }
-    GroupModel { id: artists; engine: "audio"; groupBy: ["category", "albumArtist"]; filter: view.audioFilter }
-    ItemModel { id: tracks; engine: "audio"; filter: view.audioFilter; order: ["title"] }
-    GroupModel { id: movies; engine: "video"; groupBy: ["category", "title", "year"]; filter: ({ search: view.text, type: 1 }) }
-    GroupModel { id: shows; engine: "video"; groupBy: ["category", "show"]; filter: ({ search: view.text, type: 2 }) }
+    // The latest results from Library.search (off the UI thread). They stay while the page is
+    // hidden, so going back from a result shows them again as they were.
+    property string answered: ""    // the text `results` answer
+    property var results: ({})
+    readonly property var albums: results.albums || { total: 0, items: [] }
+    readonly property var artists: results.artists || { total: 0, items: [] }
+    readonly property var tracks: results.tracks || { total: 0, items: [] }
+    readonly property var movies: results.movies || { total: 0, items: [] }
+    readonly property var shows: results.shows || { total: 0, items: [] }
+    readonly property int found: albums.total + artists.total + tracks.total + movies.total + shows.total
+    readonly property bool tooShort: text.length > 0 && text.length < minLength
 
-    readonly property int found: albums.total + artists.total + tracks.count + movies.total + shows.total
+    onTextChanged: if (text.length >= minLength && text !== answered) Library.search(text)
+    Connections {
+        target: Library
+        function onSearchFinished(text, results) {
+            if (text !== view.text) return
+            view.answered = text
+            view.results = results
+        }
+    }
 
     component Section: Column {
         property string title
@@ -59,24 +73,24 @@ Item {
                 Text { text: "search"; color: Theme.text; font.pixelSize: Theme.fontSizeTitle; font.weight: Theme.weightBold }
                 Text {
                     anchors.baseline: parent.children[0].baseline
-                    text: view.found > 0 ? "“" + view.text + "”" : "nothing matches “" + view.text + "”"
+                    text: view.tooShort ? "type at least " + view.minLength + " letters"
+                        : view.answered !== view.text ? "searching “" + view.text + "”…"
+                        : view.found > 0 ? "“" + view.text + "”" : "nothing matches “" + view.text + "”"
                     color: Theme.textDim
                 }
             }
 
-            Section { title: "albums"; total: albums.total }
-            Flow {
+            Section { title: "albums"; total: view.albums.total }
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
-                visible: albums.total > 0
+                visible: view.albums.total > 0
                 Repeater {
-                    model: albums
+                    model: view.albums.items
                     CoverCard {
-                        required property var model
-                        required property int index
-                        visible: index < view.shown
-                        width: visible ? Theme.px(150) : 0
-                        source: model.thumbnail
+                        required property var modelData
+                        readonly property var model: modelData
+                        width: parent.cardWidth
+                        source: Library.thumbnail(model.coverEntry)
                         online: model.online
                         title: model.values[2]
                         subtitle: model.values[1] + (model.yearMax > 0 ? " · " + model.yearMax : "")
@@ -86,43 +100,45 @@ Item {
                 }
             }
 
-            Section { title: "artists"; total: artists.total }
+            Section { title: "artists"; total: view.artists.total }
             Flow {
                 width: content.width
                 spacing: Theme.px(18)
-                visible: artists.total > 0
+                visible: view.artists.total > 0
                 Repeater {
-                    model: artists
+                    model: view.artists.items
                     LinkText {
-                        required property var model
-                        required property int index
-                        visible: index < view.shown * 2
+                        required property var modelData
+                        readonly property var model: modelData
                         text: model.values[1]
                         onActivated: view.opened(Number(model.values[0]), "artist", { name: model.values[1], crumb: model.values[1] })
                     }
                 }
             }
 
-            Section { title: "tracks"; total: tracks.count }
+            Section { title: "tracks"; total: view.tracks.total }
             Column {
                 width: content.width
-                visible: tracks.count > 0
+                visible: view.tracks.total > 0
                 Repeater {
-                    model: tracks
+                    model: view.tracks.items
                     Rectangle {
-                        required property var model
-                        required property int index
-                        visible: index < view.shown
+                        required property var modelData
+                        readonly property var model: modelData
                         width: content.width
-                        height: visible ? Theme.px(32) : 0
+                        height: Theme.px(32)
                         color: trackArea.containsMouse ? Theme.hover : "transparent"
+                        // Title, artist, album across the whole width (40 / 30 / 30).
                         Row {
+                            id: trackRow
+                            readonly property real room: parent.width - leftPadding - rightPadding - 2 * spacing
                             anchors.verticalCenter: parent.verticalCenter
                             leftPadding: Theme.px(12)
+                            rightPadding: Theme.px(12)
                             spacing: Theme.px(16)
-                            Text { width: Theme.px(360); text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
-                            Text { width: Theme.px(260); text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
-                            Text { width: Theme.px(260); text: model.album; elide: Text.ElideRight; color: Theme.textDim }
+                            Text { width: trackRow.room * 0.4; text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
+                            Text { width: trackRow.room * 0.3; text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
+                            Text { width: trackRow.room * 0.3; text: model.album; elide: Text.ElideRight; color: Theme.textDim }
                         }
                         MouseArea {
                             id: trackArea
@@ -137,21 +153,19 @@ Item {
                 }
             }
 
-            Section { title: "movies"; total: movies.total }
-            Flow {
+            Section { title: "movies"; total: view.movies.total }
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
-                visible: movies.total > 0
+                visible: view.movies.total > 0
                 Repeater {
-                    model: movies
+                    model: view.movies.items
                     CoverCard {
-                        required property var model
-                        required property int index
-                        visible: index < view.shown
-                        width: visible ? Theme.px(130) : 0
+                        required property var modelData
+                        readonly property var model: modelData
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "movies"
-                        source: model.thumbnail
+                        source: Library.thumbnail(model.coverEntry)
                         online: model.online
                         title: model.values[1]
                         subtitle: model.values[2] > 0 ? model.values[2] : ""
@@ -161,21 +175,19 @@ Item {
                 }
             }
 
-            Section { title: "shows"; total: shows.total }
-            Flow {
+            Section { title: "shows"; total: view.shows.total }
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
-                visible: shows.total > 0
+                visible: view.shows.total > 0
                 Repeater {
-                    model: shows
+                    model: view.shows.items
                     CoverCard {
-                        required property var model
-                        required property int index
-                        visible: index < view.shown
-                        width: visible ? Theme.px(130) : 0
+                        required property var modelData
+                        readonly property var model: modelData
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "shows"
-                        source: model.thumbnail
+                        source: Library.thumbnail(model.coverEntry)
                         online: model.online
                         title: model.values[1]
                         subtitle: Format.plural(model.count, "episode")

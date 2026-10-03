@@ -70,16 +70,16 @@ Item {
             Row {
                 spacing: Theme.px(12)
                 LinkText {
+                    id: artistName
                     text: section.model.values[0]
                     font.weight: Theme.weightBold
                     onActivated: browser.owner.open("artist", { name: section.model.values[0], crumb: section.model.values[0] })
                 }
-                Text { text: Format.plural(artistModel.total, "album"); color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+                Text { anchors.baseline: artistName.baseline; text: Format.plural(artistModel.total, "album"); color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.hairline }
-            Flow {
+            CardFlow {
                 width: parent.width
-                spacing: Theme.px(18)
                 Repeater {
                     model: GroupModel {
                         id: artistModel
@@ -90,7 +90,7 @@ Item {
                     }
                     CoverCard {
                         required property var model
-                        width: Theme.px(150)
+                        width: parent.cardWidth
                         source: model.thumbnail
                         online: model.online
                         title: model.values[1]

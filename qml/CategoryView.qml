@@ -13,6 +13,12 @@ Item {
     property var category
     signal addFolderRequested()
     signal folderSettingsRequested(int folderId)
+    // Pages ask to play through here; Main decides how (the queue prompt, the video page).
+    signal playRequested(var ids, int start, var addIds, string label, bool video)
+    // A page opened from the search results: back from it (at `returnDepth`) asks to show them again.
+    property int returnDepth: -1
+    signal returnRequested()
+    function play(ids, start, addIds, label, video) { playRequested(ids, start, addIds, label, video) }
 
     readonly property int categoryId: category ? category.id : -1
     property int kindRevision: 0
@@ -44,9 +50,14 @@ Item {
     function back() {
         if (!canGoBack)
             return false
+        const toSearch = returnDepth >= 0 && routes.length - 1 === returnDepth
+        if (toSearch)
+            returnDepth = -1
         forwardRoutes = forwardRoutes.concat([route])
         routes = routes.slice(0, routes.length - 1)
         stack.popCurrentItem(StackView.Immediate)
+        if (toSearch)
+            returnRequested()
         return true
     }
     function forward() {
@@ -58,6 +69,7 @@ Item {
         return true
     }
     function home() {
+        returnDepth = -1
         routes = [{ page: "home", params: {} }]
         forwardRoutes = []
         stack.clear(StackView.Immediate)
@@ -80,6 +92,8 @@ Item {
     }
     // Like going back several pages at once: they can all come back with "forward".
     function goToCrumb(crumb) {
+        if (crumb.depth < returnDepth)
+            returnDepth = -1   // a crumb above the page from search: that way back is gone
         if (crumb.depth >= routes.length - 1)
             return
         forwardRoutes = forwardRoutes.concat(routes.slice(crumb.depth + 1).reverse())
@@ -103,6 +117,7 @@ Item {
             switch (r.page) {
             case "movie": return moviePage
             case "show": return showPage
+            case "season": return seasonPage
             case "director": return personPage
             case "genre":
             case "year": return videoFilterPage
@@ -153,6 +168,7 @@ Item {
     Component { id: showsHome; VideoGridView { movies: false } }
     Component { id: moviePage; MovieView {} }
     Component { id: showPage; ShowView {} }
+    Component { id: seasonPage; SeasonView {} }
     Component { id: personPage; PersonView {} }
     Component { id: videoFilterPage; VideoGridView { movies: view.mode === "movies" } }
 }

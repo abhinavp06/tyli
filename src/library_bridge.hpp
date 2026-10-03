@@ -53,6 +53,8 @@ class LibraryBridge : public QObject {
     Q_PROPERTY(bool syncing READ syncing NOTIFY syncingChanged)
     // Reading metadata (after a sync, as its own background job; a new sync pauses it).
     Q_PROPERTY(bool reading READ reading NOTIFY readingChanged)
+    // A search is running in the background (search()).
+    Q_PROPERTY(bool searching READ searching NOTIFY searchingChanged)
     // {folderIndex (1-based), folderCount, folderId, folderName, files, errors}; empty when not syncing.
     Q_PROPERTY(QVariantMap syncProgress READ syncProgress NOTIFY syncProgressChanged)
     // The last finished sync: {categoryId (-1 = everything), cancelled, finishedAt, folders: [report]}.
@@ -144,10 +146,22 @@ public:
     Q_INVOKABLE QVariantList albumCopies(const QString& albumArtist, const QString& album, int categoryId = -1);
     // [{label, item}]
     Q_INVOKABLE QVariantList movieCopies(const QString& title, int year, int categoryId = -1);
+    // A movie page's "more by <director>" and "more in <genre>" rows (mockup movie-album.html):
+    // [{kind: "director" | "genre", name, others, movies: [{values: [title, year], coverEntry,
+    // online, maxHeight, hdr}]}]. Up to `perRow` movies a row, never this movie and never one a
+    // row above already shows; directors' newest first, genres' most recently added first.
+    Q_INVOKABLE QVariantList moreMovies(const QString& title, int year, int categoryId, int perRow);
     // {qualities: [{label, episodes, total}], episodes: [{season, episode, copies: [{label, item}]}]}
     Q_INVOKABLE QVariantMap showCopies(const QString& show, int categoryId = -1);
     Q_INVOKABLE QString folderLabel(int folderId) const { return folderName(qint64(folderId)); }
     Q_INVOKABLE int categoryOfFolder(int folderId) const;
+
+    // Search across the library, off the UI thread (a 50k-track library took about 0.5 s per
+    // keystroke on it). Only the latest text is answered: searchFinished(text, results) with
+    // {albums, artists, tracks, movies, shows}, each {total, items: [maps]}, the items as many as
+    // the results page shows. A search already running for older text is left to finish and dropped.
+    Q_INVOKABLE void search(const QString& text);
+    bool searching() const { return searchRunning_; }
     Q_INVOKABLE QString thumbnail(qint64 entryId);
     // Which view a category opens: "music", "movies", "shows", or "none". The user's choice
     // (Settings → Library) or a default from its kinds and what it holds.
@@ -168,6 +182,8 @@ signals:
     void settingsChanged();
     void syncingChanged();
     void readingChanged();
+    void searchingChanged();
+    void searchFinished(const QString& text, const QVariantMap& results);
     void syncProgressChanged();
     void lastReportChanged();
     void folderOperationRunningChanged();
@@ -226,6 +242,8 @@ private:
     QVariantMap settings_;
     bool syncing_ = false;
     bool reading_ = false;
+    bool searchRunning_ = false;
+    QString searchWanted_;   // the latest text asked for
     QVariantMap syncProgress_;
     QVariantMap lastReport_;
     QHash<qint64, QVariantMap> folderReports_;  // the latest report per folder

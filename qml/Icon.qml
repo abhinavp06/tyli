@@ -9,6 +9,7 @@ Item {
     property string name
     property color color: Theme.textDim
     property real size: Theme.iconSize
+    property bool filled: false   // the liked heart: filled with its color
 
     implicitWidth: size
     implicitHeight: size
@@ -29,6 +30,7 @@ Item {
         target: "M6 12a6 6 0 1 0 12 0a6 6 0 1 0 -12 0 M12 2v5 M12 17v5 M2 12h5 M17 12h5",
         move: "M4 8h13 M13 4l4 4-4 4 M20 16H7 M11 12l-4 4 4 4",
         chevronDown: "M6 9l6 6 6-6",
+        chevronUp: "M6 15l6-6 6 6",
         chevronRight: "M9 6l6 6-6 6",
         check: "M5 12l5 5 9-10",
         close: "M6 6l12 12 M18 6L6 18",
@@ -40,7 +42,16 @@ Item {
         disc: "M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M9.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0 -5 0",
         drive: "M3 7h18v10H3z M7 12h.01 M11 12h6",
         heart: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
-        playlist: "M4 6h12 M4 11h12 M4 16h7 M17 14v6 M14 17h6"
+        playlist: "M4 6h12 M4 11h12 M4 16h7 M17 14v6 M14 17h6",
+        pause: "M8 5v14 M16 5v14",
+        previous: "M6 5v14 M18 5l-9 7 9 7z",
+        next: "M18 5v14 M6 5l9 7-9 7z",
+        queue: "M4 6h16 M4 12h16 M4 18h10 M17 15l4 3-4 3z",
+        volume: "M4 9h4l5-4v14l-5-4H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11",
+        mute: "M4 9h4l5-4v14l-5-4H4z M16 9l5 6 M21 9l-5 6",
+        fullscreen: "M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5",
+        rewind: "M11 7l-5 5 5 5 M18 7l-5 5 5 5",
+        forward: "M6 7l5 5-5 5 M13 7l5 5-5 5"
     })
 
     Shape {
@@ -53,7 +64,7 @@ Item {
         ShapePath {
             strokeColor: icon.color
             strokeWidth: 1.5
-            fillColor: "transparent"
+            fillColor: icon.filled ? icon.color : "transparent"
             capStyle: ShapePath.SquareCap
             joinStyle: ShapePath.MiterJoin
             PathSvg { path: icon.paths[icon.name] ?? "" }

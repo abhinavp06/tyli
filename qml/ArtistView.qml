@@ -56,18 +56,17 @@ ColumnLayout {
             topPadding: Theme.px(18)
             spacing: Theme.px(14)
 
-            component Albums: Flow {
+            component Albums: CardFlow {
                 property alias model: repeater.model
                 property bool skipOwn: false
                 width: content.width
-                spacing: Theme.px(18)
                 Repeater {
                     id: repeater
                     CoverCard {
                         required property var model
                         // "Appears on" leaves out the artist's own albums.
                         visible: !parent.skipOwn || model.values[0].toLowerCase() !== page.name.toLowerCase()
-                        width: visible ? Theme.px(150) : 0
+                        width: visible ? parent.cardWidth : 0
                         source: model.thumbnail
                         online: model.online
                         title: model.values[1]

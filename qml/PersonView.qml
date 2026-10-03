@@ -54,14 +54,13 @@ ColumnLayout {
             topPadding: Theme.px(18)
             spacing: Theme.px(14)
             Text { text: "movies"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; visible: movies.count > 0 }
-            Flow {
+            CardFlow {
                 width: parent.width
-                spacing: Theme.px(18)
                 Repeater {
                     model: movies
                     CoverCard {
                         required property var model
-                        width: Theme.px(150)
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "movies"
                         source: model.thumbnail
@@ -73,14 +72,13 @@ ColumnLayout {
                 }
             }
             Text { text: "episodes"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; visible: shows.count > 0; topPadding: Theme.px(10) }
-            Flow {
+            CardFlow {
                 width: parent.width
-                spacing: Theme.px(18)
                 Repeater {
                     model: shows
                     CoverCard {
                         required property var model
-                        width: Theme.px(150)
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "shows"
                         source: model.thumbnail
