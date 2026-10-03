@@ -592,6 +592,42 @@ private slots:
         QVERIFY(qmlWarnings.isEmpty());
     }
 
+    // Search from any page, Settings included; the field's × clears it and the page comes back.
+    void searchFromSettingsAndClear() {
+        QVERIFY(window_->setProperty("settingsOpen", true));
+        setState("settingsView", "currentPage", "general");
+        auto* field = qobject_cast<QQuickItem*>(find("searchField"));
+        auto* settings = qobject_cast<QQuickItem*>(find("settingsView"));
+        QVERIFY(field && settings);
+        field->setProperty("text", "");  // earlier steps may have left a search
+        QVERIFY(settings->isVisible());
+        QVERIFY(!qobject_cast<QQuickItem*>(find("clearSearch"))->isVisible());  // nothing to clear
+        field->setProperty("text", "radio");
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("searchView"))->isVisible());
+        QVERIFY(!settings->isVisible());
+        QCOMPARE(window_->property("view").toString(), QStringLiteral("search"));
+        screenshot("search-over-settings");
+
+        auto* clear = qobject_cast<QQuickItem*>(find("clearSearch"));
+        QVERIFY(clear && clear->isVisible());
+        QTest::mouseClick(window_, Qt::LeftButton, {}, clear->mapToScene(QPointF(clear->width() / 2, clear->height() / 2)).toPoint());
+        QCOMPARE(field->property("text").toString(), QString());
+        QCOMPARE(window_->property("searchText").toString(), QString());   // at once, no typing delay
+        QVERIFY(settings->isVisible());
+        QCOMPARE(settings->property("currentPage").toString(), QStringLiteral("general"));  // where it was
+        QVERIFY(field->hasActiveFocus());
+
+        // Back from results over Settings shows Settings; back again leaves them.
+        field->setProperty("text", "radio");
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("search"));
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("settings"));
+        QCOMPARE(field->property("text").toString(), QString());
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_VERIFY(window_->property("view").toString() != QStringLiteral("settings"));
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
     void theSidebarCollapses() {
         QVERIFY(window_->setProperty("sidebarCollapsed", true));
         screenshot("sidebar-collapsed");

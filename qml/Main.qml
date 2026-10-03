@@ -47,7 +47,9 @@ ApplicationWindow {
     property bool expandedOpen: false   // the expanded player, over everything above the bar
     property bool expandedQueue: false  // its queue panel
     // The page in the content area, most specific first.
-    readonly property string view: settingsOpen ? "settings" : searchText !== "" ? "search" : videoOpen ? "video"
+    // Search works from every page, Settings included: its results cover the page, and clearing
+    // them (or going back) shows that page again.
+    readonly property string view: searchText !== "" ? "search" : settingsOpen ? "settings" : videoOpen ? "video"
                                    : queueOpen ? "queue" : homeOpen ? "home" : "category"
     property string lastView: "category"
     // Leaving the video page pauses the video (features/player_ui.md, decision P3); the bar keeps it.
@@ -67,18 +69,19 @@ ApplicationWindow {
     function openSettings(page) {
         settingsOpen = true
         settings.currentPage = page
+        clearSearch()
     }
 
     // Back and forward, like a browser: the mouse's side buttons, Alt+← / Alt+→, the
-    // keyboard's Back / Forward keys. Back first leaves Settings or the search results, then
+    // keyboard's Back / Forward keys. Back first leaves the search results, then Settings, then
     // walks the category's pages; a page you go back to is exactly as you left it.
     function goBack() {
         if (expandedOpen)
             expandedOpen = false
-        else if (settingsOpen)
-            settingsOpen = false
         else if (searchText !== "")
             clearSearch()
+        else if (settingsOpen)
+            settingsOpen = false
         else if (videoOpen)
             videoOpen = false
         else if (queueOpen)
@@ -206,9 +209,17 @@ ApplicationWindow {
             id: topBar
             Layout.fillWidth: true
             visible: !window.fullScreen
-            settingsOpen: window.settingsOpen
+            settingsOpen: window.view === "settings"
             onToggleSidebar: window.sidebarCollapsed = !window.sidebarCollapsed
-            onSettingsRequested: window.settingsOpen ? (window.settingsOpen = false) : window.openSettings("library")
+            // The gear: closes Settings when they're showing; over search results it shows them.
+            onSettingsRequested: {
+                if (window.view === "settings")
+                    window.settingsOpen = false
+                else if (window.settingsOpen)
+                    window.clearSearch()
+                else
+                    window.openSettings("library")
+            }
             onSyncStatusClicked: window.openSettings("library")
             onHomeRequested: window.openHome()
         }
@@ -259,7 +270,17 @@ ApplicationWindow {
                 // Search results while the top bar's field has text (debounced: hoardor runs a
                 // query per keystroke otherwise).
                 Timer { id: searchDelay; interval: 400; onTriggered: window.searchText = topBar.searchText.trim() }
-                Connections { target: topBar; function onSearchTextChanged() { searchDelay.restart() } }
+                Connections {
+                    target: topBar
+                    function onSearchTextChanged() {
+                        if (topBar.searchText.trim() === "") {  // cleared: the page comes back at once
+                            searchDelay.stop()
+                            window.searchText = ""
+                        } else {
+                            searchDelay.restart()
+                        }
+                    }
+                }
                 SearchView {
                     anchors.fill: parent
                     visible: window.view === "search"
@@ -268,6 +289,7 @@ ApplicationWindow {
                     onOpened: (categoryId, page, params) => {
                         const text = window.searchText
                         window.currentCategoryId = categoryId
+                        window.settingsOpen = false
                         window.homeOpen = false
                         window.queueOpen = false
                         window.videoOpen = false
@@ -308,7 +330,7 @@ ApplicationWindow {
                 SettingsView {
                     id: settings
                     anchors.fill: parent
-                    visible: window.settingsOpen
+                    visible: window.view === "settings"
                     focusedCategoryId: window.currentCategoryId
                 }
             }

@@ -66,14 +66,32 @@ Rectangle {
 
         Item { Layout.preferredWidth: Theme.px(24) }
 
-        // Search across the library; results replace the page while there's text (Esc clears).
+        // Search across the library, from any page; results replace the page while there's
+        // text (the × or Esc clears).
         TyField {
             id: search
             objectName: "searchField"
             Layout.preferredWidth: Theme.px(300)
             placeholderText: "search"
             font.pixelSize: Theme.fontSizeSmall
+            rightPadding: clearButton.visible ? clearButton.width : Theme.px(10)
             Keys.onEscapePressed: text = ""
+
+            TyIconButton {
+                id: clearButton
+                objectName: "clearSearch"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.height - 2
+                height: parent.height - 2
+                iconName: "close"
+                tip: "clear the search"
+                visible: search.text !== ""
+                onClicked: {
+                    search.text = ""
+                    search.forceActiveFocus()  // ready for the next search
+                }
+            }
         }
 
         Item { Layout.fillWidth: true }

@@ -2,6 +2,29 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Search: a clear button, and search from any page (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Two requests from the user: "add an x button in search to clear things", and "search should work from any screen" (it didn't from Settings: Settings outranked the results in `Main.qml`'s `view`).
+
+**What changed:**
+- **`TopBar.qml`:** a `TyIconButton` (×, `clearSearch`) inside the field while it has text. It clears the field and keeps its focus. The text no longer runs under it.
+- **`Main.qml`:**
+  - `view` puts search before Settings, and `SettingsView` shows only when `view === "settings"`.
+  - Back clears the results first, then leaves Settings.
+  - `openSettings()` clears a search.
+  - The gear shows Settings over results and closes them only when they're showing. It's lit by `view`.
+  - Opening a result leaves Settings.
+  - An emptied field shows the page at once, instead of after the 400 ms typing delay.
+
+**Tests:** 5 suites pass. `tst_qml_smoke::searchFromSettingsAndClear`:
+- results over Settings
+- the × clears at once, back on the same Settings page, with the field focused
+- back from results over Settings, then back out of Settings
+
+Screenshot: `search-over-settings`.
+
+**Files:** `qml/TopBar.qml`, `qml/Main.qml`, `tests/tst_qml_smoke.cpp`, `DOCUMENTATION/application/features/media_listing_ui.md`
+
 ### Posters for every movie and show: Plex's, else a frame (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** Most movies and shows had no poster on the user's Windows test, because Plex keeps its art in its own data folder. The user chose Plex's posters, with a frame from the video as the fallback. Together with hoardor `3f59b51` (`PlexPosters`, `grab_frame`, `Group::first_entry`). `features/media_listing_ui.md` §7f.

@@ -166,6 +166,15 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
   - The page waits 400 ms after the last keystroke (was 200), and needs at least 2 letters ("type at least 2 letters").
 - **Back returns to the results:** a page opened from a result is marked (`CategoryView.returnDepth`). Back from it, by the arrow, a mouse button, or Alt+←, shows the results again as they were (`returnRequested`). A crumb above that page, or another category, drops the way back.
 
+### Search from anywhere, and a clear button (2026-10-03, the user)
+
+- **An × inside the search field** while it has text (`clearSearch`): it clears the search, the page comes back at once (no typing delay), and the field keeps focus for the next search. Esc still clears too.
+- **Search works from every page, Settings included.**
+  - The results cover the page, Settings too (`view` puts search first).
+  - Clearing them, or going back, shows the page again, on the same Settings page.
+  - Opening a result leaves Settings.
+  - The gear is lit only while Settings actually show; over results, it brings them back.
+
 ## 7d. Back, forward, and keeping your place (2026-10-03, the user's Windows test)
 
 - **The user's findings:** going back from an album to the home grid scrolled to the top, and the mouse's side buttons did nothing.
