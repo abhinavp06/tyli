@@ -9,6 +9,7 @@
 #include "thumbnail_cache.hpp"
 
 #include <QImage>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
@@ -278,6 +279,82 @@ private slots:
         QVERIFY(stray.open(QIODevice::WriteOnly));
         stray.close();
         QCOMPARE(ThumbnailCache::build(folder, bridge_->databasePath()).removed, 1);
+    }
+
+    // A movie without art of its own: Plex's poster, else a frame from the video (hoardor
+    // features/posters.md); frames only in passes that allow them, a failed frame tried once.
+    void videoPostersFromPlexThenFrames() {
+        const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+        if (ffmpeg.isEmpty()) QSKIP("the ffmpeg tool isn't installed");
+        QDir().mkpath(media("Films/Heat"));
+        QCOMPARE(QProcess::execute(ffmpeg, {"-y", "-loglevel", "error", "-f", "lavfi", "-t", "2", "-i", "testsrc=size=640x360:rate=25",
+                                            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", media("Films/Heat/Heat.mkv")}),
+                 0);
+        writeFile(media("Films/Arrival/Arrival.mkv"));  // junk: only Plex can help
+        writeFile(media("Films/Junk/Junk.mkv"));        // junk Plex doesn't know: no poster at all
+        const int movies = categoryId(*bridge_, "Movies");
+        QVERIFY(addFolder(*bridge_, movies, media("Films"), "Films").first);
+        QVERIFY(!sync(*bridge_, -1).isEmpty());
+        seedVideo(bridge_->databasePath(), [](const hoardor::file::Entry& e, const std::vector<hoardor::file::Entry>&)
+                                               -> std::optional<std::pair<hoardor::video::VideoInfo, qint64>> {
+            hoardor::video::VideoInfo v;
+            v.title = QFileInfo(QString::fromStdString(e.relative_path)).completeBaseName().toStdString();
+            v.year = 2000;
+            return std::make_pair(v, qint64(0));
+        });
+
+        // A fake Plex: it knows Arrival (as Plex saw it, on another drive letter) and has its poster.
+        const QString plex = data_->filePath("Plex Media Server");
+        QVERIFY(QDir().mkpath(plex + "/Plug-in Support/Databases"));
+        {
+            auto db = hoardor::db::Database::open((plex + "/Plug-in Support/Databases/com.plexapp.plugins.library.db").toStdU16String());
+            QVERIFY(db.has_value());
+            QVERIFY(db->exec("CREATE TABLE metadata_items (id INTEGER PRIMARY KEY, parent_id INTEGER, metadata_type INTEGER, hash TEXT, user_thumb_url TEXT);"
+                             "CREATE TABLE media_items (id INTEGER PRIMARY KEY, metadata_item_id INTEGER);"
+                             "CREATE TABLE media_parts (id INTEGER PRIMARY KEY, media_item_id INTEGER, file TEXT);"
+                             "INSERT INTO metadata_items VALUES (1, NULL, 1, 'abc', 'metadata://posters/p1');"
+                             "INSERT INTO media_items VALUES (1, 1);"
+                             "INSERT INTO media_parts VALUES (1, 1, 'Q:\\Films\\Arrival\\Arrival.mkv');"));
+        }
+        const QString bundle = plex + "/Metadata/Movies/a/bc.bundle/Contents/_combined/posters";
+        QVERIFY(QDir().mkpath(bundle));
+        QImage art(200, 300, QImage::Format_RGB888);
+        art.fill(Qt::darkGreen);
+        QVERIFY(art.save(bundle + "/p1", "PNG"));
+
+        const QString folder = data_->filePath("thumbnails");
+        ThumbnailCache::Options options;
+        options.plexFolder = plex;
+        options.frames = false;  // as while tags are read
+        auto r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.fromPlex, 1);
+        QCOMPARE(r.made, 1);
+        QCOMPARE(r.failed, 0);       // Heat and Junk wait for a pass with frames
+        QCOMPARE(r.plexMissed.size(), 2);
+
+        options.plexMissed = r.plexMissed;
+        options.frames = true;
+        r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.fromFrames, 1);  // Heat
+        QCOMPARE(r.made, 1);
+        QCOMPARE(r.failed, 1);      // Junk: not a video
+        QCOMPARE(r.failedFrames.size(), 1);
+
+        options.failedFrames = r.failedFrames;
+        r = ThumbnailCache::build(folder, bridge_->databasePath(), options);
+        QCOMPARE(r.made + r.failed, 0);  // nothing redone, the failure not retried
+        QCOMPARE(QDir(folder).entryList(QDir::Files).size(), 2);
+
+        GroupModel cards;
+        cards.setEngine("video");
+        cards.setGroupBy({"title", "year"});
+        cards.setFilter({{"type", 1}});
+        waitForReload();
+        emit bridge_->thumbnails()->changed();
+        int withArt = 0;
+        for (int i = 0; i < cards.rowCount(); ++i) withArt += !cards.get(i).value("thumbnail").toString().isEmpty();
+        QCOMPARE(cards.rowCount(), 3);
+        QCOMPARE(withArt, 2);
     }
 
     void scrollSpeedIsAPreferenceAppliedAtOnce() {

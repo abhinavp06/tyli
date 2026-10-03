@@ -2,6 +2,7 @@
 
 #include "copy_grouper.hpp"
 #include "library_bridge.hpp"
+#include "media_fields.hpp"
 
 #include <hoardor/master/playback.hpp>
 
@@ -68,8 +69,8 @@ PlayerBridge::PlayerBridge(const QString& databasePath, QObject* parent) : QObje
     // (a check of the picture on a display, without a sound card).
     player::Outputs outputs;
     const QString wanted = qEnvironmentVariable("TYLI_PLAYER_OUTPUTS");
-    if (wanted == QLatin1String("null")) outputs = {"null", "null"};
-    else if (wanted == QLatin1String("noaudio")) outputs = {"null", "libmpv"};
+    if (wanted == QLatin1String("null")) outputs = {"null", "null", {}};
+    else if (wanted == QLatin1String("noaudio")) outputs = {"null", "libmpv", {}};
     // TYLI_MPV_LOG=1: mpv writes mpv.log next to library.db (which decoder, hardware decoding,
     // scaler, and dithering it used), to diagnose playback on the user's machine.
     if (qEnvironmentVariable("TYLI_MPV_LOG") == QLatin1String("1")) {
@@ -163,7 +164,18 @@ PlayerBridge::Description PlayerBridge::describe(qint64 entryId) const {
             }
             d.subtitle = parts.join(QStringLiteral(" · "));
             d.duration = v->duration_ms;
-            d.coverEntry = v->poster_entry ? v->poster_entry : (v->has_embedded_poster ? v->entry_id : 0);
+            // The same poster as its card in the grid (its movie or show), Plex's or a frame included.
+            const video::Filter own = episode
+                ? video::Filter{{{video::Field::Type, video::Value{std::int64_t{2}}}, {video::Field::Show, video::Value{v->show}}}}
+                : video::Filter{{{video::Field::Type, video::Value{std::int64_t{1}}}, {video::Field::Title, video::Value{v->title}},
+                                 {video::Field::Year, video::Value{std::int64_t{v->year}}}}};
+            const std::vector<video::Field> by = episode ? std::vector<video::Field>{video::Field::Show}
+                                                         : std::vector<video::Field>{video::Field::Title, video::Field::Year};
+            if (auto g = videos->groups(by, own, video::GroupOrder::Values, false, std::nullopt, 1); g && !g->items.empty()) {
+                d.coverEntry = fields::videoCover(g->items.front());
+            } else {
+                d.coverEntry = v->poster_entry ? v->poster_entry : (v->has_embedded_poster ? v->entry_id : 0);
+            }
             const QVariantMap params = episode ? QVariantMap{{"show", qstr(v->show)}, {"crumb", qstr(v->show)}}
                                                : QVariantMap{{"title", qstr(v->title)}, {"year", v->year}, {"crumb", qstr(v->title)}};
             d.link = {{"categoryId", library->categoryOfFolder(int(v->root_id))},

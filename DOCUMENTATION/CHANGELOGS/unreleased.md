@@ -2,6 +2,41 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Posters for every movie and show: Plex's, else a frame (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Most movies and shows had no poster on the user's Windows test, because Plex keeps its art in its own data folder. The user chose Plex's posters, with a frame from the video as the fallback. Together with hoardor `3f59b51` (`PlexPosters`, `grab_frame`, `Group::first_entry`). `features/media_listing_ui.md` §7f.
+
+**What changed:**
+- **`ThumbnailCache`:** after the poster image and the poster inside the video come Plex's poster, then a frame from the group's first video.
+- **When the fallbacks run:**
+  - Frames only in passes after tag reading (`rebuild(bool frames)`; the 15-s passes during reading use `false`), since they read the drive.
+  - Plex's database is read once per pass, only when something needs it.
+  - A failed frame, or (during reading) a Plex miss, isn't retried in the same session (`Options` and `Result` carry the sets).
+- **`fields::videoCover(group)`:** one rule for the entry a video card's thumbnail is named after. Used by `GroupModel`, search, and `PlayerBridge`: the bar now shows the video's movie or show poster (any copy's, Plex's, or a frame).
+- **`TYLI_PLEX_DIR`** points to another Plex data folder.
+- **`tools/plex_probe.ps1`:** a read-only check of Plex's posters on Windows, shipped in the zip.
+- **The workflow** ships `swscale-*.dll` (frames) and the probe.
+- The `Outputs` initializers name `log_file` (a warning).
+
+**Tests:** 5 suites pass. `tst_media_models::videoPostersFromPlexThenFrames`:
+- a fake Plex folder, a real video, and junk
+- Plex's poster in a pass without frames, matched across a drive letter
+- the frame in a pass with frames
+- the junk's failed frame not retried
+- 2 of 3 cards with thumbnails
+
+The smoke test's movie grid shows a frame as Heat's poster.
+
+**Files:**
+- `src/{thumbnail_cache.hpp, thumbnail_cache.cpp, media_fields.hpp, group_model.cpp, library_bridge.cpp, player_bridge.cpp}`
+- `tests/tst_media_models.cpp`, `tools/plex_probe.ps1` (new), `.github/workflows/windows.yml`, `CLAUDE.md`
+- `DOCUMENTATION/application/{features/media_listing_ui.md, ARCHITECTURE.md}`
+
+**Known limitations:**
+- Verified against a fake Plex, not the user's.
+- A frame poster stays after Plex gets a real one, until its thumbnail is cleared.
+- The first run grabs a frame per movie and show without art. That takes about a second each on a spun-up HDD, in the background after tag reading.
+
 ### Video grain checked; TYLI_MPV_LOG; the "Resume" idea recorded (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:**

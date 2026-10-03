@@ -219,7 +219,7 @@ std::optional<std::vector<GroupModel::Row>> GroupModel::page(std::optional<hoard
             r.maxHeight = g.max_height;
             r.hdr = g.any_hdr;
             r.online = g.any_online;
-            r.coverEntry = g.poster_entry ? g.poster_entry : g.embedded_poster_entry;
+            r.coverEntry = fields::videoCover(g);
             out.push_back(std::move(r));
         }
         cursor = result->next;

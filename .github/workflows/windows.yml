@@ -150,12 +150,14 @@ jobs:
           # The MSVC runtime next to the exe ("app-local"), so it runs without installing the VC++ redistributable.
           $crt = Get-ChildItem "$env:VCToolsRedistDir\x64" -Directory -Filter "Microsoft.VC*.CRT" | Select-Object -First 1
           if ($crt) { Copy-Item "$($crt.FullName)\*.dll" dist/ }
-          # ffmpeg's libraries hoardor links (avformat needs avcodec and avutil; avcodec needs swresample),
-          # with ffmpeg's license, as the LGPL asks.
-          foreach ($dll in "avformat-*.dll", "avcodec-*.dll", "avutil-*.dll", "swresample-*.dll") {
+          # ffmpeg's libraries hoardor links (avformat needs avcodec and avutil; avcodec needs swresample;
+          # swscale scales frames grabbed for posters), with ffmpeg's license, as the LGPL asks.
+          foreach ($dll in "avformat-*.dll", "avcodec-*.dll", "avutil-*.dll", "swresample-*.dll", "swscale-*.dll") {
             Copy-Item "$env:RUNNER_TEMP\ffmpeg\bin\$dll" dist/
           }
           Copy-Item "$env:RUNNER_TEMP\ffmpeg\LICENSE.txt" dist/ffmpeg-LICENSE.txt
+          # A read-only check of Plex's posters, in case they don't show (hoardor features/posters.md).
+          Copy-Item tyli/tools/plex_probe.ps1 dist/
           # libmpv (the player), with where it comes from and its license.
           Copy-Item "$env:RUNNER_TEMP\mpv\bin\libmpv-2.dll" dist/
           Copy-Item "$env:RUNNER_TEMP\mpv\bin\vulkan-1.dll" dist/

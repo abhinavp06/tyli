@@ -3,6 +3,7 @@
 #include "app_setup.hpp"
 #include "copy_grouper.hpp"
 #include "item_model.hpp"
+#include "media_fields.hpp"
 #include "thumbnail_cache.hpp"
 
 #include <QDateTime>
@@ -430,7 +431,7 @@ void LibraryBridge::onMetadataProgress(const hoardor::master::MetadataProgress& 
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     if (thumbnails_ && now - lastThumbnailPass_ > 15000) {
         lastThumbnailPass_ = now;
-        thumbnails_->rebuild();
+        thumbnails_->rebuild(false);  // no frames while tags are read: they'd compete for the drive
     }
 }
 
@@ -565,7 +566,7 @@ QVariantMap runSearch(const QString& databasePath, const QString& text) {
         if (auto page = videos->groups(by, filter, v::GroupOrder::Values, false, std::nullopt, 12)) {
             for (const auto& g : page->items) {
                 items << QVariantMap{{"values", strings(g.values)}, {"count", qint64(g.items)}, {"yearMin", g.year_min},
-                                     {"coverEntry", qint64(g.poster_entry ? g.poster_entry : g.embedded_poster_entry)},
+                                     {"coverEntry", fields::videoCover(g)},
                                      {"online", g.any_online}};
             }
         }

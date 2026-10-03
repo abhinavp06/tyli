@@ -49,24 +49,33 @@ QString ThumbnailCache::url(qint64 entryId) {
     return result;
 }
 
-void ThumbnailCache::rebuild() {
+void ThumbnailCache::rebuild(bool frames) {
     if (running_) {
         again_ = true;
+        againFrames_ = againFrames_ || frames;
         return;
     }
     running_ = true;
     emit runningChanged();
-    auto future = QtConcurrent::run([folder = folder_, path = databasePath_] { return build(folder, path); });
+    Options options;
+    options.frames = frames;
+    options.plexFolder = qEnvironmentVariable("TYLI_PLEX_DIR");
+    options.failedFrames = failedFrames_;
+    options.plexMissed = plexMissed_;
+    auto future = QtConcurrent::run([folder = folder_, path = databasePath_, options] { return build(folder, path, options); });
     auto* watcher = new QFutureWatcher<Result>(this);
     connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher] {
         const Result r = watcher->result();
         watcher->deleteLater();
         running_ = false;
+        failedFrames_.unite(r.failedFrames);
+        plexMissed_.unite(r.plexMissed);
         emit runningChanged();
         if (r.made > 0 || r.removed > 0) emit changed();
         if (again_) {
             again_ = false;
-            rebuild();
+            const bool frames = std::exchange(againFrames_, false);
+            rebuild(frames);
         }
     });
     watcher->setFuture(future);
@@ -102,9 +111,24 @@ bool writeThumbnail(const QByteArray& image, const QString& target) {
     return out.commit();
 }
 
+// A frame (RGB) as a JPEG, for writeThumbnail.
+QByteArray jpeg(const hoardor::video::Frame& frame) {
+    const QImage image(reinterpret_cast<const uchar*>(frame.rgb.data()), frame.width, frame.height, frame.width * 3,
+                       QImage::Format_RGB888);
+    QByteArray out;
+    QBuffer buffer(&out);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "JPG", 92);
+    return out;
+}
+
 }
 
 ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QString& databasePath) {
+    return build(folder, databasePath, Options{});
+}
+
+ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QString& databasePath, const Options& options) {
     Result result;
     auto database = hoardor::db::Database::open(databasePath.toStdU16String());
     if (!database) return result;
@@ -127,6 +151,7 @@ ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QStrin
     };
 
     QSet<QString> keep;
+    bool deferred = false;  // set by a `load` that can't try now (not a failure)
     // `source`: the entry the thumbnail is named after; `load` reads the image bytes (drive).
     const auto make = [&](file::EntryId source, const std::function<QByteArray(const file::Entry&, const std::filesystem::path&)>& load) {
         if (source <= 0) return;
@@ -139,7 +164,9 @@ ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QStrin
         if (QFile::exists(target)) return;
         const auto path = pathOf(*entry);
         if (!path) return;  // offline: try again after a later sync
+        deferred = false;
         const QByteArray image = load(*entry, *path);
+        if (deferred) return;
         if (!image.isEmpty() && writeThumbnail(image, target)) ++result.made;
         else ++result.failed;
     };
@@ -194,11 +221,55 @@ ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QStrin
         after = page->next;
     }
 
-    // Posters: a companion image file, else a picture inside the video.
+    // Posters: a companion image file, else a picture inside the video, else (below) Plex's or a frame.
     const auto image_file = [&](const file::Entry&, const std::filesystem::path& path) { return readFile(path); };
     const auto embedded = [&](const file::Entry&, const std::filesystem::path& path) -> QByteArray {
         auto picture = video::embedded_poster(path);
         return picture ? bytes(*picture) : QByteArray();
+    };
+    // Nothing of its own: Plex's poster (internal storage), else a frame from the video (the
+    // drive; only in passes that allow it). Plex's database is read once, when first needed.
+    std::optional<video::PlexPosters> plex;
+    bool plexOpened = false;
+    const auto plexOrFrame = [&](const file::Entry& entry, const std::filesystem::path& path) -> QByteArray {
+        if (!options.frames && options.plexMissed.contains(entry.id)) {  // asked Plex already; frames come later
+            deferred = true;
+            return {};
+        }
+        if (!plexOpened) {
+            plexOpened = true;
+            std::optional<std::filesystem::path> where;
+            if (!options.plexFolder.isEmpty()) where = std::filesystem::path(options.plexFolder.toStdU16String());
+            else where = video::PlexPosters::find_folder();
+            if (where) {
+                if (auto opened = video::PlexPosters::open(*where)) plex.emplace(std::move(*opened));
+            }
+        }
+        if (plex) {
+            if (auto image = plex->poster(path)) {
+                QByteArray data = readFile(*image);
+                if (!data.isEmpty()) {
+                    ++result.fromPlex;
+                    return data;
+                }
+            }
+        }
+        if (!options.frames) {
+            result.plexMissed.insert(entry.id);
+            deferred = true;
+            return {};
+        }
+        if (options.failedFrames.contains(entry.id)) {
+            deferred = true;
+            return {};
+        }
+        auto frame = video::grab_frame(path);
+        if (!frame) {
+            result.failedFrames.insert(entry.id);
+            return {};
+        }
+        ++result.fromFrames;
+        return jpeg(*frame);
     };
     for (const std::vector<video::Field>& by : {std::vector<video::Field>{video::Field::Title, video::Field::Year},
                                                 std::vector<video::Field>{video::Field::Show}}) {
@@ -207,7 +278,8 @@ ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QStrin
             if (!page) break;
             for (const auto& g : page->items) {
                 if (g.poster_entry) make(g.poster_entry, image_file);
-                else make(g.embedded_poster_entry, embedded);
+                else if (g.embedded_poster_entry) make(g.embedded_poster_entry, embedded);
+                else make(g.first_entry, plexOrFrame);
             }
             if (!page->next) break;
             after = page->next;

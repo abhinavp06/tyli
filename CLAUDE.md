@@ -42,7 +42,7 @@ CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines t
 src/                          # C++: main.cpp, app_setup (style + fonts + wheel), LibraryBridge (the QML singleton `Library`), PlayerBridge (`Player`), GroupModel/ItemModel, QueueModel, VideoItem (`VideoView`, mpv frames), copy_grouper, thumbnail_cache, media_fields
 qml/                          # QML views (one file per screen or reusable component); Theme.qml, Icon.qml, controls/ (restyled controls), fonts/
 tests/                        # Qt Test suites (bridge, models, QML smoke test); screenshots land in build/screenshots/
-tools/                        # developer scripts (vnc_session.sh: the UI over VNC; mockup_server.sh: the HTML mockups)
+tools/                        # developer scripts (vnc_session.sh: the UI over VNC; mockup_server.sh: the HTML mockups; plex_probe.ps1: a read-only check of Plex's posters on Windows)
 DOCUMENTATION/
   CHANGELOGS/                 # one file per version + unreleased.md (same rules as hoardor)
   application/

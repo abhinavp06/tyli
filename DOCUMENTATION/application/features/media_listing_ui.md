@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Shipped in `v0.2.0`** (2026-10-03), with hoardor `v0.2.0`; tested by the user on Windows with their library (§7d, §7e). Open: posters for most movies and shows, the album count vs Plex, the home page's design. Design approved 2026-10-02 (draft v2) |
+| Status | **Shipped in `v0.2.0`** (2026-10-03), with hoardor `v0.2.0`; tested by the user on Windows with their library (§7d, §7e). Open: the album count vs Plex (posters for most movies and shows: §7f, waiting for the user's test), the home page's design. Design approved 2026-10-02 (draft v2) |
 | Branch | `abhinavp06/MEDIA_LISTING` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.2.0`, together with hoardor `v0.2.0` |
 | hoardor feature | Media library v1: `../hoardor/DOCUMENTATION/application/features/media_listing.md` (metadata with ffmpeg, the `audio`/`video` engines, generic filter/order/group queries) |
@@ -181,6 +181,24 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 - **`tyli_` opens the home page** (`Main.homeOpen`). It's blank for now: it gets designed after the player and playlists, and is where recommendations will go. A category, a search result, or back leaves it. The app still starts on the first category.
 - **No Books:** hoardor no longer keeps an untouched Books category (its file migration 3), so the sidebar and Settings show Music, Movies, and Shows.
 - **Track list actions:** white outline heart and playlist icons. Liking (the heart fills with the accent color) comes with liked songs and playlists; the user chose to do only the look now.
+
+## 7f. Posters for every movie and show (2026-10-03, the user's choice)
+
+Most folders have no art, because Plex keeps it in its own data folder. The user chose Plex's posters, with a frame from the video as the fallback. The design is hoardor `features/posters.md`.
+- **`ThumbnailCache`** goes through, per movie or show:
+  1. the poster image
+  2. the poster inside the video
+  3. **Plex's poster** (read-only, found automatically; `TYLI_PLEX_DIR` points elsewhere)
+  4. **a frame** from the first video (a show's first real episode)
+- **Frames only after tag reading** (`rebuild(false)` during it), because they read the drive. Plex's posters come from internal storage, so they're also looked up during tag reading.
+- **Not retried in the same session:** a failed frame, and (while tags are read) a video Plex had nothing for.
+- **The cover entry** is `fields::videoCover(group)`: poster, else embedded, else `first_entry`. The grid, search, and the player bar (its movie's or show's group) use it, so they all show the same picture.
+- **`tools/plex_probe.ps1`** (also in the Windows zip) is a read-only check of Plex's layout on the user's PC, in case its posters don't show.
+- **Tests:** `tst_media_models::videoPostersFromPlexThenFrames`, with a fake Plex, a real video, and junk:
+  - Plex's poster in a pass without frames
+  - the frame in a pass with them
+  - a failed frame not retried
+  - the grid's thumbnails
 
 ## 8. Open items
 

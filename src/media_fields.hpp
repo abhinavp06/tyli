@@ -26,4 +26,10 @@ std::optional<hoardor::video::Filter> videoFilter(const QVariantMap& filter);
 std::optional<std::vector<hoardor::audio::Order>> audioOrder(const QStringList& order);
 std::optional<std::vector<hoardor::video::Order>> videoOrder(const QStringList& order);
 
+// The entry a movie's or show's poster thumbnail is named after: its poster image, else the video
+// with a poster inside, else its first video (Plex's poster or a frame; ThumbnailCache).
+inline qint64 videoCover(const hoardor::video::Group& g) {
+    return g.poster_entry ? g.poster_entry : (g.embedded_poster_entry ? g.embedded_poster_entry : g.first_entry);
+}
+
 }
