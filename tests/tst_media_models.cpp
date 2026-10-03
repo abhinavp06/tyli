@@ -229,6 +229,7 @@ private slots:
         const QVariantMap show = bridge_->showCopies("Dark");
         QCOMPARE(show.value("episodes").toList().size(), 2);
         QCOMPARE(show.value("qualities").toList().size(), 1);
+        QVERIFY(show.value("coverEntry").toLongLong() > 0);   // its card's cover (here: its first episode, for a frame)
 
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Music")), QStringLiteral("music"));
         QCOMPARE(bridge_->categoryView(movies), QStringLiteral("movies"));

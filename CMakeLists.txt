@@ -98,6 +98,8 @@ qt_add_qml_module(tyli_ui
         qml/SearchView.qml
         qml/SeekLine.qml
         qml/ShowView.qml
+        qml/ShowState.qml
+        qml/SeasonView.qml
         qml/Sidebar.qml
         qml/SortBar.qml
         qml/StatusLine.qml

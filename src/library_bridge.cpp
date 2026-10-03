@@ -526,7 +526,14 @@ QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
         for (const auto& c : e.copies) list << QVariantMap{{"label", c.label}, {"item", itemToMap(c.item)}};
         episodes << QVariantMap{{"season", e.season}, {"episode", e.episode}, {"copies", list}};
     }
-    return {{"qualities", qualities}, {"episodes", episodes}};
+    // The show's poster, as on its card (any copy's, Plex's, or a frame): for pages opened
+    // without one (a link, a season).
+    qint64 cover = 0;
+    const std::vector<v::Field> by{v::Field::Show};
+    if (auto g = videos_->groups(by, filter, v::GroupOrder::Values, false, std::nullopt, 1); g && !g->items.empty()) {
+        cover = fields::videoCover(g->items.front());
+    }
+    return {{"qualities", qualities}, {"episodes", episodes}, {"coverEntry", cover}};
 }
 
 namespace {

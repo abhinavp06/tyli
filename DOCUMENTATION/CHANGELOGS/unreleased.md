@@ -2,6 +2,40 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Shows: seasons as album cards, a season page laid out like an album (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Part 2 of "music's album structure for movies and shows" (mockups `show-seasons.html` and `season.html`, approved).
+
+**What changed:**
+- **`ShowView`:**
+  - The hero's poster is as tall as an album cover (147 px wide).
+  - The show's quality picker and play (the next episode) stay.
+  - The season tabs and episode list are replaced by a "seasons" `CardFlow` of `CoverCard`s, specials and unknown seasons last. Each card has the show's poster (hoardor keeps no season posters yet), "N episodes · year" ("· watched" when all are), and a watched line.
+- **`SeasonView` (new, route `season`, crumbs shows / Dark / Season 2):**
+  - the album layout: label "season", title, its show as a link back, year, genres, directors, "N episodes · runtime · M watched", and the drive
+  - a quality picker with that season's qualities and episode counts, sharing the show's remembered choice
+  - play (the episode you're in, else the next unwatched one of the season)
+  - the episode list moved from `ShowView` (markers, centered rows, right-aligned quality)
+- **`ShowState` (new):** one show's state shared by both pages:
+  - `Library.showCopies`, refreshed on `contentChanged`
+  - seasons in order, season titles, qualities (whole show or one season)
+  - the chosen quality, `pick`, what you watched, `seasonProgress`, `playFrom`, `playNext`
+- **`CoverCard.progress`:** a 2 px watched line under the art.
+- **`Library.showCopies`** also returns `coverEntry`, the show's card cover, so a show or season page opened without one shows it.
+
+**Tests:** 5 suites pass.
+- `tst_qml_smoke::showsAndAShow`: season cards (titles, "3 episodes"); opening season 2 (2 episodes); the show link back; season 1 (3 episodes)
+- `tst_media_models`: `showCopies` has a cover
+
+Screenshots: `show`, `season`.
+
+**Files:**
+- `qml/{ShowView.qml, SeasonView.qml (new), ShowState.qml (new), CoverCard.qml, CategoryView.qml}`
+- `src/library_bridge.cpp`, `CMakeLists.txt`, `tests/{tst_qml_smoke.cpp, tst_media_models.cpp}`
+- `DOCUMENTATION/application/{features/media_listing_ui.md, ARCHITECTURE.md}`
+
+**Follow-up:** season posters (`season02-poster.jpg`, Plex's season poster) in hoardor.
+
 ### Movies and shows grids: "by director" and "by genre" sections (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** Part 1 of "music's album structure for movies and shows" (mockups `movies-by.html` and `shows-by.html`, approved). Uses hoardor `f02c809` (`Condition::none`).

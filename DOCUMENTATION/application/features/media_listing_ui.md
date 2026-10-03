@@ -218,7 +218,16 @@ The user asked for music's album structure in movies and shows. Mockups: `show-s
    - a "no director" / "no genre" section last, so nothing drops out (hoardor `Condition::none`)
    - only on a category's own page; the choice is remembered with the other sorts
    - section counts sit on the name's baseline, music's included
-2. **Seasons as album cards, and a season page in the album layout** (below, as built).
+2. **Seasons as album cards, and a season page in the album layout:**
+   - **The show page** (`ShowView`): the hero (poster as tall as an album cover), the show's quality and play (the next episode), then a card per season, specials last.
+     - A card shows the show's poster (hoardor keeps no season posters yet), "N episodes · year", and a green line for how much of the season you've watched; "watched" when all of it.
+     - The season tabs and the episode list moved to the season page.
+   - **The season page** (`SeasonView`, route `season`):
+     - the album layout: poster, "season", its show (a link back), year, genres, directors, then "N episodes · runtime · M watched" and the drive
+     - quality (that season's qualities) and play (resumes within the season)
+     - its episodes as tracks, as before
+   - **`ShowState`** is shared by both pages: the episodes and copies, the chosen quality (one per show), what you watched, and what plays next.
+   - **The cover:** `Library.showCopies` returns the show's `coverEntry` (as on its card), so a page opened without one still shows it.
 3. **The movie page in the album layout:** its copies as rows, then "more by" the director and "more in" each genre (below, as built).
 4. **The folder rule:** waiting for the user's answers.
 

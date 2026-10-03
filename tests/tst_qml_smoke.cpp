@@ -584,12 +584,24 @@ private slots:
         setState("showsView", "sortKey", "added");
         call("categoryView", "open", "show", QVariantMap{{"show", "Dark"}, {"crumb", "Dark"}});
         QTRY_VERIFY(find("showView"));
+        // Its seasons as cards, like an artist's albums.
+        QTRY_VERIFY(find("season-1") && find("season-2"));
+        QCOMPARE(find("season-1")->property("title").toString(), QStringLiteral("Season 1"));
+        QVERIFY(find("season-1")->property("subtitle").toString().startsWith(QStringLiteral("3 episodes")));
+        screenshot("show");
+        // A season, laid out like an album: its episodes as tracks.
+        QVERIFY(QMetaObject::invokeMethod(find("season-2"), "activated"));
+        QTRY_VERIFY(find("seasonView") && qobject_cast<QQuickItem*>(find("seasonView"))->isVisible());
         QObject* episodes = find("episodeList");
         QVERIFY(episodes);
-        QTRY_COMPARE(episodes->property("count").toInt(), 3);  // season 1
-        screenshot("show");
-        setState("showView", "seasonIndex", 1);
-        QTRY_COMPARE(episodes->property("count").toInt(), 2);
+        QTRY_COMPARE(episodes->property("count").toInt(), 2);  // season 2
+        screenshot("season");
+        // Back (the show's link) returns to the seasons.
+        QVERIFY(QMetaObject::invokeMethod(find("seasonShowLink"), "activated"));
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("showView"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(find("season-1"), "activated"));
+        QTRY_VERIFY(find("seasonView") && qobject_cast<QQuickItem*>(find("seasonView"))->isVisible());
+        QTRY_COMPARE(find("episodeList")->property("count").toInt(), 3);
         QVERIFY(qmlWarnings.isEmpty());
     }
 

@@ -117,6 +117,7 @@ Item {
             switch (r.page) {
             case "movie": return moviePage
             case "show": return showPage
+            case "season": return seasonPage
             case "director": return personPage
             case "genre":
             case "year": return videoFilterPage
@@ -167,6 +168,7 @@ Item {
     Component { id: showsHome; VideoGridView { movies: false } }
     Component { id: moviePage; MovieView {} }
     Component { id: showPage; ShowView {} }
+    Component { id: seasonPage; SeasonView {} }
     Component { id: personPage; PersonView {} }
     Component { id: videoFilterPage; VideoGridView { movies: view.mode === "movies" } }
 }
