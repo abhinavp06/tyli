@@ -12,6 +12,7 @@ The detailed history of TYLI. Each version has its own file, so no single file g
 | Version | Date | Highlights |
 |---|---|---|
 | [Unreleased](unreleased.md) | — | Nothing yet |
+| [v0.3.0](v0.3.0.md) | 2026-10-03 | **The player UI**: now-playing bar, queue prompt and page, video page, expanded player, likes, resume and viewed markers; **movies and shows like albums** (by director/genre, season cards and pages, the movie page with copies and more by its director and genres); posters from Plex or a frame; search from anywhere; lists that fill the width |
 | [v0.2.0](v0.2.0.md) | 2026-10-03 | **Media library UI v1**: metadata-driven music, movie, and show pages with a quality picker for copies, thumbnails, live refresh while tags are read, search, browser-like back/forward that keeps your place, sizes for real screens, a scroll speed setting, preferences saved on Windows |
 | [v0.1.0](v0.1.0.md) | 2026-10-02 | **File Sync UI + OLED theme**: Qt 6.12 app on hoardor `v0.1.0`, `Library` bridge, paged file lists, Settings → Library and General, OLED black + minimal green with its own controls and icons, live HTML mockups and VNC view, a Windows build on GitHub Actions |
 

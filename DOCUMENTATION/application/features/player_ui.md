@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Built** (2026-10-03, §5a); waiting for the user's Windows test. Approved 2026-10-03 ("looks good", plus the like heart); mockups `player-*.html` |
+| Status | **Shipped in `v0.3.0`** (2026-10-03) with hoardor `v0.3.0`: built (§5a), tested by the user on Windows. Approved 2026-10-03 ("looks good", plus the like heart); mockups `player-*.html` |
 | Branch | `abhinavp06/PLAYER` (pairs with hoardor's branch of the same name) |
 | Ships in | TYLI `v0.3.0`, together with hoardor `v0.3.0` |
 | hoardor side | `../hoardor/DOCUMENTATION/application/features/player.md` (the `player` engine on libmpv, the queue, progress) |
