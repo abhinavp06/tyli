@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TYLI mockup · a movie: album layout</title>
+<link rel="stylesheet" href="theme.css">
+<script src="live.js"></script>
+</head>
+<body>
+<style>
+  .sortbar { display: flex; gap: 16px; align-items: center; font-size: 11px; }
+  .sortbar .s { color: var(--text-dim); cursor: pointer; background: none; border: 0; font: inherit; padding: 2px 0; }
+  .sortbar .s:hover { color: var(--text); }
+  .sortbar .s.on { color: var(--accent); }
+  .crumbs { display: flex; gap: 8px; align-items: center; color: var(--text-dim); }
+  .crumbs a { color: var(--text-dim); text-decoration: none; }
+  .crumbs a:hover { color: var(--accent); }
+  .scroll { min-height: 0; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: var(--text-faint) transparent; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 18px; }
+  .card { display: flex; flex-direction: column; gap: 3px; color: var(--text); text-decoration: none; min-width: 0; }
+  .card .art { margin-bottom: 7px; outline: 1px solid transparent; }
+  .card:hover .art { outline-color: var(--accent); }
+  .card:hover .t { color: var(--accent); }
+  .card.offline .art { opacity: .35; }
+  .card.offline .t, .card.offline .dim { color: var(--text-faint); }
+  .art { position: relative; overflow: hidden; display: grid; place-items: center; color: var(--text-faint); }
+  .art.square { aspect-ratio: 1; }
+  .art.poster { aspect-ratio: 2 / 3; }
+  .art.none { border: 1px solid var(--hairline); }
+  .art.none .icon { width: 28px; height: 28px; stroke-width: 1; }
+  .section { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; padding-top: 8px; border-bottom: 1px solid var(--hairline); padding-bottom: 6px; }
+  .section a { color: var(--text); text-decoration: none; font-weight: 600; }
+  .section a:hover { color: var(--accent); }
+  a.link { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--text-faint); }
+  a.link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  a.drive { display: inline-flex; gap: 6px; align-items: center; color: var(--text-dim); text-decoration: none; font-size: 11px; }
+  a.drive:hover { color: var(--accent); }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; color: var(--text-dim); }
+  .hero { display: grid; gap: 28px; align-items: end; position: relative; }
+  .actions { position: absolute; top: 0; right: 0; display: flex; gap: 10px; align-items: center; }
+  .quality { position: relative; }
+  .quality > button { display: inline-flex; gap: 10px; align-items: center; background: none; border: 1px solid var(--hairline); color: var(--text); font: inherit; padding: 5px 10px; cursor: pointer; height: 40px; box-sizing: border-box; }
+  .quality > button:hover { border-color: var(--text-faint); }
+  .quality .menu { display: none; position: absolute; right: 0; top: 44px; min-width: 280px; background: var(--background); border: 1px solid var(--hairline); z-index: 5; padding: 4px 0; }
+  .quality.open .menu { display: block; }
+  .quality .opt { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 12px; cursor: pointer; }
+  .quality .opt:hover { background: var(--hover); }
+  .quality .opt .icon { color: var(--accent); }
+  .playbtn { width: 40px; height: 40px; border: 1px solid var(--accent-dim); color: var(--accent); background: none; display: grid; place-items: center; cursor: pointer; }
+  .playbtn:hover { border-color: var(--accent); background: #04140a; }
+  .todo { font-size: 10px; letter-spacing: .06em; color: var(--text-faint); border: 1px dashed var(--text-faint); padding: 0 5px; white-space: nowrap; font-weight: 400; }
+  .t-todo { color: var(--text-faint); display: inline-grid; place-items: center; }
+  .rows .r { display: grid; gap: 16px; align-items: center; padding: 6px 12px; cursor: pointer; }
+  .rows .r:not(.label):hover { background: var(--hover); }
+  .rows .label { cursor: default; }
+  .disc { display: flex; gap: 8px; align-items: center; padding: 14px 12px 6px; color: var(--accent-dim); font-size: 11px; letter-spacing: .08em; }
+  .num { text-align: right; color: var(--text-dim); }
+  .modal-wrap { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.7); place-items: center; z-index: 20; }
+  .modal-wrap.open { display: grid; }
+
+  .rows .r { grid-template-columns: 32px minmax(0, 1fr) 70px 22px; }
+  .rows .r .icon { width: 14px; height: 14px; }
+  .tab .faint { font-size: 11px; }
+
+  .card .t { font-size: 13px; }
+  .card .s { font-size: 11px; color: var(--text-dim); }
+  .grid.posters { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .rows.copies .r { grid-template-columns: 32px minmax(0, 1fr) 70px 80px 22px; }
+  .rows.eps .r { grid-template-columns: 32px minmax(0, 1fr) 70px 120px 22px; }
+  .seen { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--hairline); }
+  .seen > div { height: 2px; background: var(--accent); }
+  .note { font-size: 11px; color: var(--text-faint); border-left: 2px solid var(--text-faint); padding-left: 10px; }
+</style>
+<div class="mock-nav"><span>proposal · album structure for movies and shows (not built, for review) · <a href="index.html">index</a> ·</span> <a href="show-seasons.html">a show: seasons</a> · <a href="season.html">a season</a> · <a href="movie-album.html" class="on">a movie: album layout</a> · <a href="movies-by.html">movies: by director / genre</a> · <a href="shows-by.html">shows: by genre</a></div>
+<div class="window">
+  <header class="topbar">
+    <button class="ib" title="collapse or expand the sidebar" aria-label="toggle sidebar" onclick="this.closest('.window').classList.toggle('collapsed')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16"/></svg></button>
+    <span class="wordmark">tyli<span class="acc cursor">_</span></span>
+    <span class="spacer"></span>
+    <a class="sync-status" href="settings-library.html" title="sync status: open library settings"><div class="progress"><div class="fill" style="width: 8%"></div></div><span>reading tags · music (e:) · 1,204 / 14,902</span></a>
+    <a class="ib" href="settings-library.html" title="settings" aria-label="settings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></a>
+  </header>
+  <div class="body">
+    <nav class="sidebar">
+      <a class="nav" href="music-albums.html" title="music" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l10-2v12"/><circle cx="6.5" cy="17" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/></svg><span class="text">music</span><span class="count">1,284</span></a>
+      <a class="nav on" href="movies.html" title="movies" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg><span class="text">movies</span><span class="count">212</span></a>
+      <a class="nav" href="shows.html" title="shows" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12"/><path d="M8 3l4 4 4-4"/></svg><span class="text">shows</span><span class="count">38</span></a>
+      </nav>
+    <main class="main">
+      <header class="crumbs"><a class="ib" href="javascript:history.back()" title="back" aria-label="back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a><a href="movies.html">movies</a><span class="faint">/</span><span style="color: var(--text)">Heat</span></header>
+      <div class="hero" style="grid-template-columns: 147px minmax(0, 1fr)">
+        <div class="art poster" style="background: linear-gradient(160deg,#18140c,#7a6428 55%,#f0e8d0)"></div>
+        <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: 820px">
+          <span class="label">movie</span>
+          <h1 style="font-size: 26px">Heat</h1>
+          <div class="facts"><a class="link" href="#">1995</a><span class="faint">·</span><span>2h 50m</span><span class="faint">·</span><a class="link" href="#">Crime</a><a class="link" href="#">Thriller</a></div>
+          <div class="facts"><span class="label">directed by</span><a class="link" href="#">Michael Mann</a></div>
+          <div class="facts"><span>3 copies · 80.4 GB</span><span class="faint">·</span><a class="drive" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10"/><path d="M7 12h.01M17 12h-6"/></svg>Movies (F:)</a><span class="faint">·</span><span class="faint">info from Heat (1995).nfo</span></div>
+        </div>
+        <div class="actions">
+          <div class="quality"><button title="choose which copy plays"><span class="label">quality</span><span class="v">2160p · HDR10</span><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button><div class="menu"><div class="opt" data-v="2160p · HDR10"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="visibility: visible"><path d="M5 12l5 5 9-10"/></svg><span>2160p · HDR10</span><span class="dim">61.2 GB</span></div><div class="opt" data-v="1080p · SDR"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="visibility: hidden"><path d="M5 12l5 5 9-10"/></svg><span>1080p · SDR</span><span class="dim">14.8 GB</span></div><div class="opt" data-v="720p · SDR"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="visibility: hidden"><path d="M5 12l5 5 9-10"/></svg><span>720p · SDR</span><span class="dim">4.4 GB</span></div></div></div>
+          <button class="playbtn" title="play (resumes at 1:12:40)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></button>
+        </div>
+      </div>
+      <p class="dim" style="margin: 0; max-width: 820px">A group of high-end professional thieves start to feel the heat from the LAPD when they unknowingly leave a clue at their latest heist.</p>
+      <div class="scroll rows copies" style="border-top: 1px solid var(--hairline)">
+        <div class="r label" style="padding-top: 10px"><span class="num">#</span><span>copy</span><span style="text-align: right">length</span><span style="text-align: right">size</span><span></span></div>
+        <div class="r" onclick="queuePrompt()" title="play this copy" style="box-shadow: inset 2px 0 0 var(--accent)"><span class="num">1</span><div style="min-width: 0"><span class="ell" style="display: block; color: var(--accent)">2160p · HDR10 · HEVC</span><span class="ell dim" style="display: block; font-size: 11px">TrueHD 7.1 eng · AC3 5.1 deu · subs eng, deu</span></div><span class="dim" style="text-align: right">2:46:21</span><span class="dim" style="text-align: right">61.2 GB</span><span></span></div><div class="r" onclick="queuePrompt()" title="play this copy"><span class="num">2</span><div style="min-width: 0"><span class="ell" style="display: block">1080p · SDR · H.264</span><span class="ell dim" style="display: block; font-size: 11px">DTS 5.1 eng · subs eng</span></div><span class="dim" style="text-align: right">2:46:19</span><span class="dim" style="text-align: right">14.8 GB</span><span></span></div><div class="r" onclick="queuePrompt()" title="play this copy"><span class="num">3</span><div style="min-width: 0"><span class="ell" style="display: block">720p · SDR · H.264</span><span class="ell dim" style="display: block; font-size: 11px">AAC 2.0 eng</span></div><span class="dim" style="text-align: right">2:46:19</span><span class="dim" style="text-align: right">4.4 GB</span><span></span></div>
+        <p class="note" style="margin: 24px 12px 0">The album page's layout: the same hero (cover, facts, quality and play at the top right), the plot under it, then the movie's copies as rows, like an album's tracks: what each has (resolution, HDR, codec, audio tracks and subtitles, from the streams hoardor already reads), its length and size. The copy that plays is marked green; clicking a row plays that copy. Later: chapters and extras (trailers, featurettes) as more rows.</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// "added" is one button: the first click sorts newest first, the next click flips to oldest first.
+let addedDesc = true;
+function pickSort(b) {
+  if (b.dataset.sort === 'added' && b.classList.contains('on')) addedDesc = !addedDesc;
+  else if (b.dataset.sort === 'added') addedDesc = true;
+  document.querySelectorAll('.sortbar .s').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.sortbar .s[data-sort="added"]').forEach(x => x.textContent = 'added ' + (addedDesc ? '↓' : '↑'));
+  if (window.render) window.render(b.dataset.sort === 'added' ? (addedDesc ? 'added-desc' : 'added-asc') : b.dataset.sort);
+}
+document.querySelectorAll('.sortbar .s').forEach(b => b.addEventListener('click', () => pickSort(b)));
+</script>
+
+<script>
+document.querySelectorAll('.quality > button').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); b.parentElement.classList.toggle('open'); }));
+document.addEventListener('click', () => document.querySelectorAll('.quality.open').forEach(q => q.classList.remove('open')));
+document.querySelectorAll('.quality .opt').forEach(o => o.addEventListener('click', () => {
+  const q = o.closest('.quality');
+  q.querySelectorAll('.opt .icon').forEach(i => i.style.visibility = 'hidden');
+  o.querySelector('.icon').style.visibility = 'visible';
+  q.querySelector('button .v').textContent = o.dataset.v;
+}));
+function queuePrompt() { const q = document.getElementById('queue'); if (q) q.classList.add('open'); }
+</script>
+</body>
+</html>
