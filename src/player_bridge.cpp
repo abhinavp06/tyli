@@ -45,6 +45,7 @@ QVariantList tracksToList(const std::vector<player::Track>& tracks, bool audio) 
                                                               : QStringLiteral(" %1.1").arg(t.channels - 1);
         if (!codec.isEmpty()) parts << codec;
         if (!t.title.empty()) parts << qstr(t.title);
+        if (t.forced && !qstr(t.title).contains(QStringLiteral("forced"), Qt::CaseInsensitive)) parts << QStringLiteral("forced");
         if (t.external) parts << QStringLiteral("next to the file");
         out << QVariantMap{{"id", t.id}, {"label", parts.isEmpty() ? QStringLiteral("track %1").arg(t.id) : parts.join(QStringLiteral(" · "))},
                            {"selected", t.selected}};

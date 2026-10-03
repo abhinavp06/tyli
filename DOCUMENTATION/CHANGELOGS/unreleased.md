@@ -2,6 +2,15 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Subtitles on by default (with hoardor 4f0f678) (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:**
+- **New default:** with hoardor `4f0f678`, a video starts with subtitles on: a track in the preferred languages, else the first full one, embedded or a `.srt` next to the file.
+- **TYLI's change:** the video page's subtitle menu marks forced tracks "forced", unless their own title already says so.
+- **Not built yet:** a subtitles switch and preferred languages in Settings.
+
+**Files:** `src/player_bridge.cpp`
+
 ### Media lists fill the width, edge to edge (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user: "a lot of negative space on the right while listing any media", with the sort options at the far right and the cards ending well before them. Fixed as its own commit.
