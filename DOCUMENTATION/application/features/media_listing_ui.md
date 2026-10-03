@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Built** (2026-10-02, phases 2–3); waiting for the user's check on Windows (phase 4). Design approved 2026-10-02 (draft v2) |
+| Status | **Shipped in `v0.2.0`** (2026-10-03), with hoardor `v0.2.0`; tested by the user on Windows with their library (§7d, §7e). Open: posters for most movies and shows, the album count vs Plex, the home page's design. Design approved 2026-10-02 (draft v2) |
 | Branch | `abhinavp06/MEDIA_LISTING` (pairs with the hoardor branch of the same name) |
 | Ships in | TYLI `v0.2.0`, together with hoardor `v0.2.0` |
 | hoardor feature | Media library v1: `../hoardor/DOCUMENTATION/application/features/media_listing.md` (metadata with ffmpeg, the `audio`/`video` engines, generic filter/order/group queries) |
