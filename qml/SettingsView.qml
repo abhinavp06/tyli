@@ -11,14 +11,15 @@ Item {
     property int focusedCategoryId: -1  // the category open in the main view; Library starts on it
 
     onVisibleChanged: if (visible) library.selectedCategoryId = focusedCategoryId
+    function showCategory(categoryId) { library.selectedCategoryId = categoryId }
 
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: Theme.pageMargin
         anchors.rightMargin: Theme.pageMargin
-        anchors.topMargin: 20
-        anchors.bottomMargin: 12
-        spacing: 14
+        anchors.topMargin: Theme.px(20)
+        anchors.bottomMargin: Theme.px(12)
+        spacing: Theme.px(14)
 
         Text {
             text: "settings"

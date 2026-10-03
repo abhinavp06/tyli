@@ -39,7 +39,7 @@ A snappy, low-memory, fully offline home for the user's whole media and writing 
 ```
 CLAUDE.md                     # this file
 CMakeLists.txt                # root build: finds Qt, adds ../hoardor, defines tyli_ui (the QML module) and the tyli app
-src/                          # C++: main.cpp, app_setup (style + fonts), LibraryBridge (the QML singleton `Library`), CategoryFilesModel
+src/                          # C++: main.cpp, app_setup (style + fonts), LibraryBridge (the QML singleton `Library`), GroupModel/ItemModel, copy_grouper, thumbnail_cache, media_fields
 qml/                          # QML views (one file per screen or reusable component); Theme.qml, Icon.qml, controls/ (restyled controls), fonts/
 tests/                        # Qt Test suites (bridge, models, QML smoke test); screenshots land in build/screenshots/
 tools/                        # developer scripts (vnc_session.sh: the UI over VNC; mockup_server.sh: the HTML mockups)
@@ -54,7 +54,7 @@ DOCUMENTATION/
 ## Build and test
 
 ```bash
-# Linux VM (Qt in /opt/Qt, installed with aqtinstall)
+# Linux VM (Qt in /opt/Qt, installed with aqtinstall; ffmpeg dev packages for hoardor: see ../hoardor/CLAUDE.md)
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/opt/Qt/6.12.0/gcc_64
 cmake --build build -j4     # a number: plain -j starts unlimited jobs and ran this 8 GB VM out of memory
 ctest --test-dir build --output-on-failure
@@ -69,8 +69,8 @@ QT_QPA_PLATFORM=offscreen ./build/tyli     # headless run (tests, screenshots)
 - **The VM can't see the user's external drives.** It's only for testing with sample folders. Real-drive testing needs the Windows build.
 
 **Windows:**
-- **Without installing anything:** every push runs `.github/workflows/windows.yml` on GitHub (Windows, MSVC 2022, Qt 6.12, hoardor from its public repo, same branch name or `master`). It builds, runs the tests, and uploads the artifact `tyli-windows`: `tyli.exe` with Qt's libraries and the MSVC runtime. Download it from the run's page (repo → Actions → the run → Artifacts), unzip, run `tyli.exe`. It's unsigned, so SmartScreen asks once (More info → Run anyway).
-- **Requirements (building on Windows yourself):** Visual Studio 2022 (the "Desktop development with C++" workload) and Qt 6.12 for `msvc2022_64`, installed with the Qt Online Installer or aqtinstall.
+- **Without installing anything:** every push runs `.github/workflows/windows.yml` on GitHub (Windows, MSVC 2022, Qt 6.12, hoardor from its public repo, same branch name or `master`). It builds, runs the tests, and uploads the artifact `tyli-windows`: `tyli.exe` with Qt's libraries, ffmpeg's DLLs (a pinned BtbN LGPL build, checked by SHA-256) with its license, and the MSVC runtime. Download it from the run's page (repo → Actions → the run → Artifacts), unzip, run `tyli.exe`. It's unsigned, so SmartScreen asks once (More info → Run anyway).
+- **Requirements (building on Windows yourself):** Visual Studio 2022 (the "Desktop development with C++" workload), Qt 6.12 for `msvc2022_64` (Qt Online Installer or aqtinstall), and an ffmpeg shared LGPL build (add `-DFFMPEG_ROOT=C:/ffmpeg` to the configure line, and its `bin` to `PATH`).
 - **Layout:** keep the same workspace layout, with `hoardor` next to `tyli`.
 - **Build:**
   ```bat

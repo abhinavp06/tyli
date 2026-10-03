@@ -2,11 +2,18 @@
 
 #include "library_bridge.hpp"
 
+#include <hoardor/audio/audio.hpp>
+#include <hoardor/file/library.hpp>
+#include <hoardor/video/video.hpp>
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSignalSpy>
 #include <QTest>
+
+#include <functional>
+#include <optional>
 
 // Helpers shared by the suites: media trees on disk, and waiting for the bridge's
 // background work.
@@ -60,6 +67,76 @@ inline QVariantMap sync(LibraryBridge& bridge, int categoryId) {
 
 inline QVariantMap folderReport(const QVariantMap& report, int index = 0) {
     return report.value("folders").toList().value(index).toMap();
+}
+
+// Stores made-up metadata for the library's files, on a connection of its own, as the
+// metadata pass would (the test files are empty, so there's nothing real to read).
+// `make` returns the info for an entry, or nullopt to leave it unread.
+inline void seedAudio(const QString& databasePath,
+                      const std::function<std::optional<hoardor::audio::TrackInfo>(const hoardor::file::Entry&)>& make) {
+    auto db = hoardor::db::Database::open(databasePath.toStdU16String());
+    QVERIFY(db.has_value());
+    auto files = hoardor::file::Library::open(*db);
+    auto tracks = hoardor::audio::Library::open(*db);
+    QVERIFY(files && tracks);
+    const auto roots = files->roots().value();  // kept alive: range-for over a temporary's value() dangles in GCC 13
+    for (const auto& root : roots) {
+        for (hoardor::file::EntryId after = 0;;) {
+            const auto page = files->entries(root.id, after, 500).value();
+            if (page.empty()) break;
+            for (const auto& e : page) {
+                after = e.id;
+                if (e.kind != hoardor::file::FileKind::Audio) continue;
+                if (auto info = make(e)) QVERIFY(tracks->store(e.id, std::int64_t(e.size), e.mtime_ns, *info));
+            }
+        }
+    }
+}
+
+// `make(entry, companions)`: the info and the poster entry (0: none), or nullopt.
+inline void seedVideo(const QString& databasePath,
+                      const std::function<std::optional<std::pair<hoardor::video::VideoInfo, qint64>>(
+                          const hoardor::file::Entry&, const std::vector<hoardor::file::Entry>&)>& make) {
+    auto db = hoardor::db::Database::open(databasePath.toStdU16String());
+    QVERIFY(db.has_value());
+    auto files = hoardor::file::Library::open(*db);
+    auto videos = hoardor::video::Library::open(*db);
+    QVERIFY(files && videos);
+    const auto roots = files->roots().value();  // kept alive: range-for over a temporary's value() dangles in GCC 13
+    for (const auto& root : roots) {
+        for (hoardor::file::EntryId after = 0;;) {
+            const auto page = files->entries(root.id, after, 500).value();
+            if (page.empty()) break;
+            for (const auto& e : page) {
+                after = e.id;
+                if (e.kind != hoardor::file::FileKind::Video) continue;
+                const auto companions = files->companions(e.id, 2).value();
+                if (auto made = make(e, companions)) QVERIFY(videos->store(e.id, std::int64_t(e.size), e.mtime_ns, made->first, made->second));
+            }
+        }
+    }
+}
+
+inline hoardor::audio::TrackInfo track(const std::string& albumArtist, const std::string& album, int disc, int number,
+                                       const std::string& title, int year, int bitDepth = 16, int sampleRate = 44100) {
+    hoardor::audio::TrackInfo t;
+    t.album_artist = albumArtist;
+    t.artists = {albumArtist};
+    t.album = album;
+    t.disc = disc;
+    t.track = number;
+    t.title = title;
+    t.year = year;
+    t.date = std::to_string(year);
+    t.genres = {"Art Rock"};
+    t.duration_ms = 241'000;
+    t.codec = "flac";
+    t.lossless = true;
+    t.bit_depth = bitDepth;
+    t.sample_rate = sampleRate;
+    t.bitrate_kbps = bitDepth > 16 ? 2'500 : 900;
+    t.channels = 2;
+    return t;
 }
 
 }

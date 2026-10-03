@@ -1,8 +1,12 @@
 #pragma once
 
+#include "app_setup.hpp"
+
+#include <hoardor/audio/audio.hpp>
 #include <hoardor/db/database.hpp>
 #include <hoardor/file/library.hpp>
 #include <hoardor/master/sync_worker.hpp>
+#include <hoardor/video/video.hpp>
 
 #include <QHash>
 #include <QObject>
@@ -21,6 +25,8 @@ class QQmlEngine;
 class QJSEngine;
 
 namespace tyli {
+
+class ThumbnailCache;
 
 // The one object QML talks to (the singleton `Library`). It owns the UI thread's
 // hoardor connection and the background SyncWorker, and turns hoardor's types into
@@ -45,6 +51,8 @@ class LibraryBridge : public QObject {
     Q_PROPERTY(QVariantMap settingLimits READ settingLimits CONSTANT)
     Q_PROPERTY(QStringList fileKinds READ fileKinds CONSTANT)
     Q_PROPERTY(bool syncing READ syncing NOTIFY syncingChanged)
+    // Reading metadata (after a sync, as its own background job; a new sync pauses it).
+    Q_PROPERTY(bool reading READ reading NOTIFY readingChanged)
     // {folderIndex (1-based), folderCount, folderId, folderName, files, errors}; empty when not syncing.
     Q_PROPERTY(QVariantMap syncProgress READ syncProgress NOTIFY syncProgressChanged)
     // The last finished sync: {categoryId (-1 = everything), cancelled, finishedAt, folders: [report]}.
@@ -55,6 +63,14 @@ class LibraryBridge : public QObject {
     // Each folder's latest report this session, keyed by folder id (as a string).
     Q_PROPERTY(QVariantMap folderReports READ folderReports NOTIFY lastReportChanged)
     Q_PROPERTY(bool folderOperationRunning READ folderOperationRunning NOTIFY folderOperationRunningChanged)
+    // Reading metadata: {done, total, perSecond}; empty when not reading.
+    Q_PROPERTY(QVariantMap metadataProgress READ metadataProgress NOTIFY metadataProgressChanged)
+    // UI preferences (preferences.ini next to library.db): which columns a track list shows, in order.
+    Q_PROPERTY(QStringList trackColumns READ trackColumns WRITE setTrackColumns NOTIFY trackColumnsChanged)
+    // How far a mouse-wheel notch scrolls, in percent of Qt's default (50–500, default 200).
+    Q_PROPERTY(int scrollSpeed READ scrollSpeed WRITE setScrollSpeed NOTIFY scrollSpeedChanged)
+    Q_PROPERTY(int defaultScrollSpeed READ defaultScrollSpeed CONSTANT)
+    Q_PROPERTY(QStringList allTrackColumns READ allTrackColumns CONSTANT)
 
 public:
     // Opens (or creates) `dataDir`/library.db and starts the SyncWorker. On failure the
@@ -71,8 +87,11 @@ public:
     static LibraryBridge* instance() { return instance_; }
     static LibraryBridge* create(QQmlEngine* qmlEngine, QJSEngine* jsEngine);
 
-    // The UI thread's hoardor library, for CategoryFilesModel. Null when not ready.
+    // The UI thread's hoardor libraries, for the list models. Null when not ready.
     hoardor::file::Library* library() { return library_ ? &*library_ : nullptr; }
+    hoardor::audio::Library* tracks() { return tracks_ ? &*tracks_ : nullptr; }
+    hoardor::video::Library* videos() { return videos_ ? &*videos_ : nullptr; }
+    ThumbnailCache* thumbnails() { return thumbnails_.get(); }
 
     bool ready() const { return library_.has_value(); }
     QString openError() const { return openError_; }
@@ -83,11 +102,19 @@ public:
     QVariantMap settingLimits() const;
     QStringList fileKinds() const;
     bool syncing() const { return syncing_; }
+    bool reading() const { return reading_; }
     QVariantMap syncProgress() const { return syncProgress_; }
     QVariantMap lastReport() const { return lastReport_; }
     QVariantMap categoryReports() const;
     QVariantMap folderReports() const;
     bool folderOperationRunning() const { return folderOperations_ > 0; }
+    QVariantMap metadataProgress() const { return metadataProgress_; }
+    QStringList trackColumns() const;
+    int scrollSpeed() const;
+    int defaultScrollSpeed() const { return DefaultScrollSpeedPercent; }
+    void setScrollSpeed(int percent);
+    void setTrackColumns(const QStringList& columns);
+    QStringList allTrackColumns() const;
 
     // Sync (in the background, on hoardor's SyncWorker).
     Q_INVOKABLE bool requestSync(int categoryId);  // -1 = every category; false if already queued
@@ -111,6 +138,26 @@ public:
     Q_INVOKABLE bool updateCategory(int id, const QString& name, const QStringList& kinds);
     Q_INVOKABLE bool removeCategory(int id);
 
+    // Media pages (features/media_listing_ui.md). Copies of one album / movie / show in
+    // different qualities, best first. They read SQLite only.
+    // [{label, complete, trackCount, totalTracks, size, tracks: [track]}]
+    Q_INVOKABLE QVariantList albumCopies(const QString& albumArtist, const QString& album, int categoryId = -1);
+    // [{label, item}]
+    Q_INVOKABLE QVariantList movieCopies(const QString& title, int year, int categoryId = -1);
+    // {qualities: [{label, episodes, total}], episodes: [{season, episode, copies: [{label, item}]}]}
+    Q_INVOKABLE QVariantMap showCopies(const QString& show, int categoryId = -1);
+    Q_INVOKABLE QString folderLabel(int folderId) const { return folderName(qint64(folderId)); }
+    Q_INVOKABLE int categoryOfFolder(int folderId) const;
+    Q_INVOKABLE QString thumbnail(qint64 entryId);
+    // Which view a category opens: "music", "movies", "shows", or "none". The user's choice
+    // (Settings → Library) or a default from its kinds and what it holds.
+    Q_INVOKABLE QString categoryView(int categoryId);
+    Q_INVOKABLE QString categoryViewChoice(int categoryId) const;  // "" = automatic
+    Q_INVOKABLE void setCategoryView(int categoryId, const QString& view);
+    // A remembered UI choice (e.g. a grid's sort), or `fallback`.
+    Q_INVOKABLE QVariant preference(const QString& key, const QVariant& fallback) const;
+    Q_INVOKABLE void setPreference(const QString& key, const QVariant& value);
+
     // Settings. saveSettings refuses invalid values with hoardor's message (errorOccurred).
     Q_INVOKABLE bool saveSettings(const QVariantMap& settings);
     Q_INVOKABLE QVariantMap defaultSettings() const;
@@ -120,13 +167,24 @@ signals:
     void foldersChanged();
     void settingsChanged();
     void syncingChanged();
+    void readingChanged();
     void syncProgressChanged();
     void lastReportChanged();
     void folderOperationRunningChanged();
     void syncFinished(const QVariantMap& report);
+    void metadataProgressChanged();
+    void metadataFinished(const QVariantMap& report);  // {read, failed, skipped, cancelled}
+    // What the library holds changed (a sync finished; tags were read, every few seconds
+    // during a pass and at its end): models refresh in place.
+    void contentChanged();
+    void trackColumnsChanged();
+    void scrollSpeedChanged();
+    void categoryViewsChanged();
     void folderOperationFinished(bool ok, const QString& message);
     // Anything else that failed, in plain words.
     void errorOccurred(const QString& message);
+    // Something worth a line in the status bar that isn't an error.
+    void notice(const QString& message);
 
 private:
     void open(const QString& dataDir);
@@ -134,9 +192,12 @@ private:
     void reloadFolders();
     void reloadSettings();
     void setSyncing(bool syncing);
+    void setReading(bool reading);
     void onProgress(const hoardor::file::SyncProgress& progress);
     void onFinished(std::optional<hoardor::file::CategoryId> scope, const hoardor::file::SyncReport& report);
     void checkIdle();
+    void onMetadataProgress(const hoardor::master::MetadataProgress& progress);
+    void onMetadataFinished(const hoardor::master::MetadataReport& report);
     QString folderName(qint64 folderId) const;
     // Reports a hoardor error through errorOccurred and returns false; returns true on success.
     template <class T>
@@ -149,20 +210,30 @@ private:
     inline static LibraryBridge* instance_ = nullptr;
 
     QString databasePath_;
+    // UI preferences: an INI file in the data folder, not QSettings() (the registry on Windows,
+    // which saves nothing without an organization name; setting one would move the data folder).
+    QString preferencesPath_;
     QString openError_;
     std::optional<hoardor::db::Database> database_;  // the UI thread's connection
     std::optional<hoardor::file::Library> library_;  // uses database_, so declared after it
+    std::optional<hoardor::audio::Library> tracks_;
+    std::optional<hoardor::video::Library> videos_;
+    std::unique_ptr<ThumbnailCache> thumbnails_;
     std::unique_ptr<hoardor::master::SyncWorker> worker_;
 
     QVariantList categories_;
     QVariantList folders_;
     QVariantMap settings_;
     bool syncing_ = false;
+    bool reading_ = false;
     QVariantMap syncProgress_;
     QVariantMap lastReport_;
     QHash<qint64, QVariantMap> folderReports_;  // the latest report per folder
     QTimer idleTimer_;
+    QTimer liveRefresh_;            // while tags are read: contentChanged every few seconds
+    qint64 lastThumbnailPass_ = 0;  // ms since the epoch
     int folderOperations_ = 0;
+    QVariantMap metadataProgress_;
 };
 
 }

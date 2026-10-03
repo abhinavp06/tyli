@@ -52,10 +52,10 @@ Item {
     }
 
     // Folder columns, shared by the header and the rows.
-    readonly property int dotWidth: 16
-    readonly property int filesWidth: 80
-    readonly property int syncWidth: 170
-    readonly property int markerWidth: 20
+    readonly property int dotWidth: Theme.px(16)
+    readonly property int filesWidth: Theme.px(80)
+    readonly property int syncWidth: Theme.px(170)
+    readonly property int markerWidth: Theme.px(20)
     readonly property int actionsWidth: 4 * Theme.controlHeight
 
     // ---- Small pieces used below
@@ -65,7 +65,7 @@ Item {
     }
     component KindChecks: Flow {
         property var kinds: []
-        spacing: 12
+        spacing: Theme.px(12)
         Repeater {
             model: Library.fileKinds
             TyCheckBox {
@@ -78,8 +78,8 @@ Item {
     }
     component Chip: Rectangle {
         property alias text: chipText.text
-        implicitWidth: chipText.implicitWidth + 16
-        implicitHeight: 20
+        implicitWidth: chipText.implicitWidth + Theme.px(16)
+        implicitHeight: Theme.px(20)
         color: "transparent"
         border.width: 1
         border.color: Theme.hairline
@@ -94,7 +94,7 @@ Item {
     component PathField: RowLayout {
         property alias text: field.text
         property alias field: field
-        spacing: 4
+        spacing: Theme.px(4)
         TyField {
             id: field
             Layout.fillWidth: true
@@ -113,13 +113,13 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 14
+        spacing: Theme.px(14)
 
         // ---- Category pills
         Flow {
             objectName: "categoryPills"
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Theme.px(8)
             TyPill {
                 text: "all"
                 count: String(Library.folders.length)
@@ -153,10 +153,10 @@ Item {
         RowLayout {
             visible: page.addingCategory
             Layout.fillWidth: true
-            spacing: 16
+            spacing: Theme.px(16)
             TyField {
                 id: newCategoryName
-                Layout.preferredWidth: 220
+                Layout.preferredWidth: Theme.px(220)
                 placeholderText: "new category name"
                 onAccepted: addCategoryButton.clicked()
             }
@@ -182,13 +182,13 @@ Item {
         // ---- The selected category (or "all"): name, kinds, totals, actions
         RowLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Theme.px(4)
             visible: !page.editingCategory
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
                 Row {
-                    spacing: 12
+                    spacing: Theme.px(12)
                     Text {
                         text: page.selectedCategory ? page.selectedCategory.name.toLowerCase() : "all folders"
                         color: Theme.text
@@ -242,12 +242,43 @@ Item {
             }
         }
 
+        // ---- Which view the category opens (a TYLI preference; "automatic" decides from its files)
+        Row {
+            objectName: "viewChoice"
+            visible: page.selectedCategory !== undefined && !page.editingCategory
+            spacing: Theme.px(16)
+            property string choice: page.selectedCategory ? Library.categoryViewChoice(page.selectedCategory.id) : ""
+            Connections {
+                target: Library
+                function onCategoryViewsChanged() { parent.choice = page.selectedCategory ? Library.categoryViewChoice(page.selectedCategory.id) : "" }
+            }
+            Text { text: "view"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Repeater {
+                model: [{ key: "", label: "automatic" }, { key: "music", label: "music" }, { key: "movies", label: "movies" }, { key: "shows", label: "shows" }]
+                Text {
+                    required property var modelData
+                    readonly property bool on: parent.choice === modelData.key
+                    text: modelData.label
+                    color: on ? Theme.accent : choiceArea.containsMouse ? Theme.text : Theme.textDim
+                    font.pixelSize: Theme.fontSizeSmall
+                    MouseArea {
+                        id: choiceArea
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: Library.setCategoryView(page.selectedCategory.id, modelData.key)
+                    }
+                }
+            }
+        }
+
         // ---- Editing the category (inline)
         RowLayout {
             visible: page.editingCategory
             Layout.fillWidth: true
-            spacing: 16
-            TyField { id: editName; Layout.preferredWidth: 220; onAccepted: saveCategory.clicked() }
+            spacing: Theme.px(16)
+            TyField { id: editName; Layout.preferredWidth: Theme.px(220); onAccepted: saveCategory.clicked() }
             KindChecks { id: editKinds; Layout.fillWidth: true }
             TyIconButton {
                 id: saveCategory
@@ -267,8 +298,8 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             visible: Library.syncing
-            spacing: 16
-            TyProgress { width: 260; Layout.preferredWidth: 260 }
+            spacing: Theme.px(16)
+            TyProgress { width: Theme.px(260); Layout.preferredWidth: Theme.px(260) }
             Text {
                 Layout.fillWidth: true
                 color: Theme.textDim
@@ -289,11 +320,11 @@ Item {
         // ---- Folder list header
         RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            spacing: 16
+            Layout.leftMargin: Theme.px(12)
+            Layout.rightMargin: Theme.px(12)
+            spacing: Theme.px(16)
             Item { Layout.preferredWidth: page.dotWidth }
-            Label { Layout.preferredWidth: 200; text: "folder" }
+            Label { Layout.preferredWidth: Theme.px(200); text: "folder" }
             Label { Layout.fillWidth: true; text: "path" }
             Label { Layout.preferredWidth: page.filesWidth; horizontalAlignment: Text.AlignRight; text: "files" }
             Label { Layout.preferredWidth: page.syncWidth; text: "last sync" }
@@ -346,21 +377,21 @@ Item {
                 // The row
                 Rectangle {
                     width: parent.width
-                    height: 44
+                    height: Theme.px(44)
                     color: rowArea.containsMouse ? Theme.hover : "transparent"
-                    MouseArea { id: rowArea; anchors.fill: parent; hoverEnabled: true; onClicked: page.toggleExpanded(folder.modelData.id) }
+                    MouseArea { id: rowArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.toggleExpanded(folder.modelData.id) }
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 16
+                        anchors.leftMargin: Theme.px(12)
+                        anchors.rightMargin: Theme.px(12)
+                        spacing: Theme.px(16)
                         Text {
                             Layout.preferredWidth: page.dotWidth
                             text: folder.online ? "●" : "○"
                             color: folder.online ? Theme.accent : Theme.textDim
                         }
                         Text {
-                            Layout.preferredWidth: 200
+                            Layout.preferredWidth: Theme.px(200)
                             text: folder.modelData.name
                             color: folder.online ? Theme.text : Theme.textDim
                             elide: Text.ElideRight
@@ -442,7 +473,7 @@ Item {
                             Layout.preferredWidth: page.actionsWidth
                             layoutDirection: Qt.RightToLeft
                             visible: folder.confirmingRemove
-                            spacing: 4
+                            spacing: Theme.px(4)
                             TyIconButton { iconName: "close"; tip: "keep it"; onClicked: folder.confirmingRemove = false }
                             TyIconButton {
                                 iconName: "check"
@@ -458,9 +489,9 @@ Item {
                 // Relocate (inline)
                 RowLayout {
                     visible: folder.relocating
-                    width: parent.width - 52
-                    x: 40
-                    spacing: 8
+                    width: parent.width - Theme.px(52)
+                    x: Theme.px(40)
+                    spacing: Theme.px(8)
                     Text { text: "now at"; color: Theme.textDim }
                     PathField { id: relocatePath; Layout.fillWidth: true; field.onAccepted: relocateOk.clicked() }
                     TyIconButton {
@@ -479,15 +510,15 @@ Item {
                 // Held removals (the mass-removal guard)
                 Rectangle {
                     visible: folder.modelData.heldRemovals > 0 && !page.keptFolderIds.includes(folder.modelData.id)
-                    x: 40
-                    width: parent.width - 52
-                    height: visible ? 40 : 0
+                    x: Theme.px(40)
+                    width: parent.width - Theme.px(52)
+                    height: visible ? Theme.px(40) : 0
                     color: "transparent"
                     Rectangle { width: Theme.lineWidth; height: parent.height; color: Theme.warning }
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 12
-                        spacing: 4
+                        anchors.leftMargin: Theme.px(12)
+                        spacing: Theme.px(4)
                         Text {
                             Layout.fillWidth: true
                             color: Theme.text
@@ -513,11 +544,11 @@ Item {
                 // Last sync and details (expanded)
                 Column {
                     visible: folder.open
-                    x: 52
-                    width: parent.width - 64
+                    x: Theme.px(52)
+                    width: parent.width - Theme.px(64)
                     topPadding: 2
-                    bottomPadding: 12
-                    spacing: 4
+                    bottomPadding: Theme.px(12)
+                    spacing: Theme.px(4)
                     readonly property var errors: folder.open ? Library.scanErrors(folder.modelData.id) : []
                     Text {
                         width: parent.width
@@ -584,19 +615,19 @@ Item {
         Column {
             Layout.fillWidth: true
             visible: page.addingFolder
-            spacing: 4
+            spacing: Theme.px(4)
             Rectangle {
                 width: parent.width
-                height: 48
+                height: Theme.px(48)
                 color: "transparent"
                 Rectangle { width: Theme.lineWidth; height: parent.height; color: Theme.accent }
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 16
+                    anchors.leftMargin: Theme.px(12)
+                    anchors.rightMargin: Theme.px(12)
+                    spacing: Theme.px(16)
                     Icon { Layout.preferredWidth: page.dotWidth; name: "plus"; color: Theme.accent }
-                    PathField { id: addPath; Layout.fillWidth: true; Layout.preferredWidth: 3; field.onAccepted: addOk.clicked() }
+                    PathField { id: addPath; Layout.fillWidth: true; Layout.preferredWidth: Theme.px(3); field.onAccepted: addOk.clicked() }
                     TyField { id: addName; Layout.fillWidth: true; Layout.preferredWidth: 1; placeholderText: "name (optional)"; onAccepted: addOk.clicked() }
                     Row {
                         spacing: 0
@@ -623,10 +654,10 @@ Item {
                     }
                 }
             }
-            TyProgress { x: 40; width: 200; visible: Library.folderOperationRunning }
+            TyProgress { x: Theme.px(40); width: Theme.px(200); visible: Library.folderOperationRunning }
             Text {
-                x: 40
-                width: parent.width - 52
+                x: Theme.px(40)
+                width: parent.width - Theme.px(52)
                 visible: page.addError !== ""
                 wrapMode: Text.Wrap
                 color: Theme.error

@@ -6,9 +6,13 @@ import Tyli
 T.CheckBox {
     id: control
 
+    // The hand over anything clickable (Templates controls keep the arrow by themselves).
+    HoverHandler { cursorShape: control.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
+
     implicitHeight: Theme.controlHeight
-    implicitWidth: indicator.implicitWidth + (text !== "" ? spacing + label.implicitWidth : 0)
-    spacing: 8
+    // With text, the label's own left padding already makes room for the [x].
+    implicitWidth: text !== "" ? label.implicitWidth : indicator.implicitWidth
+    spacing: Theme.px(8)
     hoverEnabled: true
 
     indicator: Text {

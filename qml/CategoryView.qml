@@ -1,130 +1,158 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import Tyli
-import "Format.js" as Format
 
-// A category's media. For now: its files across all its folders, paged from the
-// database as you scroll. Albums, shows, and books arrive with metadata.
+// A category's media, in the view that fits it (features/media_listing_ui.md §2): music
+// (albums), movies, or shows. Pages open in place, with back and forward like a browser
+// (the mouse's side buttons, Alt+← / Alt+→): an album, an artist, a genre, a year, a
+// movie, a director, a show.
 Item {
     id: view
+    objectName: "categoryView"
 
     property var category
     signal addFolderRequested()
+    signal folderSettingsRequested(int folderId)
 
+    readonly property int categoryId: category ? category.id : -1
+    property int kindRevision: 0
+    readonly property string kind: { kindRevision; return categoryId >= 0 ? Library.categoryView(categoryId) : "none" }  // music | movies | shows | none
     readonly property var folders: category ? Library.folders.filter(f => f.categoryId === category.id) : []
-    readonly property int fileCount: folders.reduce((sum, f) => sum + f.fileCount, 0)
-    readonly property bool anySynced: folders.some(f => f.status !== "unknown")
+    readonly property string mode: folders.length === 0 ? "empty" : kind
+    // A new category, or a new kind of home page: start again from its home.
+    readonly property string homeKey: categoryId + "/" + mode
+    onHomeKeyChanged: home()
+    Component.onCompleted: home()
 
-    CategoryFilesModel {
-        id: files
-        categoryId: view.category ? view.category.id : -1
+    // The pages from the category's home to the one shown. Each stays alive under the next
+    // (the StackView), so going back finds it exactly as it was: the same scroll position and
+    // rows. `forwardRoutes` are the pages "forward" brings back, the next one last.
+    property var routes: []
+    property var forwardRoutes: []
+    readonly property var route: routes.length > 0 ? routes[routes.length - 1] : ({ page: "home", params: {} })
+    readonly property bool canGoBack: routes.length > 1
+    readonly property bool canGoForward: forwardRoutes.length > 0
+
+    function open(page, params) {
+        forwardRoutes = []
+        push({ page: page, params: params || {} })
+    }
+    function push(r) {
+        routes = routes.concat([r])
+        stack.pushItem(componentFor(r), { owner: view, route: r, depth: routes.length - 1 }, StackView.Immediate)
+    }
+    function back() {
+        if (!canGoBack)
+            return false
+        forwardRoutes = forwardRoutes.concat([route])
+        routes = routes.slice(0, routes.length - 1)
+        stack.popCurrentItem(StackView.Immediate)
+        return true
+    }
+    function forward() {
+        if (!canGoForward)
+            return false
+        const r = forwardRoutes[forwardRoutes.length - 1]
+        forwardRoutes = forwardRoutes.slice(0, forwardRoutes.length - 1)
+        push(r)
+        return true
+    }
+    function home() {
+        routes = [{ page: "home", params: {} }]
+        forwardRoutes = []
+        stack.clear(StackView.Immediate)
+        stack.pushItem(componentFor(routes[0]), { owner: view, route: routes[0], depth: 0 }, StackView.Immediate)
     }
 
-    // Column widths shared by the header and the rows.
-    readonly property int folderWidth: 170
-    readonly property int sizeWidth: 84
-    readonly property int kindWidth: 64
-    readonly property int flagWidth: 72
+    Connections {
+        target: Library
+        function onCategoryViewsChanged() { view.kindRevision++ }
+        // "automatic" categories can change kind once tags are read; never under an open page.
+        function onContentChanged() { if (view.routes.length === 1) view.kindRevision++ }
+    }
 
-    ColumnLayout {
+    // The breadcrumb of the page at `depth`: the category, then each page opened from it.
+    function crumbs(depth) {
+        const out = [{ text: category ? category.name.toLowerCase() : "", page: "home", depth: 0 }]
+        for (let i = 1; i <= depth && i < routes.length; ++i)
+            out.push({ text: routes[i].params.crumb || routes[i].page, depth: i })
+        return out
+    }
+    // Like going back several pages at once: they can all come back with "forward".
+    function goToCrumb(crumb) {
+        if (crumb.depth >= routes.length - 1)
+            return
+        forwardRoutes = forwardRoutes.concat(routes.slice(crumb.depth + 1).reverse())
+        routes = routes.slice(0, crumb.depth + 1)
+        stack.popToIndex(crumb.depth, StackView.Immediate)
+    }
+
+    function componentFor(r) {
+        if (mode === "empty")
+            return empty
+        if (mode === "music") {
+            switch (r.page) {
+            case "album": return albumPage
+            case "artist": return artistPage
+            case "genre":
+            case "year": return musicFilterPage
+            }
+            return musicHome
+        }
+        if (mode === "movies" || mode === "shows") {
+            switch (r.page) {
+            case "movie": return moviePage
+            case "show": return showPage
+            case "director": return personPage
+            case "genre":
+            case "year": return videoFilterPage
+            }
+            return mode === "movies" ? moviesHome : showsHome
+        }
+        return unsupported
+    }
+
+    StackView {
+        id: stack
         anchors.fill: parent
         anchors.leftMargin: Theme.pageMargin
         anchors.rightMargin: Theme.pageMargin
-        anchors.topMargin: 20
-        anchors.bottomMargin: 12
-        spacing: 14
+        anchors.topMargin: Theme.px(20)
+        anchors.bottomMargin: Theme.px(12)
+        clip: true
+    }
 
-        RowLayout {
-            spacing: 16
-            Text {
-                text: view.category ? view.category.name.toLowerCase() : ""
-                color: Theme.text
-                font.pixelSize: Theme.fontSizeTitle
-                font.weight: Theme.weightBold
-            }
-            Text {
-                text: Format.plural(view.fileCount, "file") + " · " + Format.plural(view.folders.length, "folder")
-                color: Theme.textDim
-            }
-        }
-
-        Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            spacing: 16
-            visible: files.count > 0
-            Text { Layout.fillWidth: true; text: "file"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.preferredWidth: view.folderWidth; text: "folder"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.preferredWidth: view.sizeWidth; horizontalAlignment: Text.AlignRight; text: "size"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Text { Layout.preferredWidth: view.kindWidth; text: "kind"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Item { Layout.preferredWidth: view.flagWidth }
-        }
-
-        ListView {
-            id: list
-            objectName: "fileList"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            model: files
-            boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: TyScrollBar {}
-
-            delegate: Rectangle {
-                id: row
-                required property string relativePath
-                required property string folderName
-                required property bool folderOnline
-                required property double size
-                required property string kind
-                required property bool unsettled
-                width: ListView.view.width
-                height: 28
-                color: area.containsMouse ? Theme.hover : "transparent"
-                // An offline folder's files stay listed, dimmed (nothing touches the drive).
-                readonly property color main: folderOnline ? Theme.text : Theme.textFaint
-                readonly property color side: folderOnline ? Theme.textDim : Theme.textFaint
-
-                MouseArea { id: area; anchors.fill: parent; hoverEnabled: true }
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 16
-                    Text { Layout.fillWidth: true; text: row.relativePath; color: row.main; elide: Text.ElideMiddle }
-                    Text { Layout.preferredWidth: view.folderWidth; text: row.folderName; color: row.side; elide: Text.ElideRight }
-                    Text { Layout.preferredWidth: view.sizeWidth; horizontalAlignment: Text.AlignRight; text: Format.bytes(row.size); color: row.side }
-                    Text { Layout.preferredWidth: view.kindWidth; text: row.kind; color: row.side }
-                    Text { Layout.preferredWidth: view.flagWidth; text: row.unsettled ? "settling" : ""; color: Theme.warning }
-                }
-            }
-
-            // Empty states
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-                visible: list.count === 0
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    color: Theme.textDim
-                    text: !view.category ? "no categories yet"
-                        : view.folders.length === 0 ? "no folders in " + view.category.name.toLowerCase() + " yet"
-                        : !view.anySynced ? "not synced yet"
-                        : "no media files in these folders"
-                }
-                TyIconButton {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: view.category !== undefined && (view.folders.length === 0 || !view.anySynced)
-                    iconName: view.folders.length === 0 ? "plus" : "sync"
-                    primary: true
-                    tip: view.folders.length === 0 ? "add a folder (opens settings)" : "sync " + (view.category ? view.category.name.toLowerCase() : "")
-                    onClicked: view.folders.length === 0 ? view.addFolderRequested() : Library.requestSync(view.category.id)
-                }
-            }
+    Component {
+        id: empty
+        Column {
+            property var owner
+            property var route
+            property int depth
+            spacing: Theme.px(10)
+            Text { text: view.category ? view.category.name.toLowerCase() : ""; color: Theme.text; font.pixelSize: Theme.fontSizeTitle; font.weight: Theme.weightBold }
+            Text { text: "no folders yet"; color: Theme.textDim }
+            LinkText { text: "add a folder in settings → library"; onActivated: view.addFolderRequested() }
         }
     }
+    Component {
+        id: unsupported
+        Column {
+            property var owner
+            property var route
+            property int depth
+            spacing: Theme.px(10)
+            Text { text: view.category ? view.category.name.toLowerCase() : ""; color: Theme.text; font.pixelSize: Theme.fontSizeTitle; font.weight: Theme.weightBold }
+            Text { text: "books and other text get their own view later"; color: Theme.textDim }
+        }
+    }
+    Component { id: musicHome; MusicView {} }
+    Component { id: albumPage; AlbumView {} }
+    Component { id: artistPage; ArtistView {} }
+    Component { id: musicFilterPage; MusicFilterView {} }
+    Component { id: moviesHome; VideoGridView { movies: true } }
+    Component { id: showsHome; VideoGridView { movies: false } }
+    Component { id: moviePage; MovieView {} }
+    Component { id: showPage; ShowView {} }
+    Component { id: personPage; PersonView {} }
+    Component { id: videoFilterPage; VideoGridView { movies: view.mode === "movies" } }
 }

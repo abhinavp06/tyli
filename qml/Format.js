@@ -54,3 +54,57 @@ function categoryIcon(category) {
         return "books"
     return "folder"
 }
+
+// 245000 ms -> "4:05"; an hour or more -> "1:02:05".
+function duration(ms) {
+    const total = Math.round(Number(ms) / 1000)
+    const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60
+    const ss = (s < 10 ? "0" : "") + s
+    return h > 0 ? h + ":" + (m < 10 ? "0" : "") + m + ":" + ss : m + ":" + ss
+}
+
+// 7260000 ms -> "2h 1m"; under an hour -> "52m".
+function runtime(ms) {
+    const minutes = Math.round(Number(ms) / 60000)
+    return minutes >= 60 ? Math.floor(minutes / 60) + "h " + (minutes % 60) + "m" : minutes + "m"
+}
+
+// 44100 -> "44.1", 96000 -> "96".
+function kilohertz(rate) {
+    if (!rate)
+        return "?"
+    const k = Number(rate) / 1000
+    return (Math.round(k * 10) / 10).toString()
+}
+
+// A resolution badge: "4K", "1080p", "720p".
+function resolution(height) {
+    if (height >= 2000)
+        return "4K"
+    if (height >= 1000)
+        return "1080p"
+    if (height >= 700)
+        return "720p"
+    return height > 0 ? height + "p" : ""
+}
+
+// Every value of every item's list, in order (Qt's lists from C++ have no flatMap).
+function flatten(list, valuesOf) {
+    const out = []
+    for (let i = 0; i < list.length; ++i) {
+        const values = valuesOf(list[i])
+        for (let j = 0; j < values.length; ++j)
+            out.push(values[j])
+    }
+    return out
+}
+
+// Distinct values, first occurrence order.
+function unique(values) {
+    const out = []
+    for (let i = 0; i < values.length; ++i) {
+        if (out.indexOf(values[i]) < 0)
+            out.push(values[i])
+    }
+    return out
+}

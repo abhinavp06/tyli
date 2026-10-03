@@ -9,7 +9,7 @@ Item {
     property bool indeterminate: true
     property real value: 0  // 0..1, when not indeterminate
 
-    implicitWidth: 260
+    implicitWidth: Theme.px(260)
     implicitHeight: Theme.lineWidth
     clip: true
 

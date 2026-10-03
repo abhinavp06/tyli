@@ -1,9 +1,15 @@
 #include "library_bridge.hpp"
 
+#include "app_setup.hpp"
+#include "copy_grouper.hpp"
+#include "item_model.hpp"
+#include "thumbnail_cache.hpp"
+
 #include <QDateTime>
 #include <QDir>
 #include <QFutureWatcher>
 #include <QJSEngine>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QUrl>
 #include <QtConcurrent/QtConcurrentRun>
@@ -98,6 +104,7 @@ QVariantMap settingsToMap(const file::Settings& s) {
         {"progressIntervalFiles", s.progress_interval_files},
         {"relocationSampleSize", s.relocation_sample_size},
         {"relocationMinMatchPercent", s.relocation_min_match_percent},
+        {"parallelDevices", s.parallel_devices},
     };
 }
 
@@ -130,6 +137,7 @@ QString applyMap(file::Settings& s, const QVariantMap& map) {
     number("progressIntervalFiles", s.progress_interval_files);
     number("relocationSampleSize", s.relocation_sample_size);
     number("relocationMinMatchPercent", s.relocation_min_match_percent);
+    number("parallelDevices", s.parallel_devices);
     return {};
 }
 
@@ -150,11 +158,17 @@ QVariantMap rootToMap(const file::Root& root) {
 
 }  // namespace
 
-LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent) : QObject(parent) {
+LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent)
+    : QObject(parent), preferencesPath_(QDir(dataDir).filePath(QStringLiteral("preferences.ini"))) {
     // While a sync runs, poll SyncWorker::idle(): its "finished" callback runs before
     // the worker clears its running flag, so the callback alone can't say "all done".
     idleTimer_.setInterval(100);
     connect(&idleTimer_, &QTimer::timeout, this, &LibraryBridge::checkIdle);
+    // Albums and movies appear while their tags are read, not only at the end of a pass.
+    liveRefresh_.setSingleShot(true);
+    liveRefresh_.setInterval(2500);
+    connect(&liveRefresh_, &QTimer::timeout, this, &LibraryBridge::contentChanged);
+    setWheelSpeed(scrollSpeed() / 100.0);
     open(dataDir);
 }
 
@@ -198,6 +212,12 @@ void LibraryBridge::open(const QString& dataDir) {
         openError_ = qstr(library.error().message);
         return;
     }
+    auto tracks = hoardor::audio::Library::open(*database_);
+    auto videos = hoardor::video::Library::open(*database_);
+    if (!tracks || !videos) {
+        openError_ = qstr(!tracks ? tracks.error().message : videos.error().message);
+        return;
+    }
 
     // The callbacks run on hoardor's worker thread. Each copies what it needs and hands it
     // to the UI thread with a queued call, where everything else happens.
@@ -208,19 +228,28 @@ void LibraryBridge::open(const QString& dataDir) {
     callbacks.on_finished = [this](std::optional<file::CategoryId> scope, const file::SyncReport& report) {
         QMetaObject::invokeMethod(this, [this, scope, report] { onFinished(scope, report); }, Qt::QueuedConnection);
     };
+    callbacks.on_metadata_progress = [this](const hoardor::master::MetadataProgress& progress) {
+        QMetaObject::invokeMethod(this, [this, progress] { onMetadataProgress(progress); }, Qt::QueuedConnection);
+    };
+    callbacks.on_metadata_finished = [this](std::optional<file::CategoryId>, const hoardor::master::MetadataReport& report) {
+        QMetaObject::invokeMethod(this, [this, report] { onMetadataFinished(report); }, Qt::QueuedConnection);
+    };
     auto worker = hoardor::master::SyncWorker::start(file, std::move(callbacks));
     if (!worker) {
         openError_ = qstr(worker.error().message);
         return;
     }
     library_.emplace(std::move(*library));
+    tracks_.emplace(std::move(*tracks));
+    videos_.emplace(std::move(*videos));
+    thumbnails_ = std::make_unique<ThumbnailCache>(QDir(dataDir).filePath(QStringLiteral("thumbnails")), databasePath_, &*library_);
     worker_ = std::move(*worker);
 
     reloadCategories();
     reloadFolders();
     reloadSettings();
     if (!worker_->idle()) {  // "sync at startup" queued a global sync
-        setSyncing(true);
+        setSyncing(worker_->syncing());
         idleTimer_.start();
     }
 }
@@ -270,12 +299,13 @@ QVariantMap LibraryBridge::settingLimits() const {
         {"progressIntervalFiles", range(l::progress_interval_files)},
         {"relocationSampleSize", range(l::relocation_sample_size)},
         {"relocationMinMatchPercent", range(l::relocation_min_match_percent)},
+        {"parallelDevices", range(l::parallel_devices)},
     };
 }
 
 QStringList LibraryBridge::fileKinds() const {
     using K = file::FileKind;
-    return kindNames({K::Audio, K::Video, K::Text, K::Image, K::Subtitle});
+    return kindNames({K::Audio, K::Video, K::Text, K::Image, K::Subtitle, K::Info});
 }
 
 QVariantMap LibraryBridge::categoryReports() const {
@@ -380,14 +410,216 @@ void LibraryBridge::onFinished(std::optional<file::CategoryId> scope, const file
     reloadFolders();  // status, path (relocated), counts, last sync time
     emit lastReportChanged();
     emit syncFinished(lastReport_);
+    emit contentChanged();
 }
 
+void LibraryBridge::setReading(bool reading) {
+    if (reading_ == reading) return;
+    reading_ = reading;
+    emit readingChanged();
+}
+
+void LibraryBridge::onMetadataProgress(const hoardor::master::MetadataProgress& progress) {
+    setReading(true);
+    const double seconds = progress.elapsed_ms / 1000.0;
+    metadataProgress_ = {{"done", qint64(progress.done)}, {"total", qint64(progress.total)},
+                         {"perSecond", seconds > 0.5 ? qRound(progress.done / seconds) : 0}};
+    emit metadataProgressChanged();
+    if (!liveRefresh_.isActive()) liveRefresh_.start();
+    // New albums get their covers during the pass too (the cache skips what it already has).
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if (thumbnails_ && now - lastThumbnailPass_ > 15000) {
+        lastThumbnailPass_ = now;
+        thumbnails_->rebuild();
+    }
+}
+
+void LibraryBridge::onMetadataFinished(const hoardor::master::MetadataReport& report) {
+    metadataProgress_.clear();
+    emit metadataProgressChanged();
+    emit metadataFinished({{"read", qint64(report.read)}, {"failed", qint64(report.failed)},
+                           {"skipped", qint64(report.skipped)}, {"cancelled", report.cancelled}});
+    liveRefresh_.stop();
+    emit contentChanged();
+    if (thumbnails_) thumbnails_->rebuild();  // the drives are awake now
+}
+
+// Polled while hoardor's worker has jobs: a sync, then (as its own job) reading metadata.
 void LibraryBridge::checkIdle() {
-    if (worker_ && !worker_->idle()) return;
-    idleTimer_.stop();
-    syncProgress_.clear();
-    emit syncProgressChanged();
-    setSyncing(false);
+    const bool syncing = worker_ && worker_->syncing();
+    const bool reading = worker_ && worker_->reading();
+    if (!syncing && !syncProgress_.isEmpty()) {
+        syncProgress_.clear();
+        emit syncProgressChanged();
+    }
+    if (!reading && !metadataProgress_.isEmpty()) {
+        metadataProgress_.clear();
+        emit metadataProgressChanged();
+    }
+    setSyncing(syncing);
+    setReading(reading);
+    if (!syncing && !reading) idleTimer_.stop();
+}
+
+// ---------------------------------------------------------------- Media pages
+
+namespace {
+
+template <class Page, class Fetch>
+auto fetchAll(Fetch fetch) {
+    decltype(fetch(std::optional<hoardor::core::Cursor>{})->items) all;
+    std::optional<hoardor::core::Cursor> after;
+    while (true) {
+        auto page = fetch(after);
+        if (!page) break;
+        for (auto& x : page->items) all.push_back(std::move(x));
+        if (!page->next) break;
+        after = page->next;
+    }
+    return all;
+}
+
+}
+
+QVariantList LibraryBridge::albumCopies(const QString& albumArtist, const QString& album, int categoryId) {
+    if (!tracks_) return {};
+    namespace a = hoardor::audio;
+    a::Filter filter{{{a::Field::AlbumArtist, a::Value{albumArtist.toStdString()}}, {a::Field::Album, a::Value{album.toStdString()}}}};
+    if (categoryId >= 0) filter.all.push_back({a::Field::Category, a::Value{std::int64_t{categoryId}}});
+    auto all = fetchAll<a::Track>([&](const auto& after) { return tracks_->tracks(filter, {}, after, 500); });
+    QVariantList out;
+    for (auto& copy : copies::groupAudio(std::move(all))) {
+        QVariantList list;
+        for (const auto& t : copy.tracks) list << trackToMap(t);
+        out << QVariantMap{{"label", copy.label}, {"complete", copy.complete()}, {"trackCount", int(copy.tracks.size())},
+                           {"totalTracks", copy.totalTracks}, {"size", copy.size}, {"tracks", list}};
+    }
+    return out;
+}
+
+QVariantList LibraryBridge::movieCopies(const QString& title, int year, int categoryId) {
+    if (!videos_) return {};
+    namespace v = hoardor::video;
+    v::Filter filter{{{v::Field::Type, v::Value{std::int64_t{1}}}, {v::Field::Title, v::Value{title.toStdString()}},
+                      {v::Field::Year, v::Value{std::int64_t{year}}}}};
+    if (categoryId >= 0) filter.all.push_back({v::Field::Category, v::Value{std::int64_t{categoryId}}});
+    auto all = fetchAll<v::Item>([&](const auto& after) { return videos_->items(filter, {}, after, 200); });
+    QVariantList out;
+    for (const auto& copy : copies::groupVideo(std::move(all))) out << QVariantMap{{"label", copy.label}, {"item", itemToMap(copy.item)}};
+    return out;
+}
+
+QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
+    if (!videos_) return {};
+    namespace v = hoardor::video;
+    v::Filter filter{{{v::Field::Type, v::Value{std::int64_t{2}}}, {v::Field::Show, v::Value{show.toStdString()}}}};
+    if (categoryId >= 0) filter.all.push_back({v::Field::Category, v::Value{std::int64_t{categoryId}}});
+    auto all = fetchAll<v::Item>([&](const auto& after) { return videos_->items(filter, {}, after, 500); });
+    const auto grouped = copies::groupShow(std::move(all));
+    QVariantList qualities, episodes;
+    for (const auto& q : grouped.qualities) {
+        qualities << QVariantMap{{"label", q.label}, {"episodes", q.episodes}, {"total", int(grouped.episodes.size())}};
+    }
+    for (const auto& e : grouped.episodes) {
+        QVariantList list;
+        for (const auto& c : e.copies) list << QVariantMap{{"label", c.label}, {"item", itemToMap(c.item)}};
+        episodes << QVariantMap{{"season", e.season}, {"episode", e.episode}, {"copies", list}};
+    }
+    return {{"qualities", qualities}, {"episodes", episodes}};
+}
+
+int LibraryBridge::categoryOfFolder(int folderId) const {
+    for (const QVariant& f : folders_) {
+        const QVariantMap folder = f.toMap();
+        if (folder.value("id").toInt() == folderId) return folder.value("categoryId").toInt();
+    }
+    return -1;
+}
+
+QString LibraryBridge::thumbnail(qint64 entryId) { return thumbnails_ ? thumbnails_->url(entryId) : QString(); }
+
+QString LibraryBridge::categoryViewChoice(int categoryId) const {
+    return QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("views/category%1").arg(categoryId)).toString();
+}
+
+void LibraryBridge::setCategoryView(int categoryId, const QString& view) {
+    QSettings settings(preferencesPath_, QSettings::IniFormat);
+    if (view.isEmpty()) settings.remove(QStringLiteral("views/category%1").arg(categoryId));
+    else settings.setValue(QStringLiteral("views/category%1").arg(categoryId), view);
+    emit categoryViewsChanged();
+}
+
+QString LibraryBridge::categoryView(int categoryId) {
+    const QString chosen = categoryViewChoice(categoryId);
+    if (!chosen.isEmpty()) return chosen;
+    QVariantMap category;
+    for (const QVariant& c : categories_) {
+        if (c.toMap().value("id").toInt() == categoryId) category = c.toMap();
+    }
+    const QStringList kinds = category.value("kinds").toStringList();
+    if (kinds.contains(QStringLiteral("video")) && videos_) {
+        namespace v = hoardor::video;
+        const auto count = [&](std::int64_t type) {
+            auto n = videos_->count({{{v::Field::Category, v::Value{std::int64_t{categoryId}}}, {v::Field::Type, v::Value{type}}}});
+            return n ? *n : 0;
+        };
+        const auto movies = count(1), episodes = count(2);
+        if (episodes > movies) return QStringLiteral("shows");
+        if (movies > 0) return QStringLiteral("movies");
+        const QString name = category.value("name").toString().toLower();
+        for (const char* word : {"show", "tv", "series", "anime"}) {
+            if (name.contains(QLatin1String(word))) return QStringLiteral("shows");
+        }
+        return QStringLiteral("movies");
+    }
+    if (kinds.contains(QStringLiteral("audio"))) return QStringLiteral("music");
+    return QStringLiteral("none");
+}
+
+QStringList LibraryBridge::allTrackColumns() const {
+    return {QStringLiteral("length"), QStringLiteral("bitrate"), QStringLiteral("quality"), QStringLiteral("type"),
+            QStringLiteral("size"), QStringLiteral("channels")};
+}
+
+QStringList LibraryBridge::trackColumns() const {
+    return QSettings(preferencesPath_, QSettings::IniFormat)
+        .value(QStringLiteral("tracks/columns"), QStringList{QStringLiteral("length"), QStringLiteral("bitrate")})
+        .toStringList();
+}
+
+void LibraryBridge::setTrackColumns(const QStringList& columns) {
+    QStringList ordered;  // in the canonical order, known names only
+    for (const QString& c : allTrackColumns()) {
+        if (columns.contains(c)) ordered << c;
+    }
+    if (ordered == trackColumns()) return;
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("tracks/columns"), ordered);
+    emit trackColumnsChanged();
+}
+
+int LibraryBridge::scrollSpeed() const {
+    const int stored = QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("ui/scrollSpeed"), DefaultScrollSpeedPercent).toInt();
+    return std::clamp(stored, 50, 500);
+}
+
+void LibraryBridge::setScrollSpeed(int percent) {
+    percent = std::clamp(percent, 50, 500);
+    setWheelSpeed(percent / 100.0);
+    if (percent == scrollSpeed()) return;
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("ui/scrollSpeed"), percent);
+    emit scrollSpeedChanged();
+}
+
+QVariant LibraryBridge::preference(const QString& key, const QVariant& fallback) const {
+    // An INI file keeps only text: hand back the fallback's type, so false stays false in QML
+    // (the string "false" would be truthy).
+    QVariant value = QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("ui/") + key, fallback);
+    if (fallback.isValid() && value.metaType() != fallback.metaType()) value.convert(fallback.metaType());
+    return value;
+}
+
+void LibraryBridge::setPreference(const QString& key, const QVariant& value) {
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("ui/") + key, value);
 }
 
 // ---------------------------------------------------------------- Folders

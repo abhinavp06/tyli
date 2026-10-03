@@ -7,7 +7,10 @@ import Tyli
 T.TabButton {
     id: control
 
-    implicitWidth: label.implicitWidth + 28
+    // The hand over anything clickable (Templates controls keep the arrow by themselves).
+    HoverHandler { cursorShape: control.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
+
+    implicitWidth: label.implicitWidth + Theme.px(28)
     implicitHeight: Theme.controlHeight
     hoverEnabled: true
 
