@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>TYLI mockup · liked songs</title>
+<title>TYLI mockup · Liked Songs</title>
 <link rel="stylesheet" href="theme.css">
 <script src="live.js"></script>
 </head>
@@ -63,6 +63,19 @@
 
   .side-head { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 2px; padding: 8px 10px 0 18px; border-top: 1px solid var(--hairline); }
   .side-head .ib { width: 26px; height: 26px; }
+  .sidebar .nav { box-sizing: border-box; }
+  .sidebar .nav .text { min-width: 0; }
+  .nav.pl { cursor: grab; }
+  .nav .side-ic { margin-left: auto; display: inline-grid; place-items: center; }
+  .nav .side-ic + .side-ic { margin-left: 8px; }
+  .nav .side-ic .icon { width: 14px; height: 14px; }
+  .nav .playing { color: var(--accent); }
+  .nav .pin { color: var(--text-dim); visibility: hidden; cursor: pointer; }
+  .nav .pin.on { visibility: visible; color: var(--text-dim); }
+  .nav:hover .pin { visibility: visible; }
+  .nav .pin:hover { color: var(--accent); }
+  .nav.drop { box-shadow: inset 0 2px 0 var(--accent); }
+  .pin-gap { height: 1px; margin: 6px 18px; background: var(--hairline); }
   .new-pl { display: none; padding: 4px 12px 6px 18px; }
   .new-pl.open { display: block; }
   .new-pl .field { width: 100%; }
@@ -91,11 +104,17 @@
   .confirm { display: none; align-items: center; gap: 14px; }
   .confirm.open { display: flex; }
   h1 .ib { width: 26px; height: 26px; vertical-align: middle; }
-  .hero h1 .rename { display: none; }
   .hero.renaming h1 .t, .hero.renaming h1 .ib { display: none; }
-  .hero.renaming h1 .rename { display: inline-block; font: inherit; font-size: 22px; width: 420px; }
+  .hero h1 .renamebox { display: none; position: relative; width: 460px; }
+  .hero.renaming h1 .renamebox { display: inline-block; }
+  .renamebox .rename { display: block; width: 100%; font: inherit; font-size: 22px; padding-right: 76px; border-color: var(--accent); }
+  .renamebox .in { position: absolute; top: 4px; bottom: 4px; width: 32px; display: grid; place-items: center; background: none; border: 0; cursor: pointer; color: var(--text-dim); }
+  .renamebox .in:hover { background: var(--hover); }
+  .renamebox .ok { right: 38px; color: var(--accent); }
+  .renamebox .no { right: 4px; }
+  .renamebox .no:hover { color: var(--text); }
 </style>
-<div class="mock-nav"><span>proposal · playlists and liked songs (not built, for review) · <a href="index.html">index</a> ·</span> <a href="playlist.html">a playlist</a> · <a href="liked.html" class="on">liked songs</a> · <a href="album-add.html">add an album to a playlist</a></div>
+<div class="mock-nav"><span>proposal · playlists and liked songs (not built, for review) · <a href="index.html">index</a> ·</span> <a href="playlist.html">a playlist</a> · <a href="liked.html" class="on">Liked Songs</a></div>
 <div class="window">
   <header class="topbar">
     <button class="ib" title="collapse or expand the sidebar" aria-label="toggle sidebar" onclick="this.closest('.window').classList.toggle('collapsed')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16"/><path d="M9 4v16"/></svg></button>
@@ -111,18 +130,20 @@
       <a class="nav" href="shows.html" title="shows" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="12"/><path d="M8 3l4 4 4-4"/></svg><span class="text ell">shows</span></a>
       <div class="side-head"><span class="label text">playlists</span><button class="ib" title="new playlist" onclick="newPlaylist()"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
       <div class="new-pl" id="newpl"><input class="field" placeholder="name, then Enter" id="newname"></div>
-      <a class="nav on" href="liked.html" title="liked songs" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span class="text ell">liked songs</span></a>
-      <a class="nav" href="playlist.html" title="Late Night Jazz" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Late Night Jazz</span></a>
-      <a class="nav" href="playlist.html" title="Road Trip" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Road Trip</span></a>
-      <a class="nav" href="playlist.html" title="Running" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Running</span></a>
-      <a class="nav" href="playlist.html" title="Sunday Morning" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Sunday Morning</span></a>
+      <a class="nav fixed on" href="liked.html" title="Liked Songs" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span class="text ell">Liked Songs</span></a>
+      <a class="nav pl" draggable="true" data-group="pinned" href="playlist.html" title="Road Trip (drag to reorder)" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Road Trip</span><span class="side-ic playing" title="playing from this playlist"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></span><span class="side-ic pin on" title="unpin" onclick="event.preventDefault(); togglePin(this)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: currentColor"><path d="M9 4h6l-1 6 4 4H6l4-4zM12 14v6"/></svg></span></a>
+      <a class="nav pl" draggable="true" data-group="pinned" href="playlist.html" title="Late Night Jazz (drag to reorder)" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Late Night Jazz</span><span class="side-ic pin on" title="unpin" onclick="event.preventDefault(); togglePin(this)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: currentColor"><path d="M9 4h6l-1 6 4 4H6l4-4zM12 14v6"/></svg></span></a>
+      <div class="pin-gap"></div>
+      <a class="nav pl" draggable="true" data-group="others" href="playlist.html" title="Running (drag to reorder)" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Running</span><span class="side-ic pin" title="pin" onclick="event.preventDefault(); togglePin(this)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 6 4 4H6l4-4zM12 14v6"/></svg></span></a>
+      <a class="nav pl" draggable="true" data-group="others" href="playlist.html" title="Sunday Morning (drag to reorder)" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Sunday Morning</span><span class="side-ic pin" title="pin" onclick="event.preventDefault(); togglePin(this)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 6 4 4H6l4-4zM12 14v6"/></svg></span></a>
+      <a class="nav pl" draggable="true" data-group="others" href="playlist.html" title="Focus (drag to reorder)" style="text-decoration: none"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg><span class="text ell">Focus</span><span class="side-ic pin" title="pin" onclick="event.preventDefault(); togglePin(this)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 6 4 4H6l4-4zM12 14v6"/></svg></span></a>
       </nav>
     <main class="main">
       <div class="hero" style="grid-template-columns: 220px minmax(0, 1fr)">
         <div class="art square" style="width: 220px; background: #04140a; border: 1px solid var(--accent-dim); color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width: 64px; height: 64px; stroke-width: 1"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
         <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
           <span class="label">playlist</span>
-          <h1 style="font-size: 26px">liked songs</h1>
+          <h1 style="font-size: 26px">Liked Songs</h1>
           <div class="facts"><span>312 tracks · 21:04:00</span></div>
         </div>
         <div class="actions"><button class="playbtn" title="play your liked songs"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></button></div>
@@ -130,7 +151,7 @@
       <div class="scroll rows liked" style="border-top: 1px solid var(--hairline)">
         <div class="r label" style="padding-top: 10px"><span class="num">#</span><span>title</span><span>artist</span><span>album</span><span>liked</span><span style="text-align: right">length</span><span></span><span></span></div>
         <div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">1</span><span class="ell">Airbag</span><a class="l ell" href="#">Radiohead</a><a class="l ell" href="music-album.html">OK Computer</a><span class="dim" style="font-size: 11px">today</span><span class="dim" style="text-align: right">4:44</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Airbag”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">2</span><span class="ell">So What</span><a class="l ell" href="#">Miles Davis</a><a class="l ell" href="music-album.html">Kind of Blue</a><span class="dim" style="font-size: 11px">yesterday</span><span class="dim" style="text-align: right">9:22</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“So What”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">3</span><span class="ell">Teardrop</span><a class="l ell" href="#">Massive Attack</a><a class="l ell" href="music-album.html">Mezzanine</a><span class="dim" style="font-size: 11px">3 days ago</span><span class="dim" style="text-align: right">5:29</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Teardrop”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">4</span><span class="ell">Hyperballad</span><a class="l ell" href="#">Björk</a><a class="l ell" href="music-album.html">Post</a><span class="dim" style="font-size: 11px">last week</span><span class="dim" style="text-align: right">5:21</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Hyperballad”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">5</span><span class="ell">Daydreaming</span><a class="l ell" href="#">Radiohead</a><a class="l ell" href="music-album.html">A Moon Shaped Pool</a><span class="dim" style="font-size: 11px">2 weeks ago</span><span class="dim" style="text-align: right">6:24</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Daydreaming”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">6</span><span class="ell">Angel</span><a class="l ell" href="#">Massive Attack</a><a class="l ell" href="music-album.html">Mezzanine</a><span class="dim" style="font-size: 11px">in May</span><span class="dim" style="text-align: right">6:18</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Angel”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">7</span><span class="ell">Blue in Green</span><a class="l ell" href="#">Miles Davis</a><a class="l ell" href="music-album.html">Kind of Blue</a><span class="dim" style="font-size: 11px">in April</span><span class="dim" style="text-align: right">5:37</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Blue in Green”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div><div class="r" onclick="queuePrompt()" title="click to play from here"><span class="num">8</span><span class="ell">Jóga</span><a class="l ell" href="#">Björk</a><a class="l ell" href="music-album.html">Homogenic</a><span class="dim" style="font-size: 11px">in March</span><span class="dim" style="text-align: right">5:05</span><span class="t-todo" title="unlike" style="color: var(--accent)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="fill: var(--accent); stroke: var(--accent)"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="ib" title="add to a playlist" data-what="“Jóga”" onclick="addMenu(this, [])" style="width: 22px; height: 22px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></span></div>
-        <p class="note" style="margin: 24px 12px 0; font-size: 11px; color: var(--text-faint); border-left: 2px solid var(--text-faint); padding-left: 10px">Liked songs: every track you've hearted, the newest like first (a "liked" column says when). It isn't edited by hand: the heart unlikes (the row goes the next time the page opens), and there's no rename, delete, or reorder. Liked movies and episodes stay liked but aren't songs, so they're not here. Play plays them all; a row plays from there.</p>
+        <p class="note" style="margin: 24px 12px 0; font-size: 11px; color: var(--text-faint); border-left: 2px solid var(--text-faint); padding-left: 10px">Liked Songs: every track you've hearted, the newest like first (a "liked" column says when). It isn't edited by hand: the heart unlikes (the row goes the next time the page opens), and there's no rename, delete, or reorder. Liked movies and episodes stay liked but aren't songs, so they're not here. Play plays them all; a row plays from there.</p>
       </div>
     </main>
   </div>
@@ -168,7 +189,7 @@ function addMenu(btn, inList) {
   const m = document.createElement('div');
   m.className = 'addmenu';
   m.innerHTML = '<div class="opt"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>new playlist…</span></div><div class="sep"></div>' +
-    ['Late Night Jazz', 'Road Trip', 'Running', 'Sunday Morning'].map(p => `<div class="opt${inList.includes(p) ? ' in' : ''}" title="${inList.includes(p) ? 'already in it' : 'add to ' + p}"><span style="visibility: ${inList.includes(p) ? 'visible' : 'hidden'}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span><span>${p}</span></div>`).join('');
+    ['Road Trip', 'Late Night Jazz', 'Running', 'Sunday Morning', 'Focus'].map(p => `<div class="opt${inList.includes(p) ? ' in' : ''}" title="${inList.includes(p) ? 'already in it' : 'add to ' + p}"><span style="visibility: ${inList.includes(p) ? 'visible' : 'hidden'}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span><span>${p}</span></div>`).join('');
   const r = btn.getBoundingClientRect(), w = btn.closest('.window').getBoundingClientRect();
   m.style.top = (r.bottom - w.top + 4) + 'px';
   m.style.right = (w.right - r.right) + 'px';
@@ -176,8 +197,20 @@ function addMenu(btn, inList) {
   m.querySelectorAll('.opt:not(.in)').forEach(o => o.addEventListener('click', () => { const s = document.getElementById('status'); if (s) s.innerHTML = '<span class="acc">added</span> ' + (btn.dataset.what || '1 track') + ' to ' + o.textContent.replace('new playlist…', 'a new playlist'); closeMenus(); }));
   event.stopPropagation();
 }
+function togglePin(el) {
+  const a = el.closest('.nav'); const nav = a.parentElement; const gap = nav.querySelector('.pin-gap');
+  const pinned = a.dataset.group === 'pinned';
+  a.dataset.group = pinned ? 'others' : 'pinned';
+  el.classList.toggle('on', !pinned); el.innerHTML = pinned ? window.PIN : window.PINFILL;
+  if (pinned) gap.after(a); else gap.before(a);
+}
+let dragged = null;
+document.addEventListener('dragstart', e => { const a = e.target.closest && e.target.closest('.nav.pl'); if (a) dragged = a; });
+document.addEventListener('dragover', e => { const a = e.target.closest && e.target.closest('.nav.pl'); document.querySelectorAll('.nav.drop').forEach(x => x.classList.remove('drop')); if (a && dragged && a.dataset.group === dragged.dataset.group) { e.preventDefault(); a.classList.add('drop'); } });
+document.addEventListener('drop', e => { const a = e.target.closest && e.target.closest('.nav.pl'); document.querySelectorAll('.nav.drop').forEach(x => x.classList.remove('drop')); if (a && dragged && a !== dragged) { e.preventDefault(); a.before(dragged); } dragged = null; });
 function closeMenus() { document.querySelectorAll('.addmenu').forEach(m => m.remove()); }
 document.addEventListener('click', closeMenus);
+window.PIN = "<svg class=\"icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 4h6l-1 6 4 4H6l4-4zM12 14v6\"/></svg>"; window.PINFILL = "<svg class=\"icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\" style=\"fill: currentColor\"><path d=\"M9 4h6l-1 6 4 4H6l4-4zM12 14v6\"/></svg>";
 
 </script>
 </body>
