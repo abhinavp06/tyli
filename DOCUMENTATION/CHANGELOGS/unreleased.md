@@ -2,6 +2,17 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Player UI approved; the like heart (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user approved the design and the mockups, and asked for a heart next to the add-to-playlist button: green when liked, empty when not.
+- **The now-playing bar** now has three distinct buttons: ♥ like (white outline; green and filled in `Theme.accent` when liked), add to a playlist (later), and the queue. The queue used to share the playlist icon, so it has its own now.
+- **The hearts on track rows toggle too,** with the same look. hoardor stores the likes (`player_items.liked_ns`).
+- **The five proposed decisions (P1–P5)** were approved with the design.
+
+**Files**
+- `DOCUMENTATION/mockups/player-music.html`, `DOCUMENTATION/mockups/player-queue.html`
+- `DOCUMENTATION/application/features/player_ui.md` (status: approved; the bar, the rows, the bridge, the models)
+
 ### Player UI designed, with mockups (draft, awaiting approval) (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** TYLI's side of the player (hoardor `features/player.md`, libmpv in a new `player` engine). `features/player_ui.md` designs:

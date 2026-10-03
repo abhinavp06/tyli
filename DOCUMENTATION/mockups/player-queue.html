@@ -82,6 +82,11 @@
   .playsm { width: 36px; height: 36px; border: 1px solid var(--accent-dim); color: var(--accent); background: none; display: grid; place-items: center; cursor: pointer; }
   .playsm:hover { border-color: var(--accent); background: #04140a; }
   .note { font-size: 11px; color: var(--text-faint); }
+  .heart { color: var(--text); cursor: pointer; display: inline-grid; place-items: center; }
+  .heart:hover { color: var(--accent); }
+  .heart.on, .heart.on:hover { color: var(--accent); }
+  .heart.on svg path { fill: var(--accent); }
+
   .rows.q .r { grid-template-columns: 32px minmax(0, 1.2fr) minmax(0, 1fr) 60px 32px; }
   .rows.q .r.played .ell, .rows.q .r.played .num, .rows.q .r.played .dim { color: var(--text-faint); }
   .rows.q .x { visibility: hidden; width: 24px; height: 24px; }
@@ -141,7 +146,9 @@
       <div class="seek"><span id="pos" style="text-align: right">2:13</span><div class="line" onclick="seekTo(event, this)"><div class="buf" style="width: 62%"></div><div class="fill" id="fill" style="width: 34%"></div></div><span>6:24</span></div>
     </div>
     <div class="right">
-      <a class="ib on" href="player-music.html" title="the queue (12 next): open, click again to go back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></a>
+      <button class="ib heart on" title="liked (click to unlike)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+      <button class="ib" title="add to a playlist (the playlists feature, later)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12M4 11h12M4 16h7M17 14v6M14 17h6"/></svg></button>
+      <a class="ib on" href="player-music.html" title="the queue (12 next)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10M17 15l4 3-4 3z"/></svg></a>
       <button class="ib" title="mute"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
       <div class="line vol" onclick="seekTo(event, this)"><div class="fill" style="width: 80%"></div></div>
     </div>
@@ -180,6 +187,8 @@ function togglePlay() {
 }
 function seekTo(e, line) { const r = line.getBoundingClientRect(); line.querySelector('.fill').style.width = Math.round((e.clientX - r.left) / r.width * 100) + '%'; }
 setInterval(() => { if (!playing) return; const f = document.getElementById('fill'); const w = Math.min(100, parseFloat(f.style.width) + 0.26); f.style.width = w + '%'; const s = Math.round(w / 100 * 384); document.getElementById('pos').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }, 1000);
+
+document.querySelectorAll('.heart').forEach(h => h.addEventListener('click', e => { e.stopPropagation(); h.classList.toggle('on'); h.title = h.classList.contains('on') ? 'liked (click to unlike)' : 'like'; }));
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Draft, awaiting the user's approval** (2026-10-03); mockups `player-*.html` |
+| Status | **Approved by the user** (2026-10-03: "looks good", plus the like heart); mockups `player-*.html` |
 | Branch | `abhinavp06/PLAYER` (pairs with hoardor's branch of the same name) |
 | Ships in | TYLI `v0.3.0`, together with hoardor `v0.3.0` |
 | hoardor side | `../hoardor/DOCUMENTATION/application/features/player.md` (the `player` engine on libmpv, the queue, progress) |
@@ -16,6 +16,7 @@
   - **nothing playing:** the album plays from that track, in the album's order, using the copy picked on the page
   - **something playing:** the **queue prompt** asks: *cancel / add to queue / clear queue and play*. Esc cancels, and Enter clears the queue and plays.
 - **The album's play button** does the same, from track 1. An artist page's play button plays the artist's albums, newest first.
+- **The hearts on track rows work now:** a click likes or unlikes the track, with the same look as the bar's (the user, 2026-10-03). The playlist icon next to it waits for the playlists feature.
 - **The playing track** is marked on its album page: a green ▶ instead of its number, the title in green, and the green line on its left.
 - **The prompt is the one deliberate popup** (ARCHITECTURE decision, 2026-10-02).
 
@@ -25,7 +26,7 @@
 - **Middle:**
   - previous, play/pause (a 36 px green-bordered button, close to the play button the user likes), next
   - a seek line with the elapsed and total times; the buffered part shows faint behind it
-- **Right:** the queue (opens the queue page), mute, and a volume line.
+- **Right:** ♥ like (a white outline; **green and filled when liked**, in `Theme.accent`, so it follows the theme), add to a playlist (the playlists feature, later), the queue (its own icon; it opens the queue page), mute, and a volume line.
 - **Visibility:** hidden while nothing is loaded. It sits between the content and the status line.
 
 ### 1.3 The queue (`player-queue.html`)
@@ -58,7 +59,7 @@
 - **Movies:** the same on their cards: the ✓ in the poster's corner, the line under the poster. The movie page's play button says "resume at 42:10" in its tooltip.
 - **The show's play button** resumes the episode you're partway through, or plays the next unwatched one.
 
-## 2. Decisions to confirm (proposed)
+## 2. Decisions (proposed, then approved by the user with the design, 2026-10-03)
 
 | | Proposal | Why |
 |---|---|---|
@@ -72,10 +73,10 @@
 
 | Piece | What |
 |---|---|
-| **`PlayerBridge`** (QML singleton `Player`) | A second bridge object, because it holds state (the hoardor `Player`, its thread's callbacks). It forwards hoardor's callbacks with queued calls, like `SyncWorker`. **Properties:** `state`, `entryId`, `title`, `subtitle`, `coverEntry`, `hasVideo`, `position`, `duration`, `volume`, `muted`, `audioTracks`, `subtitleTracks`, `queueLength`, `current`. **Invokables:** `playNow(entryIds, start)`, `add(entryIds)`, `toggle`, `next`, `previous`, `seek`, `seekBy`, `setVolume`, `setMuted`, `selectAudio`, `selectSubtitle`, `jump`, `remove`, `clear`, `progress(entryId)` |
+| **`PlayerBridge`** (QML singleton `Player`) | A second bridge object, because it holds state (the hoardor `Player`, its thread's callbacks). It forwards hoardor's callbacks with queued calls, like `SyncWorker`. **Properties:** `state`, `entryId`, `title`, `subtitle`, `coverEntry`, `hasVideo`, `position`, `duration`, `volume`, `muted`, `audioTracks`, `subtitleTracks`, `queueLength`, `current`. **Invokables:** `playNow(entryIds, start)`, `setLiked(entryId, liked)`, `add(entryIds)`, `toggle`, `next`, `previous`, `seek`, `seekBy`, `setVolume`, `setMuted`, `selectAudio`, `selectSubtitle`, `jump`, `remove`, `clear`, `progress(entryId)` |
 | **`QueueModel`** | A `QAbstractListModel` over the queue's entry ids, with names from the audio and video engines (SQLite, UI thread, paged) |
 | **`VideoItem`** | A `QQuickFramebufferObject` that draws hoardor's `VideoRenderer` on Qt's render thread. Without OpenGL (the software renderer in tests), QML shows a black placeholder instead |
-| **Models** | `ItemModel` / `GroupModel` gain `progress` (0–1) and `viewed` roles for video items, read in one query per page (`progress_of`) |
+| **Models** | `ItemModel` / `GroupModel` gain `progress` (0–1), `viewed`, and `liked` roles, read in one query per page (hoardor `states(entries)`) |
 
 - **Connections and threads:**
   - **The player gets its own SQLite connection** for progress writes and for resolving files. hoardor uses that connection on its player thread only, following hoardor's one-connection-per-thread rule.
