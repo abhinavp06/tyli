@@ -2,6 +2,31 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Playlists: the bridge and `PlaylistModel` (2026-10-03, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** TYLI's side of hoardor `799e939` (playlists in `player::Library`). The screens follow in the next commit.
+
+**What changed:**
+- **`Player` (the bridge)** gets the playlist calls. It already holds `player::Library` for likes, so this replaces the design's "on `Library`" (doc updated).
+  - **Properties:** `playlists` (in the sidebar's order, refreshed on every change and on `Library.contentChanged`) and `source`.
+  - **Calls:** `createPlaylist` (−1 with the reason on the status line), `renamePlaylist`, `deletePlaylist`, `setPlaylistPinned`, `movePlaylist`, `addToPlaylist`, `removeFromPlaylist`, `movePlaylistItem`, `playlistInfo`, `playlistEntries`, `playlistsWith`, `likedEntries`, `likedInfo`.
+  - **Status line:** "added 2 tracks to Road Trip · 1 was already in it", "removed 1 track", "deleted “Jazz”".
+- **`Player.source`:** set by `playNow(entries, start, source)`; another `playNow` without one, or `clear`, empties it. Deleting the playlist that's playing empties it too. The sidebar's speaker follows it.
+- **`PlaylistModel` (new):** a playlist's rows, or Liked Songs (`playlistId` −1).
+  - Keyset pages of 200 from hoardor, each row's track looked up in the audio engine: title, artist, album, length, online, liked, when added or liked.
+  - It reloads on `playlistsChanged`. Liked Songs also reloads on likes; a playlist's hearts update in place.
+  - `entryIds()` is every row (to play it all).
+
+**Tests:** 5 suites pass. `tst_player_bridge::playlistsThroughTheBridge`:
+- create, a taken name, the order, pinning
+- adds with skips, `playlistsWith`
+- the model's rows and artists, moves and removes, rename
+- Liked Songs following the hearts, newest first
+- `source` set and cleared
+- delete
+
+**Files:** `src/{player_bridge.hpp, player_bridge.cpp, playlist_model.hpp (new), playlist_model.cpp (new)}`, `CMakeLists.txt`, `tests/tst_player_bridge.cpp`, `DOCUMENTATION/application/features/playlists_ui.md`
+
 ### Shows: a season plays as a queue you can see from the video page (2026-10-03, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** The user: "while playing a season of a show, I want the same queue system like an album/playlist".

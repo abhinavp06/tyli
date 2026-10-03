@@ -54,16 +54,16 @@
 
 ## 2. Bridge
 
-- **`Library` (the existing bridge)** gets the playlist calls, since they're library data:
+- **`Player` (the player bridge)** gets the playlist calls. As built: it already holds hoardor's `player::Library` (likes) on its own connection, and playlists are that engine's:
   - `playlists` (a property: `[{id, name, pinned, tracks, durationMs, updatedMs}]`, in the sidebar's order, with `playlistsChanged`)
   - `movePlaylist(id, index)`, `setPlaylistPinned(id, pinned)`
   - `createPlaylist(name) → id`, `renamePlaylist(id, name)`, `deletePlaylist(id)`
   - `addToPlaylist(id, entryIds) → {added, skipped}`, `removeFromPlaylist(id, itemIds)`, `movePlaylistItem(id, itemId, index)`
-  - `playlistEntries(id)`, `playlistsWith(entryId)`, `likedEntries()`
+  - `playlistInfo(id)`, `playlistEntries(id)`, `playlistsWith(entryId)`, `likedEntries()`, `likedInfo()`
   - **Errors:** each call returns false (or -1) and puts its reason on the status line.
 - **`PlaylistModel` (a new `QAbstractListModel`):** the rows of one playlist, or of liked songs (`playlistId` −1). Pages come from hoardor (`playlist_items` / `liked`), with each row's track looked up in the audio engine. It refreshes on `playlistsChanged` and on likes.
 - **Playing:** `Player.playNow(entries, start)`, through the queue prompt.
-- **What's playing from:** `Player.source` (`{kind: "playlist", id}` or `{kind: "liked"}`, else empty) is set when playback starts from a playlist page, and cleared when anything else replaces the queue or the queue is cleared. The sidebar's speaker follows it.
+- **What's playing from:** `Player.source`, set by `Player.playNow(entries, start, source)` (`{kind: "playlist", id}` or `{kind: "liked"}`, else empty) is set when playback starts from a playlist page, and cleared when anything else replaces the queue or the queue is cleared. The sidebar's speaker follows it.
 
 ## 3. Edge cases
 

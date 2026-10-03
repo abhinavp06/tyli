@@ -52,6 +52,12 @@ class PlayerBridge : public QObject {
     // Bumped whenever likes, positions, or viewed marks may have changed: bindings that call
     // isLiked() or itemStates() read it so they re-evaluate.
     Q_PROPERTY(int revision READ revision NOTIFY statesChanged)
+    // Playlists (features/playlists_ui.md): [{id, name, pinned, tracks, durationMs, updatedMs}] in
+    // the sidebar's order (pinned first, then the user's order).
+    Q_PROPERTY(QVariantList playlists READ playlists NOTIFY playlistsChanged)
+    // What's playing was started from: {kind: "playlist", id} or {kind: "liked"}; {} otherwise
+    // (the sidebar's speaker). Set by playNow, cleared by clear.
+    Q_PROPERTY(QVariantMap source READ source NOTIFY sourceChanged)
 
 public:
     explicit PlayerBridge(const QString& databasePath, QObject* parent = nullptr);
@@ -89,7 +95,9 @@ public:
     int revision() const { return revision_; }
 
     // ---- The queue (entry ids)
-    Q_INVOKABLE void playNow(const QVariantList& entryIds, int start = 0);
+    // `source`: what this was started from (a playlist page: {kind: "playlist", id}); {} for
+    // anything else, so a song that merely is in a playlist doesn't light it.
+    Q_INVOKABLE void playNow(const QVariantList& entryIds, int start = 0, const QVariantMap& source = {});
     Q_INVOKABLE void add(const QVariantList& entryIds);
     Q_INVOKABLE void jump(int index);
     Q_INVOKABLE void remove(int index);
@@ -116,6 +124,25 @@ public:
     // [{entryId, position, duration, viewed, playCount, liked}] in the given order.
     Q_INVOKABLE QVariantList itemStates(const QVariantList& entryIds);
 
+    // ---- Playlists and Liked Songs (hoardor's player::Library; errors go to the status line)
+    QVariantList playlists() const { return playlists_; }
+    QVariantMap source() const { return source_; }
+    Q_INVOKABLE int createPlaylist(const QString& name);   // its id, or -1
+    Q_INVOKABLE bool renamePlaylist(qint64 id, const QString& name);
+    Q_INVOKABLE bool deletePlaylist(qint64 id);
+    Q_INVOKABLE void setPlaylistPinned(qint64 id, bool pinned);
+    Q_INVOKABLE void movePlaylist(qint64 id, int index);   // within its group
+    // Adds tracks in order; says on the status line what it did. {added, skipped, notTracks}.
+    Q_INVOKABLE QVariantMap addToPlaylist(qint64 id, const QVariantList& entryIds);
+    Q_INVOKABLE void removeFromPlaylist(qint64 id, const QVariantList& itemIds);
+    Q_INVOKABLE void movePlaylistItem(qint64 id, qint64 itemId, int index);
+    Q_INVOKABLE QVariantMap playlistInfo(qint64 id);   // {id, name, pinned, tracks, durationMs, updatedMs}, or {}
+    Q_INVOKABLE QVariantList playlistEntries(qint64 id);
+    Q_INVOKABLE QVariantList playlistsWith(qint64 entryId);
+    Q_INVOKABLE QVariantList likedEntries();
+    Q_INVOKABLE QVariantMap likedInfo();                // {tracks, durationMs}
+    hoardor::player::Library* items() { return items_ ? &*items_ : nullptr; }
+
     // A file described for lists (the queue): {title, subtitle, duration, coverEntry, link}.
     struct Description {
         QString title, subtitle;
@@ -131,6 +158,8 @@ signals:
     void nowPlayingChanged();
     void queueChanged();
     void statesChanged();
+    void playlistsChanged();   // a playlist or its rows changed (models reload)
+    void sourceChanged();
 
 private:
     void onStatus(const hoardor::player::Status& status);
@@ -142,6 +171,10 @@ private:
     std::unique_ptr<hoardor::player::Player> player_;
     std::optional<hoardor::db::Database> database_;          // the UI thread's connection for states and likes
     std::optional<hoardor::player::Library> items_;
+    QVariantList playlists_;
+    QVariantMap source_;
+    void reloadPlaylists();
+    void setSource(const QVariantMap& source);
     hoardor::player::Status status_;
     qint64 position_ = 0;
     Description now_;

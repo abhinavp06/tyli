@@ -65,6 +65,9 @@ PlayerBridge::PlayerBridge(const QString& databasePath, QObject* parent) : QObje
         database_.emplace(std::move(*database));
         if (auto items = player::Library::open(*database_)) items_.emplace(std::move(*items));
     }
+    reloadPlaylists();
+    // A sync can remove files from playlists (their counts and lengths change).
+    if (auto* library = LibraryBridge::instance()) connect(library, &LibraryBridge::contentChanged, this, &PlayerBridge::reloadPlaylists);
 
     // Tests set TYLI_PLAYER_OUTPUTS=null (no sound, no frames); "noaudio" keeps the frames
     // (a check of the picture on a display, without a sound card).
@@ -227,8 +230,10 @@ void PlayerBridge::flushErrors() {
     if (auto* library = LibraryBridge::instance()) emit library->notice(line);
 }
 
-void PlayerBridge::playNow(const QVariantList& entryIds, int start) {
-    if (player_) player_->play_now(toIds(entryIds), std::size_t(std::max(0, start)));
+void PlayerBridge::playNow(const QVariantList& entryIds, int start, const QVariantMap& source) {
+    if (!player_) return;
+    player_->play_now(toIds(entryIds), std::size_t(std::max(0, start)));
+    setSource(source);
 }
 void PlayerBridge::add(const QVariantList& entryIds) {
     if (player_) player_->add(toIds(entryIds));
@@ -241,6 +246,164 @@ void PlayerBridge::remove(int index) {
 }
 void PlayerBridge::clear() {
     if (player_) player_->clear();
+    setSource({});
+}
+
+void PlayerBridge::setSource(const QVariantMap& source) {
+    if (source == source_) return;
+    source_ = source;
+    emit sourceChanged();
+}
+
+// ---- Playlists and Liked Songs
+
+namespace {
+
+QVariantMap playlistMap(const player::Playlist& p) {
+    return {{"id", qint64(p.id)}, {"name", qstr(p.name)}, {"pinned", p.pinned}, {"tracks", qint64(p.tracks)},
+            {"durationMs", qint64(p.duration_ms)}, {"updatedMs", qint64(p.updated_ns / 1'000'000)}};
+}
+
+void tell(const QString& message) {
+    if (auto* library = LibraryBridge::instance()) emit library->notice(message);
+}
+
+}  // namespace
+
+void PlayerBridge::reloadPlaylists() {
+    QVariantList out;
+    if (items_) {
+        if (auto all = items_->playlists()) {
+            for (const auto& p : *all) out << playlistMap(p);
+        }
+    }
+    playlists_ = out;
+    emit playlistsChanged();
+}
+
+int PlayerBridge::createPlaylist(const QString& name) {
+    if (!items_) return -1;
+    auto id = items_->create_playlist(name.toStdString(), nowNs());
+    if (!id) {
+        tell(qstr(id.error().message));
+        return -1;
+    }
+    reloadPlaylists();
+    return int(*id);
+}
+
+bool PlayerBridge::renamePlaylist(qint64 id, const QString& name) {
+    if (!items_) return false;
+    if (auto r = items_->rename_playlist(id, name.toStdString(), nowNs()); !r) {
+        tell(qstr(r.error().message));
+        return false;
+    }
+    reloadPlaylists();
+    return true;
+}
+
+bool PlayerBridge::deletePlaylist(qint64 id) {
+    if (!items_) return false;
+    const QString name = playlistInfo(id).value("name").toString();
+    if (auto r = items_->delete_playlist(id); !r) {
+        tell(qstr(r.error().message));
+        return false;
+    }
+    if (source_.value("kind") == QLatin1String("playlist") && source_.value("id").toLongLong() == id) setSource({});
+    tell(QStringLiteral("deleted “%1”").arg(name));
+    reloadPlaylists();
+    return true;
+}
+
+void PlayerBridge::setPlaylistPinned(qint64 id, bool pinned) {
+    if (!items_) return;
+    if (auto r = items_->set_pinned(id, pinned); !r) tell(qstr(r.error().message));
+    reloadPlaylists();
+}
+
+void PlayerBridge::movePlaylist(qint64 id, int index) {
+    if (!items_) return;
+    if (auto r = items_->move_playlist(id, std::size_t(std::max(0, index))); !r) tell(qstr(r.error().message));
+    reloadPlaylists();
+}
+
+QVariantMap PlayerBridge::addToPlaylist(qint64 id, const QVariantList& entryIds) {
+    if (!items_) return {};
+    const auto ids = toIds(entryIds);
+    auto r = items_->add_to_playlist(id, ids, nowNs());
+    if (!r) {
+        tell(qstr(r.error().message));
+        return {};
+    }
+    const QString name = playlistInfo(id).value("name").toString();
+    QStringList parts;
+    parts << (r->added == 1 ? QStringLiteral("added 1 track to %1").arg(name) : QStringLiteral("added %1 tracks to %2").arg(r->added).arg(name));
+    if (r->skipped > 0) parts << (r->skipped == 1 ? QStringLiteral("1 was already in it") : QStringLiteral("%1 were already in it").arg(r->skipped));
+    if (r->not_tracks > 0) parts << QStringLiteral("%1 not a song").arg(r->not_tracks);
+    tell(parts.join(QStringLiteral(" · ")));
+    reloadPlaylists();
+    return {{"added", qint64(r->added)}, {"skipped", qint64(r->skipped)}, {"notTracks", qint64(r->not_tracks)}};
+}
+
+void PlayerBridge::removeFromPlaylist(qint64 id, const QVariantList& itemIds) {
+    if (!items_) return;
+    std::vector<player::PlaylistItemId> ids;
+    for (const QVariant& v : itemIds) ids.push_back(v.toLongLong());
+    if (auto r = items_->remove_from_playlist(id, ids, nowNs()); !r) tell(qstr(r.error().message));
+    else tell(ids.size() == 1 ? QStringLiteral("removed 1 track") : QStringLiteral("removed %1 tracks").arg(ids.size()));
+    reloadPlaylists();
+}
+
+void PlayerBridge::movePlaylistItem(qint64 id, qint64 itemId, int index) {
+    if (!items_) return;
+    if (auto r = items_->move_in_playlist(id, itemId, std::size_t(std::max(0, index)), nowNs()); !r) tell(qstr(r.error().message));
+    reloadPlaylists();
+}
+
+QVariantMap PlayerBridge::playlistInfo(qint64 id) {
+    if (!items_) return {};
+    auto p = items_->playlist(id);
+    return p ? playlistMap(*p) : QVariantMap{};
+}
+
+QVariantList PlayerBridge::playlistEntries(qint64 id) {
+    QVariantList out;
+    if (!items_) return out;
+    if (auto all = items_->playlist_entries(id)) {
+        for (auto e : *all) out << qint64(e);
+    }
+    return out;
+}
+
+QVariantList PlayerBridge::playlistsWith(qint64 entryId) {
+    QVariantList out;
+    if (!items_) return out;
+    if (auto all = items_->playlists_with(entryId)) {
+        for (auto p : *all) out << qint64(p);
+    }
+    return out;
+}
+
+QVariantList PlayerBridge::likedEntries() {
+    QVariantList out;
+    if (!items_) return out;
+    if (auto all = items_->liked_entries()) {
+        for (auto e : *all) out << qint64(e);
+    }
+    return out;
+}
+
+QVariantMap PlayerBridge::likedInfo() {
+    if (!items_) return {};
+    qint64 duration = 0;
+    auto entries = items_->liked_entries();
+    if (!entries) return {};
+    if (auto* library = LibraryBridge::instance(); library && library->tracks()) {
+        for (auto e : *entries) {
+            if (auto t = library->tracks()->track(e)) duration += t->duration_ms;
+        }
+    }
+    return {{"tracks", qint64(entries->size())}, {"durationMs", duration}};
 }
 void PlayerBridge::toggle() {
     if (player_) player_->toggle();

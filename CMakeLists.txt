@@ -62,6 +62,8 @@ qt_add_qml_module(tyli_ui
         src/player_bridge.hpp
         src/queue_model.cpp
         src/queue_model.hpp
+        src/playlist_model.cpp
+        src/playlist_model.hpp
         src/thumbnail_cache.cpp
         src/thumbnail_cache.hpp
         src/video_item.cpp

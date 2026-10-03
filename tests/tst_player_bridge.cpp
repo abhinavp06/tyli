@@ -4,6 +4,7 @@
 
 #include "library_bridge.hpp"
 #include "player_bridge.hpp"
+#include "playlist_model.hpp"
 #include "queue_model.hpp"
 #include "test_support.hpp"
 
@@ -113,6 +114,68 @@ private slots:
         const QString line = notices.first().at(0).toString();
         QVERIFY2(line.startsWith(QStringLiteral("3 files skipped")), qPrintable(line));
         QTRY_VERIFY(!player_->active());
+    }
+
+    // Playlists through the bridge and PlaylistModel (features/playlists_ui.md §2).
+    void playlistsThroughTheBridge() {
+        QVERIFY(seed(false));
+        QSignalSpy changed(player_.get(), &PlayerBridge::playlistsChanged);
+        const int road = player_->createPlaylist("Road Trip");
+        QVERIFY(road > 0);
+        QCOMPARE(player_->createPlaylist("road trip"), -1);   // taken (the status line says why)
+        const int jazz = player_->createPlaylist("Jazz");
+        QCOMPARE(player_->playlists().size(), 2);
+        QCOMPARE(player_->playlists()[0].toMap().value("name").toString(), QStringLiteral("Jazz"));   // new on top
+        player_->setPlaylistPinned(road, true);
+        QCOMPARE(player_->playlists()[0].toMap().value("name").toString(), QStringLiteral("Road Trip"));
+        QVERIFY(player_->playlists()[0].toMap().value("pinned").toBool());
+        QVERIFY(changed.count() >= 3);
+
+        // Adding in order, with what was already there skipped.
+        QVariantMap r = player_->addToPlaylist(road, {ids_["3.flac"], ids_["1.flac"]});
+        QCOMPARE(r.value("added").toInt(), 2);
+        r = player_->addToPlaylist(road, {ids_["1.flac"], ids_["2.flac"]});
+        QCOMPARE(r.value("added").toInt(), 1);
+        QCOMPARE(r.value("skipped").toInt(), 1);
+        QCOMPARE(player_->playlistInfo(road).value("tracks").toInt(), 3);
+        QCOMPARE(player_->playlistsWith(ids_["1.flac"]), QVariantList{qint64(road)});
+
+        PlaylistModel model;
+        model.setPlaylistId(road);
+        QCOMPARE(model.rowCount(), 3);
+        QCOMPARE(model.data(model.index(0), PlaylistModel::TitleRole).toString(), QStringLiteral("Song 3"));
+        QCOMPARE(model.data(model.index(0), PlaylistModel::ArtistRole).toString(), QStringLiteral("Band"));
+        QCOMPARE(model.entryIds(), (QVariantList{ids_["3.flac"], ids_["1.flac"], ids_["2.flac"]}));
+        // Moving and removing rows reload the model.
+        const qint64 last = model.data(model.index(2), PlaylistModel::ItemIdRole).toLongLong();
+        player_->movePlaylistItem(road, last, 0);
+        QCOMPARE(model.data(model.index(0), PlaylistModel::EntryIdRole).toLongLong(), ids_["2.flac"]);
+        player_->removeFromPlaylist(road, {model.data(model.index(1), PlaylistModel::ItemIdRole)});
+        QCOMPARE(model.rowCount(), 2);
+        QVERIFY(player_->renamePlaylist(road, "Road"));
+        QCOMPARE(player_->playlistInfo(road).value("name").toString(), QStringLiteral("Road"));
+
+        // Liked Songs: the hearts, newest first; the model follows.
+        PlaylistModel liked;
+        liked.setPlaylistId(-1);
+        QCOMPARE(liked.rowCount(), 0);
+        player_->setLiked(ids_["1.flac"], true);
+        player_->setLiked(ids_["2.flac"], true);
+        QCOMPARE(liked.rowCount(), 2);
+        QCOMPARE(liked.data(liked.index(0), PlaylistModel::EntryIdRole).toLongLong(), ids_["2.flac"]);
+        QCOMPARE(player_->likedInfo().value("tracks").toInt(), 2);
+
+        // Playing from a playlist marks it; anything else, or clearing, doesn't.
+        player_->playNow(model.entryIds(), 0, QVariantMap{{"kind", "playlist"}, {"id", road}});
+        QCOMPARE(player_->source().value("id").toInt(), road);
+        player_->playNow(album(), 0);
+        QVERIFY(player_->source().isEmpty());
+        player_->playNow(model.entryIds(), 0, QVariantMap{{"kind", "playlist"}, {"id", road}});
+        player_->clear();
+        QVERIFY(player_->source().isEmpty());
+
+        QVERIFY(player_->deletePlaylist(jazz));
+        QCOMPARE(player_->playlists().size(), 1);
     }
 
     void likesAndStatesComeBack() {
