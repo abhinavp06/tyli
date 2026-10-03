@@ -2,6 +2,15 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Detail pages: no empty band under the breadcrumbs (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** On an album, movie, show, or season page, `BrowseHeader` drew its title row and hairline with nothing in them. That left about 70 px of empty space between the breadcrumbs and the page's own hero. The mockups have none.
+- **Fixed:** the row and its line show only when the header has a title, a label, a subtitle, or the sort (`titled`). Grids and the artist, genre, and director pages are unchanged.
+
+**Tests:** 5 suites pass. Screenshots reviewed: album, movie, show, season, artist.
+
+**Files:** `qml/BrowseHeader.qml`
+
 ### Shows: seasons as album cards, a season page laid out like an album (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** Part 2 of "music's album structure for movies and shows" (mockups `show-seasons.html` and `season.html`, approved).

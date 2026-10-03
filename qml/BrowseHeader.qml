@@ -15,6 +15,9 @@ ColumnLayout {
     property alias sortKey: sort.sortKey
     property alias addedDescending: sort.addedDescending
     property bool showSort: true
+    // A detail page (an album, a movie, a show) has only the crumbs: no empty title row and
+    // line under them (they left a 70 px gap above the page's own hero).
+    readonly property bool titled: title !== "" || label !== "" || subtitle !== "" || showSort
     signal back()
     signal crumbClicked(var crumb)
     signal sortPicked(string key, bool addedDescending)
@@ -45,6 +48,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
+        visible: header.titled
         spacing: Theme.px(16)
         ColumnLayout {
             spacing: 2
@@ -66,5 +70,5 @@ ColumnLayout {
             onPicked: (key, desc) => header.sortPicked(key, desc)
         }
     }
-    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
+    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline; visible: header.titled }
 }
