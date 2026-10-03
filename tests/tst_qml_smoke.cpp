@@ -776,6 +776,7 @@ private slots:
         QVERIFY(window_->setProperty("settingsOpen", true));
         setState("settingsView", "currentPage", "general");
         screenshot("settings-general");
+        QVERIFY(find("aboutLine")->property("text").toString().endsWith(QStringLiteral(" · by abhinavp06")));
         // Further down: sync, interface (scroll speed), track columns.
         auto* speed = qobject_cast<QQuickItem*>(find("scrollSpeed"));
         QVERIFY(speed);

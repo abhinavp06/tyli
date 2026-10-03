@@ -325,7 +325,12 @@ Item {
                 Layout.fillWidth: true
                 spacing: Theme.px(6)
                 SectionTitle { text: "about" }
-                Text { text: "tyli " + Qt.application.version; color: Theme.textDim }
+                // The app and its author (the user, 2026-10-03: "tyli x.x.x · by abhinavp06").
+                Text {
+                    objectName: "aboutLine"
+                    text: "tyli " + (Qt.application.version || "") + " · by abhinavp06"
+                    color: Theme.textDim
+                }
                 Text { Layout.fillWidth: true; text: "library " + Library.databasePath; color: Theme.textDim; wrapMode: Text.WrapAnywhere }
             }
         }
