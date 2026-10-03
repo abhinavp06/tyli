@@ -22,6 +22,11 @@ jobs:
       # shinchiro "dev" build (headers + libmpv-2.dll; GPL: it bundles GPL parts), checked by its SHA-256.
       MPV_URL: https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261003/mpv-dev-x86_64-20261003-git-3186d369f9.7z
       MPV_SHA256: b8c2d656c1584d5f08196fcee5c2d0783d1f76021897c4e0b3cc30f94c79522e
+      # libmpv-2.dll needs vulkan-1.dll (the Vulkan loader). GPU drivers usually install it, but the
+      # runner has none (the tests failed with 0xc0000135, "DLL not found"), so it ships next to the
+      # exe: LunarG's runtime components, pinned. TYLI draws through OpenGL; Vulkan is optional for mpv.
+      VULKAN_RT_URL: https://sdk.lunarg.com/sdk/download/1.4.363.0/windows/vulkan-runtime-components.zip
+      VULKAN_RT_SHA256: a25a927aa8b9f0371048f1861cf88ac3b9bc9b1fb332c42d897c8ab32695769a
 
     steps:
       - name: Check out TYLI
@@ -84,7 +89,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/mpv
-          key: mpv-${{ env.MPV_SHA256 }}-v1
+          key: mpv-${{ env.MPV_SHA256 }}-${{ env.VULKAN_RT_SHA256 }}-v2
 
       # The package has a MinGW import library only, so MSVC's mpv.lib is made from the DLL's
       # exports (dumpbin, then lib /def). After "Set up MSVC": both tools come from it.
@@ -109,6 +114,14 @@ jobs:
           & lib /nologo /def:"$mpv\lib\mpv.def" /machine:x64 /out:"$mpv\lib\mpv.lib"
           if ($LASTEXITCODE -ne 0) { throw "lib /def failed" }
           Write-Host "mpv.lib made with $($names.Count) exports"
+          $vk = "$env:RUNNER_TEMP\vulkan-rt.zip"
+          Invoke-WebRequest -Uri $env:VULKAN_RT_URL -OutFile $vk
+          $hash = (Get-FileHash $vk -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:VULKAN_RT_SHA256) { throw "Vulkan runtime download has SHA-256 $hash, expected $env:VULKAN_RT_SHA256" }
+          Expand-Archive $vk -DestinationPath "$env:RUNNER_TEMP\vulkan-rt"
+          $components = Get-ChildItem "$env:RUNNER_TEMP\vulkan-rt" -Directory | Select-Object -First 1
+          Copy-Item "$($components.FullName)\x64\vulkan-1.dll" "$mpv\bin\vulkan-1.dll"
+          Copy-Item "$($components.FullName)\VulkanRT-License.txt" "$mpv\bin\VulkanRT-License.txt"
 
       # PowerShell, not Git Bash: Git Bash has its own link.exe that would shadow MSVC's linker.
       - name: Configure
@@ -145,6 +158,8 @@ jobs:
           Copy-Item "$env:RUNNER_TEMP\ffmpeg\LICENSE.txt" dist/ffmpeg-LICENSE.txt
           # libmpv (the player), with where it comes from and its license.
           Copy-Item "$env:RUNNER_TEMP\mpv\bin\libmpv-2.dll" dist/
+          Copy-Item "$env:RUNNER_TEMP\mpv\bin\vulkan-1.dll" dist/
+          Copy-Item "$env:RUNNER_TEMP\mpv\bin\VulkanRT-License.txt" dist/vulkan-LICENSE.txt
           Set-Content dist/libmpv-NOTICE.txt @(
             "libmpv-2.dll is mpv's player library (https://mpv.io), source: https://github.com/mpv-player/mpv",
             "This build: $env:MPV_URL (shinchiro/mpv-winbuild-cmake), SHA-256 $env:MPV_SHA256",

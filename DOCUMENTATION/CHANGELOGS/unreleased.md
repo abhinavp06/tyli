@@ -2,6 +2,15 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Windows build: ship the Vulkan loader for libmpv (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The first Windows run with the player failed every test at startup with `0xc0000135` ("DLL not found").
+- **Cause:** `libmpv-2.dll` imports `vulkan-1.dll`, the Vulkan loader (checked with `objdump -p` on the pinned DLL). GPU drivers usually install it into System32, but the runner has no GPU driver. Every other import is part of Windows.
+- **Fix:** the workflow fetches LunarG's Vulkan runtime components (1.4.363.0, pinned by SHA-256), puts the x64 `vulkan-1.dll` next to `libmpv-2.dll` for the tests, and ships it in the zip with `vulkan-LICENSE.txt`. The libmpv cache key changed, so the cached folder is rebuilt with it.
+- **Why shipping it is safe:** TYLI draws video through OpenGL (mpv's render API). On a machine without Vulkan drivers, the loader simply finds none, and mpv doesn't need Vulkan.
+
+**Files:** `.github/workflows/windows.yml`
+
 ### The player in TYLI: now-playing bar, queue prompt, queue page, video page, likes, markers (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The approved player design (`features/player_ui.md`, mockups `player-*.html`), built on hoardor's new `player` engine.
