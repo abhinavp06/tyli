@@ -303,21 +303,16 @@ Item {
                     spacing: Theme.px(22)
                     Repeater {
                         model: Library.allTrackColumns
-                        Row {
+                        // The name is the check box's own text, so clicking it toggles too
+                        // (a separate label next to the box wasn't clickable).
+                        TyCheckBox {
                             required property string modelData
-                            spacing: Theme.px(8)
-                            TyCheckBox {
-                                checked: Library.trackColumns.includes(modelData)
-                                onToggled: Library.trackColumns = checked ? Library.trackColumns.concat([modelData])
-                                                                          : Library.trackColumns.filter(c => c !== modelData)
-                                Accessible.name: modelData
-                            }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: ({ length: "length", bitrate: "bit rate", quality: "bit depth / sample rate", type: "file type",
-                                         size: "size", channels: "channels" })[modelData]
-                                color: Theme.text
-                            }
+                            objectName: "column-" + modelData
+                            text: ({ length: "length", bitrate: "bit rate", quality: "bit depth / sample rate", type: "file type",
+                                     size: "size", channels: "channels" })[modelData]
+                            checked: Library.trackColumns.includes(modelData)
+                            onToggled: Library.trackColumns = checked ? Library.trackColumns.concat([modelData])
+                                                                      : Library.trackColumns.filter(c => c !== modelData)
                         }
                     }
                 }

@@ -499,6 +499,19 @@ private slots:
         QVERIFY(flick);
         flick->setProperty("contentY", speed->mapToItem(qobject_cast<QQuickItem*>(flick)->property("contentItem").value<QQuickItem*>(), QPointF()).y() - 300);
         screenshot("settings-general-lower");
+
+        // A track column toggles from a click on its name, not only on the [ ] (the user, 2026-10-03).
+        auto* size = qobject_cast<QQuickItem*>(find("column-size"));
+        QVERIFY(size);
+        QVERIFY(!bridge_->trackColumns().contains("size"));
+        const QPoint onName = size->mapToScene(QPointF(size->width() - 10, size->height() / 2)).toPoint();
+        QVERIFY(window_->contentItem()->contains(onName));
+        QTest::mouseClick(window_, Qt::LeftButton, {}, onName);
+        QTRY_VERIFY(bridge_->trackColumns().contains("size"));
+        QVERIFY(size->property("checked").toBool());
+        QTest::mouseClick(window_, Qt::LeftButton, {}, onName);
+        QTRY_VERIFY(!bridge_->trackColumns().contains("size"));
+        QVERIFY(!size->property("checked").toBool());
         flick->setProperty("contentY", 0);
         QVERIFY(window_->setProperty("settingsOpen", false));
         QVERIFY(qmlWarnings.isEmpty());

@@ -2,6 +2,20 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Track columns toggle from their name (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** The user, in Settings → General → track columns: "I don't even get the green x on clicking".
+- **Cause:** each column's name was a separate `Text` next to a bare `[ ]` box, so a click on the name did nothing. Only the three-character box was clickable.
+- **Fix:** the name is now the check box's own `text`, so the whole `[ ] bit rate` is one target, with the hand cursor.
+- **Also fixed:** `TyCheckBox` counted the `[x]` twice in its width when it had text (the label's left padding already holds it), which left wide gaps between items.
+- Saving the choice on Windows was the separate preferences bug, fixed in the entry below.
+
+**Files**
+- `qml/GeneralSettings.qml`, `qml/controls/TyCheckBox.qml`
+- `tests/tst_qml_smoke.cpp`
+
+**Tests:** all 4 suites pass. `settingsGeneralLoads` clicks a column's name (not the box) twice, and checks that `Library.trackColumns` and the box follow each click.
+
 ### Preferences are saved on Windows (the CI failure) (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** `tst_media_models` had failed in the Windows workflow for several builds. With test output visible (`QT_FORCE_STDERR_LOGGING`, the entry below), the log showed three failures, all of one kind: a preference that was written read back as its old value (the category view, the scroll speed, the track columns).

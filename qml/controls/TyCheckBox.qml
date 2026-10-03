@@ -10,7 +10,8 @@ T.CheckBox {
     HoverHandler { cursorShape: control.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
 
     implicitHeight: Theme.controlHeight
-    implicitWidth: indicator.implicitWidth + (text !== "" ? spacing + label.implicitWidth : 0)
+    // With text, the label's own left padding already makes room for the [x].
+    implicitWidth: text !== "" ? label.implicitWidth : indicator.implicitWidth
     spacing: Theme.px(8)
     hoverEnabled: true
 
