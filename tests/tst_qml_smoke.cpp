@@ -539,7 +539,28 @@ private slots:
         QTRY_VERIFY(find("searchView")->property("found").toInt() > 0);
         screenshot("search-movie");
         QVERIFY(window_->setProperty("searchText", "zzzz"));
-        QTRY_COMPARE(find("searchView")->property("found").toInt(), 0);
+        QTRY_COMPARE(find("searchView")->property("answered").toString(), QStringLiteral("zzzz"));
+        QCOMPARE(find("searchView")->property("found").toInt(), 0);
+        QVERIFY(window_->setProperty("searchText", "r"));   // one letter: no search, a hint
+        QTRY_VERIFY(find("searchView")->property("tooShort").toBool());
+        screenshot("search-too-short");
+
+        // A result opened from the search: back (the mouse's button) shows the results again.
+        QVERIFY(window_->setProperty("searchText", "radio"));
+        QTRY_COMPARE(find("searchView")->property("answered").toString(), QStringLiteral("radio"));
+        const QVariantList albums = find("searchView")->property("albums").toMap().value("items").toList();
+        QVERIFY(!albums.isEmpty());
+        const QStringList values = albums.first().toMap().value("values").toStringList();
+        const QVariant params = QVariantMap{{"albumArtist", values[1]}, {"album", values[2]}, {"crumb", values[2]}};
+        QVERIFY(QMetaObject::invokeMethod(find("searchView"), "opened", Q_ARG(int, values[0].toInt()), Q_ARG(QString, "album"),
+                                          Q_ARG(QVariant, params)));
+        QTRY_VERIFY(find("albumView") && qobject_cast<QQuickItem*>(find("albumView"))->isVisible());
+        QCOMPARE(window_->property("searchText").toString(), QString());
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_COMPARE(window_->property("searchText").toString(), QStringLiteral("radio"));
+        QVERIFY(qobject_cast<QQuickItem*>(find("searchView"))->isVisible());
+        QCOMPARE(find("searchView")->property("answered").toString(), QStringLiteral("radio"));   // as they were
+        screenshot("search-after-back");
         QVERIFY(window_->setProperty("searchText", ""));
         QVERIFY(qmlWarnings.isEmpty());
     }

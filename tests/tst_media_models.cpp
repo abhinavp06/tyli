@@ -313,6 +313,34 @@ private slots:
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Movies")), QStringLiteral("shows"));
     }
 
+    // Search runs off the UI thread and answers only the latest text (a 50k-track library took
+    // about 0.5 s per keystroke on the UI thread).
+    void searchAnswersOnlyTheLatestText() {
+        seedMusic();
+        QSignalSpy finished(bridge_.get(), &LibraryBridge::searchFinished);
+        bridge_->search("son");
+        bridge_->search("song");     // typed on before the first finished
+        bridge_->search("song 2");
+        QTRY_VERIFY(!finished.isEmpty() && !bridge_->searching());
+        QTest::qWait(100);
+        QCOMPARE(finished.count(), 1);   // the older texts were dropped, not answered
+        QCOMPARE(finished.first().at(0).toString(), QStringLiteral("song 2"));
+        const QVariantMap results = finished.first().at(1).toMap();
+        const QVariantMap tracks = results.value("tracks").toMap();
+        QCOMPARE(tracks.value("total").toInt(), 4);   // "Song 2" in A/One, its hi-res copy, A/Two, B/Three
+        QCOMPARE(tracks.value("items").toList().size(), 4);
+        QCOMPARE(tracks.value("items").toList().first().toMap().value("title").toString(), QStringLiteral("Song 2"));
+        const QVariantMap albums = results.value("albums").toMap();
+        QCOMPARE(albums.value("total").toInt(), 3);
+        QCOMPARE(albums.value("items").toList().first().toMap().value("values").toStringList().value(2), QStringLiteral("One"));
+        QCOMPARE(results.value("movies").toMap().value("total").toInt(), 0);
+        // An empty text answers nothing (and drops a running search).
+        finished.clear();
+        bridge_->search("");
+        QTest::qWait(100);
+        QVERIFY(finished.isEmpty());
+    }
+
     void trackColumnsArePreferences() {
         QCOMPARE(bridge_->trackColumns(), (QStringList{"length", "bitrate"}));
         QSignalSpy changed(bridge_.get(), &LibraryBridge::trackColumnsChanged);

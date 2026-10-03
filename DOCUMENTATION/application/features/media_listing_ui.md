@@ -160,6 +160,11 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 - **The field:** the top bar's search field (debounced) shows `SearchView` in place of the page.
 - **Sections:** albums (`GroupModel` grouped by category, album artist, album), artists, tracks (`ItemModel`), movies, and shows, each filtered with `search`; up to 12 shown per section.
 - **A result** switches the sidebar to its category and opens its page there. A track opens its album.
+- **Off the UI thread (2026-10-03, the user: "search feels slow"):** at 50k tracks one keystroke cost about 0.5 s of queries on the UI thread (hoardor's `BM_SearchKeystroke`), so typing froze the window.
+  - `Library.search(text)` runs the five sections on Qt's thread pool, on its own connection, fetching only what the page shows (12 of each, 24 artists) and the totals.
+  - Only the latest text is answered (`searchFinished`). A search overtaken while running is dropped, and the newest text runs next.
+  - The page waits 400 ms after the last keystroke (was 200), and needs at least 2 letters ("type at least 2 letters").
+- **Back returns to the results:** a page opened from a result is marked (`CategoryView.returnDepth`). Back from it, by the arrow, a mouse button, or Alt+←, shows the results again as they were (`returnRequested`). A crumb above that page, or another category, drops the way back.
 
 ## 7d. Back, forward, and keeping your place (2026-10-03, the user's Windows test)
 

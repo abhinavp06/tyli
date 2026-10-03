@@ -2,6 +2,42 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Search off the UI thread; back from a result returns to the results (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user: "search feels slow… maybe run a UI test yourself", and "if I go back… I want to go back to the search results, not the homepage".
+- **Measured** (hoardor `BM_SearchKeystroke`, 50k tracks): about 0.5 s per keystroke for "t", "tr", "track", and "track 1", all on the UI thread. That's an album count of 125 ms, an album page of 104 ms, the same again for artists, a track count of 60 ms, and a track page of 53 ms. No single query was the problem: the UI thread was.
+- **Fix:**
+  - `Library.search(text)` runs the whole search on Qt's thread pool with its own connection, fetching only what the page shows (12 per section, 24 artists) plus totals.
+  - Only the latest text is answered: older searches still running are dropped, and the newest runs next, so work never piles up.
+  - `SearchView` shows the results it's given (`searching "…"…` until then).
+  - The typing delay went from 200 ms to 400 ms, and search needs 2 letters.
+- **Back to the results:**
+  - opening a result marks that page (`CategoryView.returnDepth`); back from it (arrow, mouse button, Alt+←) calls `returnRequested`, and `Main.reopenSearch()` shows the results again at once, as they were (they stay in the page while it's hidden)
+  - a breadcrumb above the page, or another category, drops it
+- **Mockup for review** (the other session's work, TYLI `d5c55eb`, before any QML): `player-expanded.html`.
+  - The bar's cover shows ↑ to expand.
+  - The expanded view has a large cover, artist and album links, and ↓ at the top right.
+  - The queue opens as a right-hand panel with its own ×, while the cover shrinks.
+  - The bar's cover becomes ↓ while expanded, and artist and album are links in the bar.
+
+**Decisions**
+- **Off the UI thread, not just a longer delay:** a 400 ms delay alone still froze the window for 0.5 s after every pause in typing.
+- **Two letters minimum:** one letter matches most of a library, is the slowest query, and is never what you're looking for.
+- **The rule "reading SQLite on the UI thread is fine because it's paged"** doesn't hold for a full-text match with counts over a big library. Search is the first read moved off the UI thread.
+
+**Files**
+- `src/library_bridge.{hpp,cpp}` (`search`, `searching`, `searchFinished`, `runSearch`)
+- `qml/SearchView.qml`, `qml/Main.qml` (`returnSearch`, `reopenSearch`, 400 ms), `qml/CategoryView.qml` (`returnDepth`, `returnRequested`)
+- `tests/tst_media_models.cpp`, `tests/tst_qml_smoke.cpp`
+- `DOCUMENTATION/application/features/media_listing_ui.md` (§7c)
+
+**Tests:** all 5 suites pass.
+- `TestMediaModels::searchAnswersOnlyTheLatestText`: three texts typed in a row are answered once, for the last; the sections' totals and first rows; an empty text answers nothing.
+- The smoke test:
+  - a one-letter hint
+  - an album opened from the results, then the mouse's back button: the results show again, with the same text
+  - screenshots `search-too-short` and `search-after-back`
+
 ### Windows build: ship the Vulkan loader for libmpv (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The first Windows run with the player failed every test at startup with `0xc0000135` ("DLL not found").

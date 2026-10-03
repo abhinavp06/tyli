@@ -142,6 +142,16 @@ ApplicationWindow {
         currentCategoryId = link.categoryId
         categoryView.open(link.page, link.params)
     }
+    // The search a result was opened from: back from that page shows these results again.
+    property string returnSearch: ""
+    function reopenSearch() {
+        if (returnSearch === "")
+            return
+        topBar.searchText = returnSearch
+        searchDelay.stop()
+        searchText = returnSearch   // at once, not after the typing delay
+        returnSearch = ""
+    }
     function clearSearch() {
         topBar.searchText = ""
         searchText = ""
@@ -227,19 +237,23 @@ ApplicationWindow {
                 }
                 // Search results while the top bar's field has text (debounced: hoardor runs a
                 // query per keystroke otherwise).
-                Timer { id: searchDelay; interval: 200; onTriggered: window.searchText = topBar.searchText.trim() }
+                Timer { id: searchDelay; interval: 400; onTriggered: window.searchText = topBar.searchText.trim() }
                 Connections { target: topBar; function onSearchTextChanged() { searchDelay.restart() } }
                 SearchView {
                     anchors.fill: parent
                     visible: window.view === "search"
                     text: window.searchText
+                    // Back from the opened page returns to these results (CategoryView.returnRequested).
                     onOpened: (categoryId, page, params) => {
+                        const text = window.searchText
                         window.currentCategoryId = categoryId
                         window.homeOpen = false
                         window.queueOpen = false
                         window.videoOpen = false
                         window.clearSearch()
                         categoryView.open(page, params)
+                        categoryView.returnDepth = categoryView.routes.length - 1
+                        window.returnSearch = text
                     }
                 }
                 CategoryView {
@@ -249,6 +263,7 @@ ApplicationWindow {
                     category: window.currentCategory
                     onPlayRequested: (ids, start, addIds, label, video) => video ? window.playVideo(ids, start)
                                                                                  : window.playTracks(ids, start, addIds, label)
+                    onReturnRequested: window.reopenSearch()
                     onAddFolderRequested: window.openSettings("library")
                     // The drive link on an album, movie, or show: that folder's category in Settings → Library.
                     onFolderSettingsRequested: (folderId) => {

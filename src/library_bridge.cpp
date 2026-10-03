@@ -528,6 +528,95 @@ QVariantMap LibraryBridge::showCopies(const QString& show, int categoryId) {
     return {{"qualities", qualities}, {"episodes", episodes}};
 }
 
+namespace {
+
+// One search on its own connection (search() runs it on Qt's thread pool). Counts and the
+// first rows of each section: the results page shows 12 of each (24 artists).
+QVariantMap runSearch(const QString& databasePath, const QString& text) {
+    namespace a = hoardor::audio;
+    namespace v = hoardor::video;
+    QVariantMap out;
+    auto database = hoardor::db::Database::open(std::filesystem::path(databasePath.toStdU16String()));
+    if (!database) return out;
+    auto tracks = a::Library::open(*database);
+    auto videos = v::Library::open(*database);
+    if (!tracks || !videos) return out;
+    const std::string words = text.toStdString();
+    const auto strings = [](const std::vector<std::string>& values) {
+        QStringList list;
+        for (const auto& value : values) list << QString::fromStdString(value);
+        return list;
+    };
+    const auto audioSection = [&](const std::vector<a::Field>& by, std::size_t limit) {
+        const a::Filter filter{{{a::Field::Search, a::Value{words}}}};
+        QVariantList items;
+        if (auto page = tracks->groups(by, filter, a::GroupOrder::Values, false, std::nullopt, limit)) {
+            for (const auto& g : page->items) {
+                items << QVariantMap{{"values", strings(g.values)}, {"count", qint64(g.tracks)}, {"yearMax", g.year_max},
+                                     {"coverEntry", qint64(g.cover_entry)}, {"online", g.any_online}};
+            }
+        }
+        const auto total = tracks->group_count(by, filter);
+        return QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    };
+    const auto videoSection = [&](const std::vector<v::Field>& by, std::int64_t type) {
+        const v::Filter filter{{{v::Field::Search, v::Value{words}}, {v::Field::Type, v::Value{type}}}};
+        QVariantList items;
+        if (auto page = videos->groups(by, filter, v::GroupOrder::Values, false, std::nullopt, 12)) {
+            for (const auto& g : page->items) {
+                items << QVariantMap{{"values", strings(g.values)}, {"count", qint64(g.items)}, {"yearMin", g.year_min},
+                                     {"coverEntry", qint64(g.poster_entry ? g.poster_entry : g.embedded_poster_entry)},
+                                     {"online", g.any_online}};
+            }
+        }
+        const auto total = videos->group_count(by, filter);
+        return QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    };
+    out["albums"] = audioSection({a::Field::Category, a::Field::AlbumArtist, a::Field::Album}, 12);
+    out["artists"] = audioSection({a::Field::Category, a::Field::AlbumArtist}, 24);
+    {
+        const a::Filter filter{{{a::Field::Search, a::Value{words}}}};
+        QVariantList items;
+        const std::vector<a::Order> byTitle{{a::Field::Title}};
+        if (auto page = tracks->tracks(filter, byTitle, std::nullopt, 12)) {
+            for (const auto& t : page->items) {
+                items << QVariantMap{{"entryId", qint64(t.entry_id)}, {"title", QString::fromStdString(t.title)},
+                                     {"album", QString::fromStdString(t.album)}, {"albumArtist", QString::fromStdString(t.album_artist)},
+                                     {"rootId", qint64(t.root_id)}, {"online", bool(t.root_online)}};
+            }
+        }
+        const auto total = tracks->count(filter);
+        out["tracks"] = QVariantMap{{"total", qint64(total ? *total : 0)}, {"items", items}};
+    }
+    out["movies"] = videoSection({v::Field::Category, v::Field::Title, v::Field::Year}, 1);
+    out["shows"] = videoSection({v::Field::Category, v::Field::Show}, 2);
+    return out;
+}
+
+}
+
+void LibraryBridge::search(const QString& text) {
+    searchWanted_ = text;
+    if (searchRunning_ || text.isEmpty()) return;   // a running search asks for the latest text when it ends
+    searchRunning_ = true;
+    emit searchingChanged();
+    auto future = QtConcurrent::run([path = databasePath_, text] { return runSearch(path, text); });
+    auto* watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, text] {
+        const QVariantMap results = watcher->result();
+        watcher->deleteLater();
+        searchRunning_ = false;
+        if (searchWanted_ == text) {
+            emit searchingChanged();
+            emit searchFinished(text, results);
+        } else {
+            search(searchWanted_);   // overtaken while running: answer the latest text instead
+            if (!searchRunning_) emit searchingChanged();
+        }
+    });
+    watcher->setFuture(future);
+}
+
 int LibraryBridge::categoryOfFolder(int folderId) const {
     for (const QVariant& f : folders_) {
         const QVariantMap folder = f.toMap();
