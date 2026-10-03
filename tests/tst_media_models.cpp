@@ -358,6 +358,47 @@ private slots:
         QCOMPARE(withArt, 2);
     }
 
+    // A movie page's "more by <director>" / "more in <genre>" rows (mockup movie-album.html).
+    void moreByTheDirectorAndInTheGenres() {
+        for (const char* f : {"A", "B", "C", "D", "E"}) writeFile(media(QStringLiteral("Films/%1/%1.mkv").arg(f)));
+        const int movies = categoryId(*bridge_, "Movies");
+        QVERIFY(addFolder(*bridge_, movies, media("Films"), "Films").first);
+        QVERIFY(!sync(*bridge_, -1).isEmpty());
+        seedVideo(bridge_->databasePath(), [](const hoardor::file::Entry& e, const std::vector<hoardor::file::Entry>&)
+                                               -> std::optional<std::pair<hoardor::video::VideoInfo, qint64>> {
+            hoardor::video::VideoInfo v;
+            const QString name = QFileInfo(QString::fromStdString(e.relative_path)).completeBaseName();
+            v.title = name.toStdString();
+            v.year = 2000 + (name.at(0).unicode() - 'A');   // A 2000 … E 2004
+            if (name == "A") { v.directors = {"X"}; v.genres = {"G1", "G2"}; }
+            if (name == "B") { v.directors = {"X"}; v.genres = {"G1"}; }
+            if (name == "C") v.genres = {"G1"};
+            if (name == "D") { v.directors = {"Y"}; v.genres = {"G2"}; }
+            return std::make_pair(v, qint64(0));
+        });
+        const QVariantList rows = bridge_->moreMovies("A", 2000, movies, 4);
+        QCOMPARE(rows.size(), 3);
+        const auto row = [&](int i) { return rows[i].toMap(); };
+        const auto titles = [&](int i) {
+            QStringList out;
+            for (const QVariant& m : row(i).value("movies").toList()) out << m.toMap().value("values").toStringList().first();
+            return out;
+        };
+        QCOMPARE(row(0).value("kind").toString(), QStringLiteral("director"));
+        QCOMPARE(row(0).value("name").toString(), QStringLiteral("X"));
+        QCOMPARE(titles(0), QStringList{"B"});                 // never A itself
+        QCOMPARE(row(0).value("others").toInt(), 1);
+        QCOMPARE(row(1).value("name").toString(), QStringLiteral("G1"));
+        QCOMPARE(titles(1), QStringList{"C"});                 // B is already in the row above
+        QCOMPARE(row(1).value("others").toInt(), 2);           // B and C
+        QCOMPARE(row(2).value("name").toString(), QStringLiteral("G2"));
+        QCOMPARE(titles(2), QStringList{"D"});
+        // perRow limits each row; a movie with nothing related has no rows.
+        const QVariantList one = bridge_->moreMovies("A", 2000, movies, 1);
+        QCOMPARE(one.size(), 3);
+        QVERIFY(bridge_->moreMovies("E", 2004, movies, 4).isEmpty());
+    }
+
     void scrollSpeedIsAPreferenceAppliedAtOnce() {
         QCOMPARE(bridge_->scrollSpeed(), DefaultScrollSpeedPercent);
         QCOMPARE(wheelSpeed(), 2.0);

@@ -155,6 +155,7 @@ private slots:
         writeFile(media_.filePath("Films/Arrival (2016)/Arrival 2160p.mkv"), 8192);
         writeImage(media_.filePath("Films/Arrival (2016)/poster.png"), QColor(40, 70, 120));
         writeFile(media_.filePath("Films/Heat (1995)/Heat.mkv"), 4096);
+        writeFile(media_.filePath("Films/Sicario (2015)/Sicario.mkv"), 4096);   // more by Villeneuve, more in Drama
         for (const char* episode : {"Season 1/Dark S01E01.mkv", "Season 1/Dark S01E02.mkv", "Season 1/Dark S01E03.mkv",
                                     "Season 2/Dark S02E01.mkv", "Season 2/Dark S02E02.mkv"}) {
             writeFile(media_.filePath(QStringLiteral("TV/Dark/") + QLatin1String(episode)), 2048);
@@ -223,6 +224,11 @@ private slots:
                     v.hdr = "HDR10";
                     v.video_codec = "hevc";
                 }
+            } else if (path.startsWith("Sicario")) {
+                v.title = "Sicario";
+                v.year = 2015;
+                v.genres = {"Drama", "Thriller"};
+                v.directors = {"Denis Villeneuve"};
             } else if (path.startsWith("Heat")) {
                 v.title = "Heat";
                 v.year = 1995;
@@ -544,7 +550,7 @@ private slots:
         showCategory("Movies");
         QObject* grid = find("posterGrid");
         QVERIFY(grid);
-        QTRY_COMPARE(grid->property("count").toInt(), 2);  // Arrival's two copies are one card
+        QTRY_COMPARE(grid->property("count").toInt(), 3);  // Arrival's two copies are one card
         screenshot("movies");
         // By director and by genre: sections, and the ones with none last (Heat has no genre).
         setState("moviesView", "sortKey", "director");
@@ -555,7 +561,7 @@ private slots:
         QTRY_VERIFY(!qobject_cast<QQuickItem*>(find("noneSection"))->isVisible());   // everyone has a director
         screenshot("movies-by-director");
         setState("moviesView", "sortKey", "genre");
-        QTRY_COMPARE(sections->property("count").toInt(), 2);   // Drama, Science Fiction
+        QTRY_COMPARE(sections->property("count").toInt(), 3);   // Drama, Science Fiction, Thriller
         QTRY_VERIFY(qobject_cast<QQuickItem*>(find("noneSection"))->isVisible());    // Heat
         screenshot("movies-by-genre");
         setState("moviesView", "sortKey", "added");
@@ -565,6 +571,12 @@ private slots:
         const QVariantList options = find("qualityPicker")->property("options").toList();
         QCOMPARE(options.size(), 2);
         QVERIFY(options[0].toMap().value("label").toString().startsWith("2160p"));
+        // Its copies as rows, the one that plays first (the best).
+        QTRY_VERIFY(find("copy-0") && find("copy-1"));
+        QVERIFY(find("copy-0")->property("current").toBool());
+        // More by Villeneuve (Sicario); Drama's only other one is Sicario too, so no row for it.
+        QTRY_VERIFY(find("more-director-Denis Villeneuve"));
+        QVERIFY(!find("more-genre-Drama"));
         screenshot("movie");
         call("categoryView", "open", "director", QVariantMap{{"name", "Denis Villeneuve"}, {"crumb", "Denis Villeneuve"}});
         QTRY_VERIFY(find("personView"));

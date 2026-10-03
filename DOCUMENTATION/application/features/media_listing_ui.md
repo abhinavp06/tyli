@@ -228,7 +228,16 @@ The user asked for music's album structure in movies and shows. Mockups: `show-s
      - its episodes as tracks, as before
    - **`ShowState`** is shared by both pages: the episodes and copies, the chosen quality (one per show), what you watched, and what plays next.
    - **The cover:** `Library.showCopies` returns the show's `coverEntry` (as on its card), so a page opened without one still shows it.
-3. **The movie page in the album layout:** its copies as rows, then "more by" the director and "more in" each genre (below, as built).
+3. **The movie page in the album layout** (`MovieView`):
+   - **The hero:** the poster as tall as an album cover; facts: year, length, genres, directors, then "N copies · size", the drive, and where the info came from. Quality and play at the top right; the plot under it.
+   - **The copies as rows,** like tracks:
+     - each row: #, the quality label with its audio tracks and subtitle languages, length, size
+     - the one that plays is green with the accent line; clicking a row chooses that copy and plays it
+   - **"More by <director>"** (a row each), then **"more in <genre>"** (a row each):
+     - one row of cards filling the width; directors' newest first, genres' most recently added first
+     - never this movie, never one a row above already shows; a row with nothing left is left out
+     - the name and "all →" open the director's or genre's page
+     - built by `Library.moreMovies(title, year, category, perRow)`, with `perRow` the cards that fit (CardFlow's columns)
 4. **The folder rule:** waiting for the user's answers.
 
 ## 8. Open items

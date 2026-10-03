@@ -2,6 +2,36 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The movie page laid out like an album, with more by its director and in its genres (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Part 3 of "music's album structure for movies and shows" (mockup `movie-album.html`, approved). Asked separately: "in a single movie view.. show other movies by the director", then "also another section for movies by genre".
+
+**What changed:**
+- **`MovieView`:**
+  - **Hero:** the poster as tall as an album cover; "N copies · size" next to the drive; the plot under the hero.
+  - **Copy rows** below a hairline, scrolling with the rest:
+    - each row: #, label, audio tracks and subtitle languages (`streamsText`: "TRUEHD 7.1 eng · AC3 5.1 deu · subs eng, deu"), length, size
+    - the playing copy is green with the accent line
+    - a click chooses that copy (remembered, as with the picker) and plays it
+  - **"More" rows:** "more by" each director, then "more in" each genre. Each row: a label, the name (a link), "N other movies", "all →", a hairline, and one `CardFlow` row of posters.
+- **`Library.moreMovies(title, year, categoryId, perRow)`** (new) builds the rows:
+  - the movie's directors and genres over all its copies
+  - per name: the first `perRow` cards (directors' by year, newest first; genres' by date added), skipping this movie and any card a row above already shows
+  - each row's total minus this movie; rows with nothing left are dropped
+  - the page passes `perRow` as the cards that fit its width, and refreshes on `contentChanged`
+
+**Tests:** 5 suites pass.
+- `tst_media_models::moreByTheDirectorAndInTheGenres`: director, then genres; never the movie itself; a card shown once; the "others" counts; `perRow`; a movie with nothing related
+- `tst_qml_smoke`:
+  - the copy rows, the best one current
+  - "more by Denis Villeneuve" (Sicario, added to the sample library)
+  - no "more in Drama" row, since its only other movie is already shown
+  - grid and genre-section counts updated
+
+Screenshot: `movie`.
+
+**Files:** `qml/MovieView.qml`, `src/library_bridge.{hpp,cpp}`, `tests/{tst_media_models.cpp, tst_qml_smoke.cpp}`, `DOCUMENTATION/application/features/media_listing_ui.md` (§7g)
+
 ### Detail pages: no empty band under the breadcrumbs (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** On an album, movie, show, or season page, `BrowseHeader` drew its title row and hairline with nothing in them. That left about 70 px of empty space between the breadcrumbs and the page's own hero. The mockups have none.

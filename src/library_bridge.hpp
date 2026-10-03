@@ -146,6 +146,11 @@ public:
     Q_INVOKABLE QVariantList albumCopies(const QString& albumArtist, const QString& album, int categoryId = -1);
     // [{label, item}]
     Q_INVOKABLE QVariantList movieCopies(const QString& title, int year, int categoryId = -1);
+    // A movie page's "more by <director>" and "more in <genre>" rows (mockup movie-album.html):
+    // [{kind: "director" | "genre", name, others, movies: [{values: [title, year], coverEntry,
+    // online, maxHeight, hdr}]}]. Up to `perRow` movies a row, never this movie and never one a
+    // row above already shows; directors' newest first, genres' most recently added first.
+    Q_INVOKABLE QVariantList moreMovies(const QString& title, int year, int categoryId, int perRow);
     // {qualities: [{label, episodes, total}], episodes: [{season, episode, copies: [{label, item}]}]}
     Q_INVOKABLE QVariantMap showCopies(const QString& show, int categoryId = -1);
     Q_INVOKABLE QString folderLabel(int folderId) const { return folderName(qint64(folderId)); }
