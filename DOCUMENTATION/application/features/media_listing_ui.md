@@ -238,7 +238,7 @@ The user asked for music's album structure in movies and shows. Mockups: `show-s
      - never this movie, never one a row above already shows; a row with nothing left is left out
      - the name and "all →" open the director's or genre's page
      - built by `Library.moreMovies(title, year, category, perRow)`, with `perRow` the cards that fit (CardFlow's columns)
-4. **The folder rule:** waiting for the user's answers.
+4. **The folder rule:** deferred by the user ("let's revisit this folder thing later"). The open questions: movies in shared folders, copies in separate folders, and show/season = folder.
 
 ## 8. Open items
 
