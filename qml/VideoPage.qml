@@ -202,13 +202,6 @@ Rectangle {
                 TyIconButton { iconName: "forward"; tip: "forward 10 s (→)"; onClicked: Player.seekBy(10000) }
                 Text { text: Format.duration(Player.position) + " / " + Format.duration(Player.duration); color: Theme.textDim }
                 Item { Layout.fillWidth: true }
-                TyIconButton {
-                    objectName: "videoQueueButton"
-                    iconName: "queue"
-                    checked: page.queueOpen
-                    tip: page.queueOpen ? "close the queue (q)" : "the queue (q)" + (page.episode ? ": the season's episodes" : "")
-                    onClicked: page.queueOpen = !page.queueOpen
-                }
                 TrackMenuButton {
                     objectName: "audioMenu"
                     label: "audio"
@@ -221,6 +214,14 @@ Rectangle {
                     tracks: Player.subtitleTracks
                     canTurnOff: true
                     onPicked: (id) => Player.selectSubtitle(id)
+                }
+                // Right of the subtitles, left of the volume (the user, 2026-10-03).
+                TyIconButton {
+                    objectName: "videoQueueButton"
+                    iconName: "queue"
+                    checked: page.queueOpen
+                    tip: page.queueOpen ? "close the queue (q)" : "the queue (q)" + (page.episode ? ": the season's episodes" : "")
+                    onClicked: page.queueOpen = !page.queueOpen
                 }
                 TyIconButton { iconName: Player.muted ? "mute" : "volume"; tip: "mute (m)"; onClicked: Player.setMuted(!Player.muted) }
                 SeekLine {

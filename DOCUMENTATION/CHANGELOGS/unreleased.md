@@ -2,6 +2,12 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The video page's queue button sits right of the subtitles (2026-10-03, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** The user asked to move the queue button "to the right of the subtitles options, or to the left of the volume". The controls now read: audio, subtitles, queue, mute, volume, full screen (it was first in that group).
+
+**Files:** `qml/VideoPage.qml`
+
 ### Playlists and Liked Songs: the screens (2026-10-03, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** The UI for the approved design (mockups `playlist.html`, `liked.html`; the user's review in `features/playlists_ui.md` §0), on the bridge from the previous commit and hoardor `799e939`. As built: §6.
