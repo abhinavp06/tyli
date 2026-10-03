@@ -9,8 +9,10 @@ ColumnLayout {
     objectName: "musicFilterView"
 
     property var owner
-    readonly property string field: owner.route.page             // "genre" | "year"
-    readonly property var value: owner.route.params.value !== undefined ? owner.route.params.value : ""
+    property var route: ({ page: "home", params: {} })  // this page's own: set by CategoryView
+    property int depth: 0
+    readonly property string field: route.page             // "genre" | "year"
+    readonly property var value: route.params.value !== undefined ? route.params.value : ""
     property string sortKey: field === "year" ? "az" : "artist"
     property bool addedDescending: true
 
@@ -18,7 +20,7 @@ ColumnLayout {
 
     BrowseHeader {
         Layout.fillWidth: true
-        crumbs: page.owner.crumbs()
+        crumbs: page.owner.crumbs(page.depth)
         label: page.field
         title: String(page.value)
         subtitle: Format.plural(browser.total, "album")

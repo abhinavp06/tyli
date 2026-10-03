@@ -11,7 +11,9 @@ ColumnLayout {
     objectName: "showView"
 
     property var owner
-    readonly property var params: owner.route.params.show !== undefined ? owner.route.params : ({ show: "" })
+    property var route: ({ page: "home", params: {} })  // this page's own: set by CategoryView
+    property int depth: 0
+    readonly property var params: route.params.show !== undefined ? route.params : ({ show: "" })
     property var info: Library.showCopies(params.show, owner.categoryId)
     readonly property string qualityKey: "quality/show/" + encodeURIComponent(params.show)
     property string chosen: Library.preference(qualityKey, "")
@@ -35,11 +37,11 @@ ColumnLayout {
         function onContentChanged() { page.info = Library.showCopies(page.params.show, page.owner.categoryId) }
     }
 
-    spacing: 16
+    spacing: Theme.px(16)
 
     BrowseHeader {
         Layout.fillWidth: true
-        crumbs: page.owner.crumbs()
+        crumbs: page.owner.crumbs(page.depth)
         showSort: false
         onBack: page.owner.back()
         onCrumbClicked: (crumb) => page.owner.goToCrumb(crumb)
@@ -48,7 +50,7 @@ ColumnLayout {
     HeroHeader {
         Layout.fillWidth: true
         poster: true
-        artWidth: 130
+        artWidth: Theme.px(130)
         placeholder: "shows"
         source: Library.thumbnail(page.params.coverEntry || 0)
         online: page.any ? page.any.online : true
@@ -57,7 +59,7 @@ ColumnLayout {
 
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             LinkText {
                 visible: page.firstYear > 0
                 text: page.firstYear
@@ -78,7 +80,7 @@ ColumnLayout {
         }
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             visible: page.directors.length > 0
             Text { text: "directed by"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
             Repeater {
@@ -91,9 +93,9 @@ ColumnLayout {
             }
         }
         Row {
-            spacing: 6
+            spacing: Theme.px(6)
             visible: page.any !== null
-            Icon { name: "drive"; size: 14; anchors.verticalCenter: parent.verticalCenter }
+            Icon { name: "drive"; size: Theme.px(14); anchors.verticalCenter: parent.verticalCenter }
             LinkText {
                 text: page.any ? Library.folderLabel(page.any.rootId) : ""
                 font.pixelSize: Theme.fontSizeSmall
@@ -144,31 +146,31 @@ ColumnLayout {
         model: page.episodes
         ScrollBar.vertical: TyScrollBar {}
         header: Row {
-            height: 28
-            spacing: 16
-            leftPadding: 12
-            Text { width: 28; horizontalAlignment: Text.AlignRight; text: "#"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Text { width: 400; text: "name"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            height: Theme.px(28)
+            spacing: Theme.px(16)
+            leftPadding: Theme.px(12)
+            Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: "#"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Text { width: Theme.px(400); text: "name"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
         }
         delegate: Rectangle {
             id: row
             required property var modelData
             width: ListView.view.width
-            height: 34
+            height: Theme.px(34)
             color: area.containsMouse ? Theme.hover : "transparent"
             Row {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 16
-                leftPadding: 12
-                Text { width: 28; horizontalAlignment: Text.AlignRight; text: row.modelData.episode > 0 ? row.modelData.episode : ""; color: Theme.textDim }
+                spacing: Theme.px(16)
+                leftPadding: Theme.px(12)
+                Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.episode > 0 ? row.modelData.episode : ""; color: Theme.textDim }
                 Text {
-                    width: row.width - 12 - 28 - 16 * 3 - 70 - 120
+                    width: row.width - Theme.px(12 + 28 + 16 * 3 + 70 + 120)
                     text: row.modelData.title
                     elide: Text.ElideRight
                     color: !row.modelData.online ? Theme.textFaint : row.modelData.fromName ? Theme.textDim : Theme.text
                 }
-                Text { width: 70; horizontalAlignment: Text.AlignRight; text: row.modelData.duration > 0 ? Format.runtime(row.modelData.duration) : ""; color: Theme.textDim }
-                Text { width: 120; text: Format.resolution(row.modelData.height) + (row.modelData.hdr ? " " + row.modelData.hdr : ""); color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
+                Text { width: Theme.px(70); horizontalAlignment: Text.AlignRight; text: row.modelData.duration > 0 ? Format.runtime(row.modelData.duration) : ""; color: Theme.textDim }
+                Text { width: Theme.px(120); text: Format.resolution(row.modelData.height) + (row.modelData.hdr ? " " + row.modelData.hdr : ""); color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
             }
             MouseArea {
                 id: area

@@ -13,7 +13,7 @@ Rectangle {
     color: area.containsMouse ? Theme.hover : "transparent"
     border.width: 1
     border.color: area.containsMouse ? Theme.accent : Theme.accentDim
-    Icon { anchors.centerIn: parent; name: "play"; color: Theme.accent }
+    Icon { anchors.centerIn: parent; name: "play"; size: 16; color: Theme.accent }  // fixed: not scaled with Theme (the user likes it as is)
     ToolTip.visible: area.containsMouse
     ToolTip.text: button.tip + " (comes with the player)"
     ToolTip.delay: 300

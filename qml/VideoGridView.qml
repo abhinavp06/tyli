@@ -4,15 +4,17 @@ import Tyli
 import "Format.js" as Format
 
 // Movies (one card per title and year, whatever the copies) or shows, as posters. Also
-// serves the genre and year pages (owner.route.page "genre" / "year").
+// serves the genre and year pages (route.page "genre" / "year").
 ColumnLayout {
     id: page
     objectName: movies ? "moviesView" : "showsView"
 
     property var owner
+    property var route: ({ page: "home", params: {} })  // this page's own: set by CategoryView
+    property int depth: 0
     property bool movies: true
-    readonly property string field: owner.route.page === "genre" || owner.route.page === "year" ? owner.route.page : ""
-    readonly property var value: owner.route.params.value !== undefined ? owner.route.params.value : ""
+    readonly property string field: route.page === "genre" || route.page === "year" ? route.page : ""
+    readonly property var value: route.params.value !== undefined ? route.params.value : ""
     readonly property string prefKey: "sort/" + (movies ? "movies" : "shows")
     property string sortKey: field ? "az" : Library.preference(prefKey, "added")
     property bool addedDescending: field ? true : Library.preference(prefKey + "/added", true)
@@ -35,7 +37,7 @@ ColumnLayout {
 
     BrowseHeader {
         Layout.fillWidth: true
-        crumbs: page.owner.crumbs()
+        crumbs: page.owner.crumbs(page.depth)
         label: page.field
         title: page.field ? String(page.value) : (page.owner.category ? page.owner.category.name.toLowerCase() : "")
         subtitle: Format.plural(groups.total, page.movies ? "movie" : "show")
@@ -57,7 +59,7 @@ ColumnLayout {
         objectName: "posterGrid"
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.topMargin: 18
+        Layout.topMargin: Theme.px(18)
         model: groups
         poster: true
         placeholder: page.movies ? "movies" : "shows"

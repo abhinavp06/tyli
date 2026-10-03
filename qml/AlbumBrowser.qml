@@ -37,7 +37,7 @@ Item {
     CoverGrid {
         objectName: "albumGrid"
         anchors.fill: parent
-        anchors.topMargin: 18
+        anchors.topMargin: Theme.px(18)
         visible: browser.sortKey !== "artist"
         model: browser.sortKey !== "artist" ? albums : null
         placeholder: "music"
@@ -51,11 +51,11 @@ Item {
     ListView {
         objectName: "artistSections"
         anchors.fill: parent
-        anchors.topMargin: 12
+        anchors.topMargin: Theme.px(12)
         visible: browser.sortKey === "artist"
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        spacing: 22
+        spacing: Theme.px(22)
         ScrollBar.vertical: TyScrollBar {}
         model: GroupModel {
             engine: "audio"
@@ -66,9 +66,9 @@ Item {
             id: section
             required property var model
             width: ListView.view.width
-            spacing: 12
+            spacing: Theme.px(12)
             Row {
-                spacing: 12
+                spacing: Theme.px(12)
                 LinkText {
                     text: section.model.values[0]
                     font.weight: Theme.weightBold
@@ -79,7 +79,7 @@ Item {
             Rectangle { width: parent.width; height: 1; color: Theme.hairline }
             Flow {
                 width: parent.width
-                spacing: 18
+                spacing: Theme.px(18)
                 Repeater {
                     model: GroupModel {
                         id: artistModel
@@ -90,7 +90,7 @@ Item {
                     }
                     CoverCard {
                         required property var model
-                        width: 150
+                        width: Theme.px(150)
                         source: model.thumbnail
                         online: model.online
                         title: model.values[1]

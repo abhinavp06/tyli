@@ -19,7 +19,7 @@ Rectangle {
             clearTimer.restart()
     }
 
-    implicitHeight: message !== "" ? 30 : 0
+    implicitHeight: message !== "" ? Theme.px(30) : 0
     visible: message !== ""
     color: Theme.background
 
@@ -27,9 +27,9 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 8
-        spacing: 12
+        anchors.leftMargin: Theme.px(16)
+        anchors.rightMargin: Theme.px(8)
+        spacing: Theme.px(12)
         Text {
             objectName: "statusText"
             Layout.fillWidth: true
@@ -38,8 +38,8 @@ Rectangle {
             elide: Text.ElideRight
         }
         TyIconButton {
-            implicitHeight: 26
-            implicitWidth: 26
+            implicitHeight: Theme.px(26)
+            implicitWidth: Theme.px(26)
             iconName: "close"
             tip: "dismiss"
             onClicked: line.message = ""

@@ -6,7 +6,7 @@ import Tyli
 T.Menu {
     id: control
 
-    implicitWidth: Math.max(160, contentWidth + leftPadding + rightPadding)
+    implicitWidth: Math.max(Theme.px(160), contentWidth + leftPadding + rightPadding)
     implicitHeight: contentHeight + topPadding + bottomPadding
     padding: 1
     margins: 0

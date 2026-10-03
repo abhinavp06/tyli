@@ -43,6 +43,7 @@ The user's direction (2026-10-02): *"minimal dark + green, hacker-like, but very
 - **One monospace family for the whole app: IBM Plex Mono** (Regular and SemiBold; the user's choice, 2026-10-02), bundled with the app as a Qt resource (SIL Open Font License 1.1). Bundling makes it look the same on Windows, Linux, and macOS. System monospace fonts differ (Consolas, DejaVu Sans Mono, Menlo).
   - **A new dependency (a font asset), approved by the user** (2026-10-02). Rejected: JetBrains Mono (the user preferred Plex), the system monospace (looks different on each OS).
 - **Sizes:** 13 px base, 11 px for small dim lines, 18 px for a section title. Lowercase section labels (`folders`, `files in "music (e:)"`).
+  - **Scaled by 1.15 since 2026-10-03** (the user: bigger text and icons, except the play button and the quality picker): 15 px base, 13 px small, 17 px heading, 21 px title; icons 20 px; icon buttons and fields 36 px, just under the play button's 40 px. See §5b. The HTML mockups are still drawn at the 1.0 sizes.
 
 ## 4. Look of each element
 
@@ -77,7 +78,7 @@ The user's direction (2026-10-02): *"minimal dark + green, hacker-like, but very
 The user's notes on the first mockups, and what changed:
 
 - **Top bar** across the window: the sidebar toggle and `tyli_` on the left; the **sync status** (a 2 px progress line plus "syncing music (e:) · 5,120 files", or "synced 2 min ago" when idle) and a **gear icon** on the right. Clicking either opens Settings → Library. The word "settings" is gone.
-- **Sidebar:** categories only, each with a small stroke icon left of its name and a count on the right. It **collapses** to icons only (the toggle in the top bar).
+- **Sidebar:** categories only, each with a small stroke icon left of its name (the count on the right was removed on 2026-10-03, the user's request). It **collapses** to icons only (the toggle in the top bar).
 - **A category in the sidebar shows its media only.** Music shows a list of albums (cover, album, artist, year, tracks, length; search, sort, list or grid). Folders, sync, and file lists move out of the category views into Settings. The album list needs tag reading in hoardor, which doesn't exist yet (§4b).
 - **Settings has two tabs, `library` and `general`:**
   - **library:** category **pills** (`all`, one per category with its icon and folder count, and `+`). Under the selected category: its name, accepted kinds, totals, and actions (sync, edit, delete); the sync progress with a stop icon; its folders as rows (status, name, path, files, last sync, marker), each with icon actions (show last sync, move to another category, relocate, remove). A folder's last-sync details and scan errors expand inline under its row. Held removals appear as an amber line under the folder, with remove/keep icons. **Add folder** is an inline row (path field, browse, name, marker toggle, confirm/cancel), so there are no dialogs.
@@ -112,13 +113,21 @@ The user's notes on the first mockups, and what changed:
 - **`qml/Theme.qml`** (a singleton through `QT_QML_SINGLETON_TYPE`): the palette, font, sizes, and metrics. No color literal appears in any screen.
 - **`qml/Icon.qml`**: our stroke icons as SVG path strings drawn with Qt Quick Shapes (`PathSvg`), so an icon's color is just a binding. `Shape.CurveRenderer` antialiases them on the GPU without multisampling.
 - **`qml/controls/`**: `TyIconButton`, `TyField`, `TyCheckBox` (`[x]`), `TyMenu` + `TyMenuItem`, `TyPill`, `TyProgress`, `TyScrollBar`, `TyTab`, all built on `QtQuick.Templates` (behavior only, no look). Tabs and pills follow a bound `checked` property instead of toggling themselves.
-- **`src/app_setup.cpp`** (`setupApplication()`, used by `main()` and the QML smoke test): the Basic style, the bundled fonts (`qml/fonts/`, loaded from the module's resources), and IBM Plex Mono 13 px as the app's default font.
+- **`src/app_setup.cpp`** (`setupApplication()`, used by `main()` and the QML smoke test): the Basic style, the bundled fonts (`qml/fonts/`, loaded from the module's resources), and IBM Plex Mono 13 px as the app's default font (15 px since 2026-10-03, with the wheel-speed filter: §5b).
 - **Screens:** `Main.qml` (top bar, sidebar, category view or Settings, status line), `TopBar.qml`, `Sidebar.qml`, `CategoryView.qml`, `SettingsView.qml` → `LibrarySettings.qml` + `GeneralSettings.qml`, `StatusLine.qml`. The old `SectionView`, `SyncDetailsDialog`, and four Settings sub-tab files are gone.
 - **No popups:** results and errors go to `StatusLine` at the bottom (results clear after 8 s, errors stay until dismissed). Removal confirmations, adding and relocating folders, and editing categories all happen inline.
 - **Category view = `CategoryFilesModel`** (C++), which replaced `FolderFilesModel`: it pages through the category's folders one after another (keyset paging per folder) and reloads by itself when the folders change.
 - **The bridge gained `folderReports`** (each folder's latest report, keyed by id) for the inline last-sync details.
 - **Category names show in lowercase** (they're labels); folder names, paths, and file names show exactly as they are.
 - **Category icons** come from the name when it's a familiar one (music, movies, shows, books, …), otherwise from the accepted kinds (`Format.categoryIcon`).
+
+## 5b. Size and screens (2026-10-03)
+
+- **One scale for everything:** `Theme.scale` (1.15) and `Theme.px(length)`. Every length in the QML goes through `px()`: fonts, icons, rows, margins, column widths. Changing the one number resizes the whole UI.
+- **Fixed on purpose:** `PlayButton` and `QualityPicker` keep their 40 px box, 16 px icon, and 13/11 px text. The user likes them as they are.
+- **Different screens need nothing from TYLI.** Qt 6 follows Windows' display scaling for each monitor, and rescales live when the window moves to another screen. With Windows' usual defaults (100% on a 27" 1440p monitor, 125% on a 15" 1080p laptop), text comes out at about the same physical size on both. TYLI doesn't override the high-DPI policy (`main.cpp`).
+  - **Rejected:** a "UI size" setting. The user wants it to just work, without changing anything when switching screens. Sizing from the screen's reported physical size was rejected too: it would fight the scaling the user picked in Windows, and some monitors report wrong sizes.
+- **Wheel scrolling is 20% faster** (the user, 2026-10-03). Qt Quick scrolls in proportion to the wheel's delta: one notch moves the system's "lines per notch" × 24 px (72 px at Windows' default 3 lines). `setupApplication()` installs an app-wide filter that scales the delta by `WheelSpeed` (1.2) where the event reaches a window, so every list and grid speeds up alike, and Windows' own lines-per-notch setting still counts.
 
 ## 6. Edge cases
 

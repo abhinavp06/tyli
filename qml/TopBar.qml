@@ -26,9 +26,9 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 16
-        spacing: 12
+        anchors.leftMargin: Theme.px(10)
+        anchors.rightMargin: Theme.px(16)
+        spacing: Theme.px(12)
 
         TyIconButton {
             objectName: "sidebarToggle"
@@ -60,13 +60,13 @@ Rectangle {
             }
         }
 
-        Item { Layout.preferredWidth: 24 }
+        Item { Layout.preferredWidth: Theme.px(24) }
 
         // Search across the library; results replace the page while there's text (Esc clears).
         TyField {
             id: search
             objectName: "searchField"
-            Layout.preferredWidth: 300
+            Layout.preferredWidth: Theme.px(300)
             placeholderText: "search"
             font.pixelSize: Theme.fontSizeSmall
             Keys.onEscapePressed: text = ""
@@ -78,16 +78,16 @@ Rectangle {
         Rectangle {
             objectName: "syncStatus"
             Layout.preferredHeight: Theme.controlHeight
-            Layout.preferredWidth: statusRow.implicitWidth + 16
+            Layout.preferredWidth: statusRow.implicitWidth + Theme.px(16)
             color: statusArea.containsMouse ? Theme.hover : "transparent"
             visible: Library.syncing || Library.reading || Library.lastReport.finishedAt !== undefined
             Row {
                 id: statusRow
                 anchors.centerIn: parent
-                spacing: 12
+                spacing: Theme.px(12)
                 TyProgress {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: 140
+                    width: Theme.px(140)
                     visible: Library.syncing || Library.reading
                     // A scan's total is unknown; reading tags counts down a known list.
                     indeterminate: Library.syncing || Library.metadataProgress.total === undefined

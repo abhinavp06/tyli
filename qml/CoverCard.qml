@@ -14,11 +14,11 @@ Item {
     property string subtitle
     signal activated()
 
-    implicitWidth: 150
+    implicitWidth: Theme.px(150)
     ToolTip.visible: area.containsMouse && titleText.truncated
     ToolTip.text: card.title
     ToolTip.delay: 500
-    implicitHeight: art.height + 7 + titleText.implicitHeight + subtitleText.implicitHeight + 3
+    implicitHeight: art.height + Theme.px(7) + titleText.implicitHeight + subtitleText.implicitHeight + Theme.px(3)
 
     CoverImage {
         id: art
@@ -36,7 +36,7 @@ Item {
     Text {
         id: titleText
         anchors.top: art.bottom
-        anchors.topMargin: 7
+        anchors.topMargin: Theme.px(7)
         width: card.width
         text: card.title
         elide: Text.ElideRight
@@ -45,7 +45,7 @@ Item {
     Text {
         id: subtitleText
         anchors.top: titleText.bottom
-        anchors.topMargin: 3
+        anchors.topMargin: Theme.px(3)
         width: card.width
         text: card.subtitle
         elide: Text.ElideRight

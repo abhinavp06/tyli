@@ -2,6 +2,55 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The user's Windows test: back and forward, scroll position, sizes, scroll speed, sidebar, posters (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** The user tested the Windows build on their real library and reported eight points. This entry covers TYLI's part. Item 7 (posters) was fixed in hoardor (see its changelog), and items 3 and 6 are deferred by the user.
+1. **Scroll position on going back.** Returning from an album to the home grid scrolled to the top.
+   - `CategoryView` now keeps the pages you came from alive in a `StackView`, so the grid comes back exactly as it was left: same object, same scroll position, rows already loaded.
+2. **Mouse side buttons.** Back and forward now work like a browser:
+   - the mouse's back/forward buttons, Alt+← / Alt+→, and keyboards' Back/Forward keys
+   - forward history: a breadcrumb jump counts as several steps back, and a new page clears forward
+   - back first closes Settings, then clears the search results
+   - clicking the current category in the sidebar returns to its home page, as you left it
+4. **Scrolling 20% faster.** One app-wide event filter (`setupApplication()`) scales the wheel's delta by `WheelSpeed` = 1.2 where the event reaches a window.
+   - Measured in Qt 6.12: one notch moves lines-per-notch × 24 px (72 px at 3 lines), and 1.2× the delta moves 86 px.
+   - Every list and grid speeds up alike, and Windows' own lines-per-notch setting still counts.
+5. **No file counts in the sidebar.**
+8. **Bigger text and icons, for the user's 27" 1440p and 15" 1080p screens.**
+   - **One scale:** `Theme.scale` (1.15) and `Theme.px()`, through which every length in the QML now goes: base text 13 → 15 px, small 11 → 13, heading 15 → 17, title 18 → 21; icons 16 → 20; icon buttons and fields 32 → 36 px (just under the play button's 40).
+   - **Unchanged on purpose:** `PlayButton` and `QualityPicker` (the user likes them).
+   - **Different screens:** handled by Windows' per-monitor display scaling, which Qt 6 follows (and rescales live when the window changes screens). TYLI doesn't override it.
+- **Deferred by the user:** album grouping (3: "much better now", wait for daily use) and the album count vs Plex (6: 4,557 vs about 1,834). Item 6 is written up in `features/media_listing_ui.md` §8 with the user's idea: an album is the folder that holds the audio files.
+
+**Decisions**
+- **A `StackView` that keeps pages alive, rather than saving `contentY` and restoring it.** A restored offset deep in a paged list would first need every page above it fetched again. Keeping the page costs only its models, and the stack is as deep as the pages opened.
+- **Each page gets its own `route` and `depth` at creation.** Pages used to read `owner.route`, so a hidden page would have re-filtered itself every time a new page opened.
+- **The side buttons go through a `TapHandler` on the window.** Since Qt 6.9, `Flickable` only accepts the left button (`acceptedButtons`), and no control takes the side buttons, so every side click reaches the window. A C++ event filter wasn't needed.
+- **Sizes: no "UI size" setting.** The user: "I want something that just works… I don't want to do it every time I switch screens". Sizing from the monitor's physical size was rejected too: it fights the user's Windows scaling, and some monitors report wrong sizes.
+- **The wheel speed is a constant** (`WheelSpeed`), for the same reason. Filtering only at the window keeps it from being applied twice: Qt Quick sends the event on to items with `sendEvent`, which app-wide filters see as well.
+
+**Files**
+- **Navigation:** `qml/CategoryView.qml` (rewritten: `routes`, `forwardRoutes`, `open`, `back`, `forward`, `goToCrumb`, `home`, `crumbs(depth)`, `homeKey`), `qml/Main.qml` (`goBack`, `goForward`, `clearSearch`, the `TapHandler`, two `Shortcut`s, the sidebar's current-category click).
+- **Pages** (their own `route` and `depth`): `qml/{MusicView, AlbumView, ArtistView, MusicFilterView, VideoGridView, MovieView, ShowView, PersonView}.qml`.
+- **Sizes:** `qml/Theme.qml` (`scale`, `px()`, new sizes); every QML file with a length (`Theme.px(…)`): `AlbumBrowser`, `BrowseHeader`, `CoverCard`, `CoverGrid` (cell height from `FontMetrics`), `CoverImage`, `GeneralSettings`, `HeroHeader`, `LibrarySettings`, `SearchView`, `SettingsView`, `ShowView`, `SortBar`, `StatusLine`, `TopBar`, `TrackList`, and `controls/{TyCheckBox, TyField, TyMenu, TyMenuItem, TyPill, TyProgress, TyScrollBar, TyTab}`. `qml/PlayButton.qml` and `qml/QualityPicker.qml` are pinned at their old sizes.
+- **Sidebar:** `qml/Sidebar.qml` (no counts; the icon stays put when collapsed).
+- **Wheel and app font:** `src/app_setup.{hpp,cpp}` (`WheelSpeedFilter`, `WheelSpeed`, the app font at 15 px).
+- **Tests:** `tests/tst_qml_smoke.cpp`.
+- **Docs:** `DOCUMENTATION/application/{ARCHITECTURE.md, features/media_listing_ui.md, features/theme.md}`.
+
+**Tests:** all 4 suites pass, and the app starts offscreen without QML warnings. The smoke test has 3 new cases:
+- `backKeepsThePageAndItsScrollPosition`: a small window so the grid scrolls; open an album and go back. The same grid object comes back at the same `contentY`. Also covers forward, a breadcrumb jump home, the sidebar's current category, and a new page clearing forward.
+- `mouseSideButtonsGoBackAndForward`: real `BackButton` / `ForwardButton` clicks over the page and Alt+←/→. From Settings, back returns to the page.
+- `theWheelScrollsAFifthFurther`: one notch on a plain `ListView` moves lines × 24 × 1.2 px.
+- **The test helpers:** `find()` prefers a visible object, since hidden pages share object names. `showCategory()` returns to the category's home.
+
+**Known limitations and follow-ups**
+- History doesn't span categories: switching the category starts at its home, as before.
+- Forward re-creates the page, so it opens at the top.
+- Hidden pages keep refreshing their models while tags are read (small: one per page opened).
+- The HTML mockups are still drawn at the old sizes.
+- **To check on Windows:** both screens, the side buttons on the user's mouse, and the scroll feel.
+
 ### Search bar (2026-10-02, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:**

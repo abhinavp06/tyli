@@ -125,7 +125,7 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
   - the bridge: `albumCopies`, `movieCopies`, `showCopies`, `thumbnail`, `categoryView` / `categoryViewChoice` / `setCategoryView`, `preference` / `setPreference`, `trackColumns`, `metadataProgress`, and the signals `contentChanged`, `metadataFinished`, `notice`
   - `CategoryFilesModel` is removed.
 - **QML** (`qml/`):
-  - shared pieces: `CategoryView` (routing with a back stack and breadcrumbs), `BrowseHeader`, `SortBar`, `CoverGrid`, `CoverCard`, `CoverImage`, `HeroHeader`, `QualityPicker`, `PlayButton`, `LinkText`, `TrackList`
+  - shared pieces: `CategoryView` (routing with a back stack and breadcrumbs; a `StackView` with forward since 2026-10-03, §7d), `BrowseHeader`, `SortBar`, `CoverGrid`, `CoverCard`, `CoverImage`, `HeroHeader`, `QualityPicker`, `PlayButton`, `LinkText`, `TrackList`
   - screens: `AlbumBrowser`, `MusicView`, `MusicFilterView` (genre or year), `AlbumView`, `ArtistView`, `VideoGridView` (movies or shows, also their genre and year pages), `MovieView`, `ShowView`, `PersonView` (director)
 - **Settings:**
   - **Library:** under a selected category, "view: automatic · music · movies · shows".
@@ -161,9 +161,19 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 - **Sections:** albums (`GroupModel` grouped by category, album artist, album), artists, tracks (`ItemModel`), movies, and shows, each filtered with `search`; up to 12 shown per section.
 - **A result** switches the sidebar to its category and opens its page there. A track opens its album.
 
+## 7d. Back, forward, and keeping your place (2026-10-03, the user's Windows test)
+
+- **The user's findings:** going back from an album to the home grid scrolled to the top, and the mouse's side buttons did nothing.
+- **Pages stay alive:** `CategoryView` keeps a `StackView` of pages, one per route. Opening a page pushes it, going back pops it, and the page underneath reappears exactly as it was: the same scroll position, rows already loaded, sort. Each page gets its own `route` and `depth` when it's created (it no longer reads the current route), so a hidden page never re-filters itself.
+- **Forward**, like a browser: going back keeps the pages you left in `forwardRoutes`, a breadcrumb jump counts as several steps back, and opening a new page clears them. Forward re-creates the page (not kept alive).
+- **Input:** the mouse's back/forward buttons (a `TapHandler` on the window: Qt Quick's lists only take the left button, so side clicks always reach it), Alt+← / Alt+→, and keyboards' Back/Forward keys. Back first closes Settings, then clears the search results, then walks the category's pages.
+- **The sidebar:** clicking the category you're in goes back to its home page, as you left it.
+- **Cost:** hidden pages keep their models, which also refresh while tags are read. The stack is only as deep as the pages opened, so it stays small.
+- **Not done:** history across categories (switching the category starts at its home, as before).
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).
 - **Click-to-play, the queue prompt, viewed/progress markers:** the player.
-- **Search:** later, on both sides.
+- **Album count vs Plex** (the user, 2026-10-03, to revisit after daily use): TYLI shows about 4,557 albums where Plex shows about 1,834. Albums are hoardor groups of (album artist, album), and singles or loosely tagged tracks become albums of their own. Idea to try: an album is the folder that directly holds the audio files (the ARTIST/ALBUM/TRACKS layout), so counting those folders gives the real number.
 - **Movie collections and franchises:** not planned.

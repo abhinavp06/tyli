@@ -11,6 +11,10 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QQuickView>
+#include <QScopeGuard>
+#include <QStyleHints>
+#include <QWheelEvent>
 #include <QtQml/qqmlextensionplugin.h>
 
 #include <memory>
@@ -83,9 +87,17 @@ private:
         return nullptr;
     }
 
+    // Pages you came from stay alive, hidden, under the one shown (CategoryView's stack), so
+    // a visible match wins over a hidden one with the same name.
     QObject* find(const char* objectName) {
-        QObject* object = window_->findChild<QObject*>(objectName);
-        if (!object) object = findIn(window_->contentItem(), objectName);
+        QObject* hidden = nullptr;
+        for (QObject* object : window_->findChildren<QObject*>(objectName)) {
+            const auto* item = qobject_cast<QQuickItem*>(object);
+            if (!item || item->isVisible()) return object;
+            if (!hidden) hidden = object;
+        }
+        QObject* object = findIn(window_->contentItem(), objectName);
+        if (!object) object = hidden;
         if (!object) qWarning("no object named %s", objectName);
         return object;
     }
@@ -101,6 +113,7 @@ private:
     void showCategory(const QString& name) {
         QVERIFY(window_->setProperty("settingsOpen", false));
         QVERIFY(window_->setProperty("currentCategoryId", categoryId(*bridge_, name)));
+        call("categoryView", "home");  // also when it was already the category shown
         QTest::qWait(50);
     }
 
@@ -291,6 +304,96 @@ private slots:
         call("categoryView", "back");
         QTRY_VERIFY(find("artistView"));
         QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    // Going back (the back arrow, a breadcrumb, a mouse side button) shows the page exactly as
+    // it was left: the same grid object, scrolled where it was. Forward brings the page back.
+    void backKeepsThePageAndItsScrollPosition() {
+        const QSize size = window_->size();
+        window_->resize(640, 420);  // small enough for the album grid to scroll
+        const auto restore = qScopeGuard([&] { window_->resize(size); });
+        showCategory("Music");
+        auto* grid = qobject_cast<QQuickItem*>(find("albumGrid"));
+        QVERIFY(grid);
+        QTRY_COMPARE(grid->property("count").toInt(), 5);
+        QTRY_VERIFY(grid->property("contentHeight").toReal() > grid->height() + 60);
+        grid->setProperty("contentY", 60);
+        QObject* view = find("categoryView");
+
+        call("categoryView", "open", "album", QVariantMap{{"albumArtist", "Radiohead"}, {"album", "A Moon Shaped Pool"}, {"crumb", "A Moon Shaped Pool"}});
+        QTRY_VERIFY(find("albumView"));
+        QVERIFY(!grid->isVisible());
+        call("categoryView", "back");
+        QTRY_VERIFY(grid->isVisible());
+        QCOMPARE(find("albumGrid"), grid);  // the same page, not a new one
+        QCOMPARE(grid->property("contentY").toReal(), 60.0);
+
+        // Forward reopens the album; a breadcrumb back home keeps the grid too.
+        QVERIFY(view->property("canGoForward").toBool());
+        call("categoryView", "forward");
+        QTRY_VERIFY(find("albumView") && qobject_cast<QQuickItem*>(find("albumView"))->isVisible());
+        QVERIFY(!view->property("canGoForward").toBool());
+        const QVariant homeCrumb = QVariantMap{{"depth", 0}};
+        QVERIFY(QMetaObject::invokeMethod(view, "goToCrumb", Q_ARG(QVariant, homeCrumb)));
+        QTRY_VERIFY(grid->isVisible());
+        QCOMPARE(grid->property("contentY").toReal(), 60.0);
+
+        // Clicking the category in the sidebar goes home the same way.
+        call("categoryView", "forward");
+        QTRY_VERIFY(!grid->isVisible());
+        auto* sidebarList = qobject_cast<QQuickItem*>(find("categoryList"));
+        QVERIFY(sidebarList);
+        QVERIFY(QMetaObject::invokeMethod(sidebarList->parentItem(), "categoryClicked", Q_ARG(int, categoryId(*bridge_, "Music"))));
+        QTRY_VERIFY(grid->isVisible());
+        QCOMPARE(grid->property("contentY").toReal(), 60.0);
+
+        // A new page clears forward, as in a browser.
+        call("categoryView", "open", "artist", QVariantMap{{"name", "Radiohead"}, {"crumb", "Radiohead"}});
+        QVERIFY(!view->property("canGoForward").toBool());
+        call("categoryView", "back");
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    // The mouse's side buttons (and Alt+← / Alt+→) go back and forward from anywhere in the window.
+    void mouseSideButtonsGoBackAndForward() {
+        showCategory("Music");
+        QObject* view = find("categoryView");
+        call("categoryView", "open", "artist", QVariantMap{{"name", "Radiohead"}, {"crumb", "Radiohead"}});
+        QTRY_VERIFY(find("artistView"));
+        const QPoint middle(window_->width() / 2, window_->height() / 2);  // over the page's content
+        QTest::mouseClick(window_, Qt::BackButton, {}, middle);
+        QTRY_COMPARE(view->property("routes").toList().size(), 1);
+        QTest::mouseClick(window_, Qt::ForwardButton, {}, middle);
+        QTRY_COMPARE(view->property("routes").toList().size(), 2);
+        QTest::keyClick(window_, Qt::Key_Left, Qt::AltModifier);
+        QTRY_COMPARE(view->property("routes").toList().size(), 1);
+        QTest::keyClick(window_, Qt::Key_Right, Qt::AltModifier);
+        QTRY_COMPARE(view->property("routes").toList().size(), 2);
+
+        // From Settings, back returns to the page you were on.
+        QVERIFY(window_->setProperty("settingsOpen", true));
+        QTest::mouseClick(window_, Qt::BackButton, {}, middle);
+        QTRY_VERIFY(!window_->property("settingsOpen").toBool());
+        QCOMPARE(view->property("routes").toList().size(), 2);
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    // One wheel notch scrolls 20% further than Qt's default (WheelSpeed, app_setup).
+    void theWheelScrollsAFifthFurther() {
+        QQuickView view;
+        QQmlComponent component(view.engine());
+        component.setData("import QtQuick\nListView { width: 300; height: 300; model: 500; delegate: Item { width: 300; height: 40 } }", QUrl());
+        auto* list = qobject_cast<QQuickItem*>(component.create());
+        QVERIFY(list);
+        view.setContent(QUrl(), &component, list);
+        view.resize(300, 300);
+        view.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&view));
+        const QPointF at(150, 150);
+        QWheelEvent notch(at, view.mapToGlobal(at), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QGuiApplication::sendEvent(&view, &notch);
+        const qreal plain = QGuiApplication::styleHints()->wheelScrollLines() * 24;  // Qt's distance per notch
+        QTRY_COMPARE(qRound(list->property("contentY").toReal()), qRound(plain * WheelSpeed));
     }
 
     void moviesAMovieAndADirector() {

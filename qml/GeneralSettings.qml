@@ -50,15 +50,15 @@ Item {
         id: chip
         property alias text: chipText.text
         signal removed()
-        implicitWidth: chipRow.implicitWidth + 16
-        implicitHeight: 22
+        implicitWidth: chipRow.implicitWidth + Theme.px(16)
+        implicitHeight: Theme.px(22)
         color: "transparent"
         border.width: 1
         border.color: Theme.hairline
         Row {
             id: chipRow
             anchors.centerIn: parent
-            spacing: 6
+            spacing: Theme.px(6)
             Text { id: chipText; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.verticalCenter: parent.verticalCenter }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -85,18 +85,18 @@ Item {
         signal removed(string value)
         signal added(string text)
         property bool adding: false
-        spacing: 16
-        Text { Layout.preferredWidth: 110; Layout.alignment: Qt.AlignTop; topPadding: 3; text: chipRowRoot.label; color: Theme.textDim }
+        spacing: Theme.px(16)
+        Text { Layout.preferredWidth: Theme.px(110); Layout.alignment: Qt.AlignTop; topPadding: Theme.px(3); text: chipRowRoot.label; color: Theme.textDim }
         Flow {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Theme.px(6)
             Repeater {
                 model: chipRowRoot.values
                 Chip { required property string modelData; text: modelData; onRemoved: chipRowRoot.removed(modelData) }
             }
             TyPill {
                 visible: !chipRowRoot.adding
-                implicitHeight: 22
+                implicitHeight: Theme.px(22)
                 iconName: "plus"
                 tip: chipRowRoot.addTip
                 onClicked: { chipRowRoot.adding = true; addField.text = ""; addField.forceActiveFocus() }
@@ -104,8 +104,8 @@ Item {
             TyField {
                 id: addField
                 visible: chipRowRoot.adding
-                implicitHeight: 22
-                implicitWidth: 160
+                implicitHeight: Theme.px(22)
+                implicitWidth: Theme.px(160)
                 font.pixelSize: Theme.fontSizeSmall
                 placeholderText: "type, then enter"
                 onAccepted: { chipRowRoot.added(text); chipRowRoot.adding = false }
@@ -125,7 +125,7 @@ Item {
         readonly property int stored: page.settings[key]
         readonly property int fallback: page.defaults[key]
         readonly property bool valid: field.acceptableInput && Number(field.text) >= range.min && Number(field.text) <= range.max
-        spacing: 16
+        spacing: Theme.px(16)
         Layout.fillWidth: true
         onStoredChanged: field.text = String(stored)
         Component.onCompleted: field.text = String(stored)
@@ -146,7 +146,7 @@ Item {
         }
         TyField {
             id: field
-            Layout.preferredWidth: 120
+            Layout.preferredWidth: Theme.px(120)
             horizontalAlignment: TextInput.AlignRight
             validator: RegularExpressionValidator { regularExpression: /[0-9]{0,9}/ }
             invalid: !setting.valid
@@ -165,7 +165,7 @@ Item {
             }
         }
         Text {
-            Layout.preferredWidth: 280
+            Layout.preferredWidth: Theme.px(280)
             color: setting.valid ? Theme.textFaint : Theme.error
             text: setting.valid ? "default " + setting.fallback + " · " + setting.range.min + "–" + setting.range.max
                                 : "must be between " + setting.range.min + " and " + setting.range.max
@@ -175,20 +175,20 @@ Item {
     Flickable {
         id: flick
         anchors.fill: parent
-        contentHeight: content.implicitHeight + 24
+        contentHeight: content.implicitHeight + Theme.px(24)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: TyScrollBar {}
 
         ColumnLayout {
             id: content
-            width: flick.width - 16
-            spacing: 22
+            width: flick.width - Theme.px(16)
+            spacing: Theme.px(22)
 
             // ---- Scanning
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Theme.px(10)
                 RowLayout {
                     SectionTitle { text: "scanning" }
                     Text { Layout.fillWidth: true; text: "· which files count as media"; color: Theme.textFaint }
@@ -234,11 +234,11 @@ Item {
             // ---- Sync
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Theme.px(8)
                 SectionTitle { text: "sync" }
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 16
+                    spacing: Theme.px(16)
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
@@ -246,20 +246,20 @@ Item {
                         Text { Layout.fillWidth: true; text: "sync everything in the background when tyli starts"; color: Theme.textDim }
                     }
                     TyCheckBox {
-                        Layout.preferredWidth: 120
+                        Layout.preferredWidth: Theme.px(120)
                         checked: page.settings.syncOnStartup
                         onToggled: page.save({ syncOnStartup: checked })
                         Accessible.name: "sync at startup"
                     }
                     Item { Layout.preferredWidth: Theme.controlHeight }
-                    Text { Layout.preferredWidth: 280; text: "default " + (page.defaults.syncOnStartup ? "on" : "off"); color: Theme.textFaint }
+                    Text { Layout.preferredWidth: Theme.px(280); text: "default " + (page.defaults.syncOnStartup ? "on" : "off"); color: Theme.textFaint }
                 }
                 NumberSetting { key: "parallelDevices"; title: "drives at a time"; help: "sync and tag reading run one worker per physical drive (never two on one disk); this many drives at once" }
                 NumberSetting { key: "settleWindowSeconds"; title: "settle window (s)"; help: "a file changed this recently is still being copied; checked again next sync" }
                 NumberSetting { key: "massRemovalThresholdPercent"; title: "mass-removal guard (%)"; help: "hold removals above this share of a folder's files for your confirmation" }
                 NumberSetting { key: "relocationSampleSize"; title: "relocation sample size"; help: "relocating a folder without a marker checks this many known files" }
                 NumberSetting { key: "relocationMinMatchPercent"; title: "relocation match (%)"; help: "share of those files that must match to accept the new location" }
-                Text { Layout.topMargin: 8; text: "advanced"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+                Text { Layout.topMargin: Theme.px(8); text: "advanced"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
                 NumberSetting { key: "batchMaxRows"; title: "batch size (rows)"; help: "database writes commit after this many rows…" }
                 NumberSetting { key: "batchMaxMilliseconds"; title: "batch time (ms)"; help: "…or this many milliseconds, so other writes never wait long" }
                 NumberSetting { key: "progressIntervalFiles"; title: "progress interval (files)"; help: "sync progress is reported every this many files" }
@@ -271,19 +271,19 @@ Item {
             ColumnLayout {
                 objectName: "trackColumns"
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Theme.px(8)
                 RowLayout {
                     SectionTitle { text: "track columns" }
                     Text { Layout.fillWidth: true; text: "· what an album's track list shows, besides # and title"; color: Theme.textFaint }
                 }
                 Flow {
                     Layout.fillWidth: true
-                    spacing: 22
+                    spacing: Theme.px(22)
                     Repeater {
                         model: Library.allTrackColumns
                         Row {
                             required property string modelData
-                            spacing: 8
+                            spacing: Theme.px(8)
                             TyCheckBox {
                                 checked: Library.trackColumns.includes(modelData)
                                 onToggled: Library.trackColumns = checked ? Library.trackColumns.concat([modelData])
@@ -306,7 +306,7 @@ Item {
             // ---- About
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Theme.px(6)
                 SectionTitle { text: "about" }
                 Text { text: "tyli " + Qt.application.version; color: Theme.textDim }
                 Text { Layout.fillWidth: true; text: "library " + Library.databasePath; color: Theme.textDim; wrapMode: Text.WrapAnywhere }

@@ -19,18 +19,18 @@ ColumnLayout {
     signal crumbClicked(var crumb)
     signal sortPicked(string key, bool addedDescending)
 
-    spacing: 10
+    spacing: Theme.px(10)
 
     RowLayout {
         visible: header.crumbs.length > 1
-        spacing: 8
+        spacing: Theme.px(8)
         TyIconButton { objectName: "backButton"; iconName: "back"; tip: "back"; onClicked: header.back() }
         Repeater {
             model: header.crumbs
             Row {
                 required property var modelData
                 required property int index
-                spacing: 8
+                spacing: Theme.px(8)
                 LinkText {
                     visible: index < header.crumbs.length - 1
                     text: modelData.text
@@ -45,23 +45,23 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 16
+        spacing: Theme.px(16)
         ColumnLayout {
             spacing: 2
             Text { visible: header.label !== ""; text: header.label; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; font.letterSpacing: 1 }
             Text {
                 text: header.title
                 color: Theme.text
-                font.pixelSize: header.label !== "" ? 24 : Theme.fontSizeTitle
+                font.pixelSize: header.label !== "" ? Theme.px(24) : Theme.fontSizeTitle
                 font.weight: Theme.weightBold
             }
         }
-        Text { Layout.alignment: Qt.AlignBottom; Layout.bottomMargin: 3; text: header.subtitle; color: Theme.textDim }
+        Text { Layout.alignment: Qt.AlignBottom; Layout.bottomMargin: Theme.px(3); text: header.subtitle; color: Theme.textDim }
         Item { Layout.fillWidth: true }
         SortBar {
             id: sort
             Layout.alignment: Qt.AlignBottom
-            Layout.bottomMargin: 4
+            Layout.bottomMargin: Theme.px(4)
             visible: header.showSort
             onPicked: (key, desc) => header.sortPicked(key, desc)
         }

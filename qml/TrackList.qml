@@ -34,11 +34,11 @@ ListView {
     ScrollBar.vertical: TyScrollBar {}
 
     header: Row {
-        height: 30
-        spacing: 16
-        leftPadding: 12
-        Text { width: 28; horizontalAlignment: Text.AlignRight; text: "#"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.bottom: parent.bottom; anchors.bottomMargin: 6 }
-        Text { width: list.titleWidth; text: "title"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.bottom: parent.bottom; anchors.bottomMargin: 6 }
+        height: Theme.px(30)
+        spacing: Theme.px(16)
+        leftPadding: Theme.px(12)
+        Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: "#"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.bottom: parent.bottom; anchors.bottomMargin: Theme.px(6) }
+        Text { width: list.titleWidth; text: "title"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.bottom: parent.bottom; anchors.bottomMargin: Theme.px(6) }
         Repeater {
             model: list.columns
             Text {
@@ -49,15 +49,15 @@ ListView {
                 color: Theme.textDim
                 font.pixelSize: Theme.fontSizeSmall
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 6
+                anchors.bottomMargin: Theme.px(6)
             }
         }
     }
 
-    readonly property real titleWidth: Math.max(160, width - 12 - 28 - 16 - columns.reduce((w, c) => w + columnWidth(c) + 16, 0) - 2 * (22 + 16))
+    readonly property real titleWidth: Math.max(Theme.px(160), width - Theme.px(12 + 28 + 16) - columns.reduce((w, c) => w + columnWidth(c) + Theme.px(16), 0) - Theme.px(2 * (22 + 16)))
 
     function columnWidth(c) {
-        return ({ length: 60, bitrate: 90, quality: 110, type: 56, size: 80, channels: 40 })[c] ?? 70
+        return Theme.px(({ length: 60, bitrate: 90, quality: 110, type: 56, size: 80, channels: 40 })[c] ?? 70)
     }
     function columnTitle(c) {
         return ({ length: "length", bitrate: "bit rate", quality: "quality", type: "type", size: "size", channels: "ch" })[c] ?? c
@@ -84,13 +84,13 @@ ListView {
         Component {
             id: heading
             Row {
-                height: 34
-                spacing: 8
-                leftPadding: 12
-                Icon { anchors.bottom: parent.bottom; anchors.bottomMargin: 7; name: "disc"; size: 14; color: Theme.accentDim }
+                height: Theme.px(34)
+                spacing: Theme.px(8)
+                leftPadding: Theme.px(12)
+                Icon { anchors.bottom: parent.bottom; anchors.bottomMargin: Theme.px(7); name: "disc"; size: Theme.px(14); color: Theme.accentDim }
                 Text {
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 6
+                    anchors.bottomMargin: Theme.px(6)
                     text: row.modelData.heading
                     color: Theme.accentDim
                     font.pixelSize: Theme.fontSizeSmall
@@ -102,13 +102,13 @@ ListView {
             id: track
             Rectangle {
                 width: list.width
-                height: 32
+                height: Theme.px(32)
                 color: area.containsMouse ? Theme.hover : "transparent"
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 16
-                    leftPadding: 12
-                    Text { width: 28; horizontalAlignment: Text.AlignRight; text: row.modelData.track > 0 ? row.modelData.track : ""; color: Theme.textDim }
+                    spacing: Theme.px(16)
+                    leftPadding: Theme.px(12)
+                    Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.track > 0 ? row.modelData.track : ""; color: Theme.textDim }
                     Text {
                         width: list.titleWidth
                         text: row.modelData.title
@@ -125,8 +125,8 @@ ListView {
                             color: Theme.textDim
                         }
                     }
-                    Icon { name: "heart"; size: 14; color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
-                    Icon { name: "playlist"; size: 14; color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
+                    Icon { name: "heart"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
+                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
                 }
                 MouseArea {
                     id: area

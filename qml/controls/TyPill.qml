@@ -11,8 +11,8 @@ T.Button {
     property string count
     property string tip
 
-    implicitHeight: 28
-    implicitWidth: row.implicitWidth + (text === "" ? 16 : 28)
+    implicitHeight: Theme.px(28)
+    implicitWidth: row.implicitWidth + Theme.px(text === "" ? 16 : 28)
     hoverEnabled: true
     focusPolicy: Qt.TabFocus
     Accessible.name: tip !== "" ? tip : text
@@ -23,7 +23,7 @@ T.Button {
         Row {
             id: row
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Theme.px(8)
             Icon {
                 visible: control.iconName !== ""
                 anchors.verticalCenter: parent.verticalCenter

@@ -10,7 +10,9 @@ ColumnLayout {
     objectName: "movieView"
 
     property var owner
-    readonly property var params: owner.route.params.title !== undefined ? owner.route.params : ({ title: "", year: 0 })
+    property var route: ({ page: "home", params: {} })  // this page's own: set by CategoryView
+    property int depth: 0
+    readonly property var params: route.params.title !== undefined ? route.params : ({ title: "", year: 0 })
     property var copies: Library.movieCopies(params.title, params.year, owner.categoryId)
     readonly property string qualityKey: "quality/movie/" + encodeURIComponent(params.title + "\u001f" + params.year)
     property string chosen: Library.preference(qualityKey, "")
@@ -22,11 +24,11 @@ ColumnLayout {
         function onContentChanged() { page.copies = Library.movieCopies(page.params.title, page.params.year, page.owner.categoryId) }
     }
 
-    spacing: 18
+    spacing: Theme.px(18)
 
     BrowseHeader {
         Layout.fillWidth: true
-        crumbs: page.owner.crumbs()
+        crumbs: page.owner.crumbs(page.depth)
         showSort: false
         onBack: page.owner.back()
         onCrumbClicked: (crumb) => page.owner.goToCrumb(crumb)
@@ -43,7 +45,7 @@ ColumnLayout {
 
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             LinkText {
                 visible: page.params.year > 0
                 text: page.params.year
@@ -61,7 +63,7 @@ ColumnLayout {
         }
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             visible: page.item !== null && page.item.directors.length > 0
             Text { text: "directed by"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
             Repeater {
@@ -75,7 +77,7 @@ ColumnLayout {
         }
         Text {
             Layout.fillWidth: true
-            Layout.maximumWidth: 760
+            Layout.maximumWidth: Theme.px(760)
             visible: text !== ""
             text: page.item ? page.item.plot : ""
             color: Theme.textDim
@@ -84,11 +86,11 @@ ColumnLayout {
             elide: Text.ElideRight
         }
         Row {
-            spacing: 14
+            spacing: Theme.px(14)
             visible: page.item !== null
             Row {
-                spacing: 6
-                Icon { name: "drive"; size: 14; anchors.verticalCenter: parent.verticalCenter }
+                spacing: Theme.px(6)
+                Icon { name: "drive"; size: Theme.px(14); anchors.verticalCenter: parent.verticalCenter }
                 LinkText {
                     text: page.item ? Library.folderLabel(page.item.rootId) : ""
                     font.pixelSize: Theme.fontSizeSmall

@@ -13,7 +13,7 @@ Item {
     property bool poster: false
     property string label
     property string title
-    property int artWidth: poster ? 160 : 220
+    property int artWidth: poster ? Theme.px(160) : Theme.px(220)
     default property alias facts: factColumn.data
     property alias actions: actionRow.data
 
@@ -28,17 +28,17 @@ Item {
     ColumnLayout {
         id: factColumn
         anchors.left: art.right
-        anchors.leftMargin: 28
+        anchors.leftMargin: Theme.px(28)
         anchors.right: actionRow.left
-        anchors.rightMargin: 16
+        anchors.rightMargin: Theme.px(16)
         anchors.bottom: art.bottom
-        spacing: 8
+        spacing: Theme.px(8)
         Text { text: hero.label; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; font.letterSpacing: 1 }
         Text {
             Layout.fillWidth: true
             text: hero.title
             color: Theme.text
-            font.pixelSize: 26
+            font.pixelSize: Theme.px(26)
             font.weight: Theme.weightBold
             wrapMode: Text.Wrap
             maximumLineCount: 2
@@ -49,6 +49,6 @@ Item {
         id: actionRow
         anchors.top: parent.top
         anchors.right: parent.right
-        spacing: 10
+        spacing: Theme.px(10)
     }
 }

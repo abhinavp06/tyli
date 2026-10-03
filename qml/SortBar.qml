@@ -12,7 +12,7 @@ Row {
     property bool addedDescending: true
     signal picked(string key, bool addedDescending)
 
-    spacing: 16
+    spacing: Theme.px(16)
 
     Text {
         anchors.verticalCenter: parent.verticalCenter

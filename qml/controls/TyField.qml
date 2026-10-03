@@ -9,10 +9,10 @@ T.TextField {
 
     property bool invalid: false
 
-    implicitWidth: 200
+    implicitWidth: Theme.px(200)
     implicitHeight: Theme.controlHeight
-    leftPadding: 10
-    rightPadding: 10
+    leftPadding: Theme.px(10)
+    rightPadding: Theme.px(10)
     verticalAlignment: TextInput.AlignVCenter
     hoverEnabled: true
 

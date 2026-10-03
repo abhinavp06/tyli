@@ -14,15 +14,18 @@ GridView {
     property var subtitleOf: (row) => ""
     signal opened(var row)
 
-    readonly property int minCard: 150
-    readonly property int gap: 18
+    readonly property int minCard: Theme.px(150)
+    readonly property int gap: Theme.px(18)
     readonly property int columns: Math.max(2, Math.floor((width + gap) / (minCard + gap)))
     readonly property real cardWidth: (width - (columns - 1) * gap) / columns
 
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     cellWidth: cardWidth + gap
-    cellHeight: (poster ? cardWidth * 1.5 : cardWidth) + 7 + 2 * Theme.fontSize + 18
+    // The card's own height (CoverCard: art, title, subtitle) plus the gap.
+    cellHeight: (poster ? Math.round(cardWidth * 1.5) : cardWidth) + Theme.px(7) + titleLine.height + subtitleLine.height + Theme.px(3) + gap
+    FontMetrics { id: titleLine; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSize }
+    FontMetrics { id: subtitleLine; font.family: Theme.fontFamily; font.pixelSize: Theme.fontSizeSmall }
     ScrollBar.vertical: TyScrollBar {}
 
     delegate: Item {

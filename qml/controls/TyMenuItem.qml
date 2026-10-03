@@ -5,10 +5,10 @@ import Tyli
 T.MenuItem {
     id: control
 
-    implicitWidth: Math.max(160, label.implicitWidth + leftPadding + rightPadding)
+    implicitWidth: Math.max(Theme.px(160), label.implicitWidth + leftPadding + rightPadding)
     implicitHeight: Theme.controlHeight
-    leftPadding: 12
-    rightPadding: 12
+    leftPadding: Theme.px(12)
+    rightPadding: Theme.px(12)
     hoverEnabled: true
 
     contentItem: Text {

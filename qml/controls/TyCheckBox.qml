@@ -8,7 +8,7 @@ T.CheckBox {
 
     implicitHeight: Theme.controlHeight
     implicitWidth: indicator.implicitWidth + (text !== "" ? spacing + label.implicitWidth : 0)
-    spacing: 8
+    spacing: Theme.px(8)
     hoverEnabled: true
 
     indicator: Text {

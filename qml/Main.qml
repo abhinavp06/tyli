@@ -49,6 +49,34 @@ ApplicationWindow {
         settings.currentPage = page
     }
 
+    // Back and forward, like a browser: the mouse's side buttons, Alt+← / Alt+→, the
+    // keyboard's Back / Forward keys. Back first leaves Settings or the search results, then
+    // walks the category's pages; a page you go back to is exactly as you left it.
+    function goBack() {
+        if (settingsOpen)
+            settingsOpen = false
+        else if (searchText !== "")
+            clearSearch()
+        else
+            categoryView.back()
+    }
+    function goForward() {
+        if (!settingsOpen && searchText === "")
+            categoryView.forward()
+    }
+    function clearSearch() {
+        topBar.searchText = ""
+        searchText = ""
+    }
+    // On the window's root item, so it gets every side-button click that no control takes
+    // (none do: controls and lists only take the left button).
+    TapHandler {
+        acceptedButtons: Qt.BackButton | Qt.ForwardButton
+        onTapped: (eventPoint, button) => button === Qt.BackButton ? window.goBack() : window.goForward()
+    }
+    Shortcut { sequences: ["Alt+Left", "Back"]; onActivated: window.goBack() }
+    Shortcut { sequences: ["Alt+Right", "Forward"]; onActivated: window.goForward() }
+
     // A category that was deleted: fall back to the first one.
     Connections {
         target: Library
@@ -82,6 +110,9 @@ ApplicationWindow {
                 collapsed: window.sidebarCollapsed
                 currentCategoryId: window.settingsOpen ? -1 : window.currentCategoryId
                 onCategoryClicked: (id) => {
+                    // The category already shown: back to its home page, as you left it.
+                    if (id === window.currentCategoryId && !window.settingsOpen && window.searchText === "")
+                        categoryView.goToCrumb({ depth: 0 })
                     window.currentCategoryId = id
                     window.settingsOpen = false
                 }
@@ -100,8 +131,7 @@ ApplicationWindow {
                     text: window.searchText
                     onOpened: (categoryId, page, params) => {
                         window.currentCategoryId = categoryId
-                        topBar.searchText = ""
-                        window.searchText = ""
+                        window.clearSearch()
                         categoryView.open(page, params)
                     }
                 }
@@ -136,9 +166,9 @@ ApplicationWindow {
     // Shown instead of everything else when the library database can't be opened.
     ColumnLayout {
         anchors.centerIn: parent
-        width: Math.min(parent.width - 48, 640)
+        width: Math.min(parent.width - Theme.px(48), Theme.px(640))
         visible: !Library.ready
-        spacing: 12
+        spacing: Theme.px(12)
         Text {
             text: "the library can't be opened"
             color: Theme.error

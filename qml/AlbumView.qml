@@ -10,7 +10,9 @@ ColumnLayout {
     objectName: "albumView"
 
     property var owner
-    readonly property var params: owner.route.params.album !== undefined ? owner.route.params : ({ albumArtist: "", album: "" })
+    property var route: ({ page: "home", params: {} })  // this page's own: set by CategoryView
+    property int depth: 0
+    readonly property var params: route.params.album !== undefined ? route.params : ({ albumArtist: "", album: "" })
     property var copies: Library.albumCopies(params.albumArtist, params.album, owner.categoryId)
     // The quality you picked for this album (remembered), else the best copy.
     readonly property string qualityKey: "quality/album/" + encodeURIComponent(params.albumArtist + "\u001f" + params.album)
@@ -44,11 +46,11 @@ ColumnLayout {
         function onContentChanged() { page.copies = Library.albumCopies(page.params.albumArtist, page.params.album, page.owner.categoryId) }
     }
 
-    spacing: 18
+    spacing: Theme.px(18)
 
     BrowseHeader {
         Layout.fillWidth: true
-        crumbs: page.owner.crumbs()
+        crumbs: page.owner.crumbs(page.depth)
         showSort: false
         title: ""
         onBack: page.owner.back()
@@ -64,7 +66,7 @@ ColumnLayout {
 
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             LinkText {
                 text: page.params.albumArtist
                 onActivated: page.owner.open("artist", { name: page.params.albumArtist, crumb: page.params.albumArtist })
@@ -86,7 +88,7 @@ ColumnLayout {
         }
         Flow {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Theme.px(14)
             Text {
                 color: Theme.textDim
                 text: Format.plural(page.copy.trackCount, "track") + (page.copy.complete ? "" : " of " + page.copy.totalTracks)
@@ -99,9 +101,9 @@ ColumnLayout {
                 font.pixelSize: Theme.fontSizeSmall
             }
             Row {
-                spacing: 6
+                spacing: Theme.px(6)
                 visible: page.first !== null
-                Icon { name: "drive"; size: 14; anchors.verticalCenter: parent.verticalCenter }
+                Icon { name: "drive"; size: Theme.px(14); anchors.verticalCenter: parent.verticalCenter }
                 LinkText {
                     objectName: "driveLink"
                     text: page.first ? Library.folderLabel(page.first.rootId) : ""

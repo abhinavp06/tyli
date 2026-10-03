@@ -7,7 +7,7 @@ import Tyli
 T.TabButton {
     id: control
 
-    implicitWidth: label.implicitWidth + 28
+    implicitWidth: label.implicitWidth + Theme.px(28)
     implicitHeight: Theme.controlHeight
     hoverEnabled: true
 

@@ -22,13 +22,13 @@ Rectangle {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
-        sourceSize.width: 320
+        sourceSize.width: Theme.px(320)
     }
     Icon {
         anchors.centerIn: parent
         visible: image.status !== Image.Ready
         name: cover.placeholder
-        size: 28
+        size: Theme.px(28)
         color: Theme.textFaint
     }
 }

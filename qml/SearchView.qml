@@ -29,10 +29,10 @@ Item {
         property string title
         property int total
         width: content.width
-        spacing: 12
+        spacing: Theme.px(12)
         visible: total > 0
         Row {
-            spacing: 12
+            spacing: Theme.px(12)
             Text { text: parent.parent.title; color: Theme.text; font.weight: Theme.weightBold }
             Text { text: Format.count(parent.parent.total); color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall; anchors.baseline: parent.children[0].baseline }
         }
@@ -43,19 +43,19 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: Theme.pageMargin
         anchors.rightMargin: Theme.pageMargin
-        anchors.topMargin: 20
+        anchors.topMargin: Theme.px(20)
         clip: true
-        contentHeight: content.implicitHeight + 24
+        contentHeight: content.implicitHeight + Theme.px(24)
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: TyScrollBar {}
 
         Column {
             id: content
             width: parent.width
-            spacing: 22
+            spacing: Theme.px(22)
 
             Row {
-                spacing: 16
+                spacing: Theme.px(16)
                 Text { text: "search"; color: Theme.text; font.pixelSize: Theme.fontSizeTitle; font.weight: Theme.weightBold }
                 Text {
                     anchors.baseline: parent.children[0].baseline
@@ -67,7 +67,7 @@ Item {
             Section { title: "albums"; total: albums.total }
             Flow {
                 width: content.width
-                spacing: 18
+                spacing: Theme.px(18)
                 visible: albums.total > 0
                 Repeater {
                     model: albums
@@ -75,7 +75,7 @@ Item {
                         required property var model
                         required property int index
                         visible: index < view.shown
-                        width: visible ? 150 : 0
+                        width: visible ? Theme.px(150) : 0
                         source: model.thumbnail
                         online: model.online
                         title: model.values[2]
@@ -89,7 +89,7 @@ Item {
             Section { title: "artists"; total: artists.total }
             Flow {
                 width: content.width
-                spacing: 18
+                spacing: Theme.px(18)
                 visible: artists.total > 0
                 Repeater {
                     model: artists
@@ -114,15 +114,15 @@ Item {
                         required property int index
                         visible: index < view.shown
                         width: content.width
-                        height: visible ? 32 : 0
+                        height: visible ? Theme.px(32) : 0
                         color: trackArea.containsMouse ? Theme.hover : "transparent"
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
-                            leftPadding: 12
-                            spacing: 16
-                            Text { width: 360; text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
-                            Text { width: 260; text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
-                            Text { width: 260; text: model.album; elide: Text.ElideRight; color: Theme.textDim }
+                            leftPadding: Theme.px(12)
+                            spacing: Theme.px(16)
+                            Text { width: Theme.px(360); text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
+                            Text { width: Theme.px(260); text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
+                            Text { width: Theme.px(260); text: model.album; elide: Text.ElideRight; color: Theme.textDim }
                         }
                         MouseArea {
                             id: trackArea
@@ -140,7 +140,7 @@ Item {
             Section { title: "movies"; total: movies.total }
             Flow {
                 width: content.width
-                spacing: 18
+                spacing: Theme.px(18)
                 visible: movies.total > 0
                 Repeater {
                     model: movies
@@ -148,7 +148,7 @@ Item {
                         required property var model
                         required property int index
                         visible: index < view.shown
-                        width: visible ? 130 : 0
+                        width: visible ? Theme.px(130) : 0
                         poster: true
                         placeholder: "movies"
                         source: model.thumbnail
@@ -164,7 +164,7 @@ Item {
             Section { title: "shows"; total: shows.total }
             Flow {
                 width: content.width
-                spacing: 18
+                spacing: Theme.px(18)
                 visible: shows.total > 0
                 Repeater {
                     model: shows
@@ -172,7 +172,7 @@ Item {
                         required property var model
                         required property int index
                         visible: index < view.shown
-                        width: visible ? 130 : 0
+                        width: visible ? Theme.px(130) : 0
                         poster: true
                         placeholder: "shows"
                         source: model.thumbnail
