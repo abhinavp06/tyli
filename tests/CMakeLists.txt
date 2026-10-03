@@ -11,7 +11,10 @@ function(tyli_add_test name)
     endif()
     add_test(NAME ${name} COMMAND ${name})
     # No display on the VM (or in CI): render offscreen with the software renderer.
-    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    # QT_FORCE_STDERR_LOGGING: without a console window (the Windows CI runner), Qt Test and
+    # qWarning write to the debugger (OutputDebugString), so a failure showed no output at all.
+    set_tests_properties(${name} PROPERTIES ENVIRONMENT
+                         "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_FORCE_STDERR_LOGGING=1")
 endfunction()
 
 tyli_add_test(tst_library_bridge)

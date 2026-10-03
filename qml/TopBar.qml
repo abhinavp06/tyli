@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Tyli
 import "Format.js" as Format
 
-// The bar across the window: the sidebar toggle and the wordmark on the left; the sync
+// The bar across the window: the sidebar toggle and the wordmark (home) on the left; the sync
 // status and the settings gear on the right.
 Rectangle {
     id: bar
@@ -13,6 +13,7 @@ Rectangle {
     signal toggleSidebar()
     signal settingsRequested()
     signal syncStatusClicked()
+    signal homeRequested()
 
     implicitHeight: Theme.topBarHeight
     color: Theme.background
@@ -37,8 +38,11 @@ Rectangle {
             onClicked: bar.toggleSidebar()
         }
 
-        // tyli_ with a blinking green cursor
+        // tyli_ with a blinking green cursor; it opens the home page.
         Row {
+            objectName: "wordmark"
+            HoverHandler { cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: bar.homeRequested() }
             Text {
                 text: "tyli"
                 color: Theme.text

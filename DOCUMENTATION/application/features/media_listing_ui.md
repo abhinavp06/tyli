@@ -171,6 +171,12 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 - **Cost:** hidden pages keep their models, which also refresh while tags are read. The stack is only as deep as the pages opened, so it stays small.
 - **Not done:** history across categories (switching the category starts at its home, as before).
 
+## 7e. Home page, Books, track icons (2026-10-03, the user's next test)
+
+- **`tyli_` opens the home page** (`Main.homeOpen`). It's blank for now: it gets designed after the player and playlists, and is where recommendations will go. A category, a search result, or back leaves it. The app still starts on the first category.
+- **No Books:** hoardor no longer keeps an untouched Books category (its file migration 3), so the sidebar and Settings show Music, Movies, and Shows.
+- **Track list actions:** white outline heart and playlist icons. Liking (the heart fills with the accent color) comes with liked songs and playlists; the user chose to do only the look now.
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).

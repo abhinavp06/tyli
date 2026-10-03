@@ -379,7 +379,7 @@ Item {
                     width: parent.width
                     height: Theme.px(44)
                     color: rowArea.containsMouse ? Theme.hover : "transparent"
-                    MouseArea { id: rowArea; anchors.fill: parent; hoverEnabled: true; onClicked: page.toggleExpanded(folder.modelData.id) }
+                    MouseArea { id: rowArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.toggleExpanded(folder.modelData.id) }
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: Theme.px(12)

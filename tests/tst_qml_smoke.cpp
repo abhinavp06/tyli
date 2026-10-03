@@ -378,8 +378,8 @@ private slots:
         QVERIFY(qmlWarnings.isEmpty());
     }
 
-    // One wheel notch scrolls 20% further than Qt's default (WheelSpeed, app_setup).
-    void theWheelScrollsAFifthFurther() {
+    // One wheel notch scrolls the "scroll speed" preference times Qt's default (2× unless set).
+    void theWheelScrollsAsFarAsTheSettingSays() {
         QQuickView view;
         QQmlComponent component(view.engine());
         component.setData("import QtQuick\nListView { width: 300; height: 300; model: 500; delegate: Item { width: 300; height: 40 } }", QUrl());
@@ -393,7 +393,25 @@ private slots:
         QWheelEvent notch(at, view.mapToGlobal(at), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
         QGuiApplication::sendEvent(&view, &notch);
         const qreal plain = QGuiApplication::styleHints()->wheelScrollLines() * 24;  // Qt's distance per notch
-        QTRY_COMPARE(qRound(list->property("contentY").toReal()), qRound(plain * WheelSpeed));
+        QCOMPARE(wheelSpeed(), 2.0);
+        QTRY_COMPARE(qRound(list->property("contentY").toReal()), qRound(plain * wheelSpeed()));
+    }
+
+    // tyli_ opens the (blank, for now) home page; a category or back leaves it.
+    void theWordmarkOpensHome() {
+        showCategory("Music");
+        QObject* wordmark = find("wordmark");
+        QVERIFY(wordmark);
+        auto* item = qobject_cast<QQuickItem*>(wordmark);
+        QTest::mouseClick(window_, Qt::LeftButton, {}, item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint());
+        QTRY_VERIFY(window_->property("homeOpen").toBool());
+        QVERIFY(qobject_cast<QQuickItem*>(find("homeView"))->isVisible());
+        QVERIFY(!qobject_cast<QQuickItem*>(find("categoryView"))->isVisible());
+        screenshot("home");
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_VERIFY(!window_->property("homeOpen").toBool());
+        QVERIFY(qobject_cast<QQuickItem*>(find("categoryView"))->isVisible());
+        QVERIFY(qmlWarnings.isEmpty());
     }
 
     void moviesAMovieAndADirector() {
@@ -473,6 +491,15 @@ private slots:
         QVERIFY(window_->setProperty("settingsOpen", true));
         setState("settingsView", "currentPage", "general");
         screenshot("settings-general");
+        // Further down: sync, interface (scroll speed), track columns.
+        auto* speed = qobject_cast<QQuickItem*>(find("scrollSpeed"));
+        QVERIFY(speed);
+        QObject* flick = speed;
+        while (flick && !flick->inherits("QQuickFlickable")) flick = flick->parent();
+        QVERIFY(flick);
+        flick->setProperty("contentY", speed->mapToItem(qobject_cast<QQuickItem*>(flick)->property("contentItem").value<QQuickItem*>(), QPointF()).y() - 300);
+        screenshot("settings-general-lower");
+        flick->setProperty("contentY", 0);
         QVERIFY(window_->setProperty("settingsOpen", false));
         QVERIFY(qmlWarnings.isEmpty());
     }

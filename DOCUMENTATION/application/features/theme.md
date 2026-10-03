@@ -127,7 +127,12 @@ The user's notes on the first mockups, and what changed:
 - **Fixed on purpose:** `PlayButton` and `QualityPicker` keep their 40 px box, 16 px icon, and 13/11 px text. The user likes them as they are.
 - **Different screens need nothing from TYLI.** Qt 6 follows Windows' display scaling for each monitor, and rescales live when the window moves to another screen. With Windows' usual defaults (100% on a 27" 1440p monitor, 125% on a 15" 1080p laptop), text comes out at about the same physical size on both. TYLI doesn't override the high-DPI policy (`main.cpp`).
   - **Rejected:** a "UI size" setting. The user wants it to just work, without changing anything when switching screens. Sizing from the screen's reported physical size was rejected too: it would fight the scaling the user picked in Windows, and some monitors report wrong sizes.
-- **Wheel scrolling is 20% faster** (the user, 2026-10-03). Qt Quick scrolls in proportion to the wheel's delta: one notch moves the system's "lines per notch" × 24 px (72 px at Windows' default 3 lines). `setupApplication()` installs an app-wide filter that scales the delta by `WheelSpeed` (1.2) where the event reaches a window, so every list and grid speeds up alike, and Windows' own lines-per-notch setting still counts.
+- **Wheel scrolling is faster:** first 1.2×; the user found that still slow, so it became the **"scroll speed" setting** (Settings → General → interface, 50–500%, default 200%), stored as a UI preference (`ui/scrollSpeed`) and applied at once (the user, 2026-10-03). The mechanism: Qt Quick scrolls in proportion to the wheel's delta: one notch moves the system's "lines per notch" × 24 px (72 px at Windows' default 3 lines). `setupApplication()` installs an app-wide filter that scales the delta by `wheelSpeed()` where the event reaches a window, so every list and grid speeds up alike, and Windows' own lines-per-notch setting still counts.
+
+## 5c. Cursor and colors (2026-10-03)
+
+- **The hand cursor on everything clickable:** `TyIconButton`, `TyCheckBox`, `TyTab`, `TyPill`, `TyMenuItem` set it themselves (a `HoverHandler`; Templates controls keep the arrow otherwise), as do the folder rows and the `tyli_` wordmark. Disabled controls keep the arrow.
+- **Track actions (heart, add to playlist):** white outlines (`Theme.text`). When liking exists, a liked heart fills with `Theme.accent`, so it follows any future theme change.
 
 ## 6. Edge cases
 

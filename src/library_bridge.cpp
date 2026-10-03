@@ -1,5 +1,6 @@
 #include "library_bridge.hpp"
 
+#include "app_setup.hpp"
 #include "copy_grouper.hpp"
 #include "item_model.hpp"
 #include "thumbnail_cache.hpp"
@@ -166,6 +167,7 @@ LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent) : QObject(
     liveRefresh_.setSingleShot(true);
     liveRefresh_.setInterval(2500);
     connect(&liveRefresh_, &QTimer::timeout, this, &LibraryBridge::contentChanged);
+    setWheelSpeed(scrollSpeed() / 100.0);
     open(dataDir);
 }
 
@@ -590,6 +592,18 @@ void LibraryBridge::setTrackColumns(const QStringList& columns) {
     if (ordered == trackColumns()) return;
     QSettings().setValue(QStringLiteral("tracks/columns"), ordered);
     emit trackColumnsChanged();
+}
+
+int LibraryBridge::scrollSpeed() const {
+    return std::clamp(QSettings().value(QStringLiteral("ui/scrollSpeed"), DefaultScrollSpeedPercent).toInt(), 50, 500);
+}
+
+void LibraryBridge::setScrollSpeed(int percent) {
+    percent = std::clamp(percent, 50, 500);
+    setWheelSpeed(percent / 100.0);
+    if (percent == scrollSpeed()) return;
+    QSettings().setValue(QStringLiteral("ui/scrollSpeed"), percent);
+    emit scrollSpeedChanged();
 }
 
 QVariant LibraryBridge::preference(const QString& key, const QVariant& fallback) const {

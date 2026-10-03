@@ -5,6 +5,9 @@ import Tyli
 T.MenuItem {
     id: control
 
+    // The hand over anything clickable (Templates controls keep the arrow by themselves).
+    HoverHandler { cursorShape: control.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
+
     implicitWidth: Math.max(Theme.px(160), label.implicitWidth + leftPadding + rightPadding)
     implicitHeight: Theme.controlHeight
     leftPadding: Theme.px(12)

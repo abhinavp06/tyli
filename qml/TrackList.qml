@@ -125,8 +125,10 @@ ListView {
                             color: Theme.textDim
                         }
                     }
-                    Icon { name: "heart"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
-                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
+                    // White outlines; liking fills the heart with Theme.accent once liked songs exist
+                    // (the user, 2026-10-03), so it follows the theme.
+                    Icon { name: "heart"; size: Theme.px(14); color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
                 }
                 MouseArea {
                     id: area

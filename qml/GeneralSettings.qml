@@ -121,25 +121,28 @@ Item {
         property string key
         property string title
         property string help
-        readonly property var range: Library.settingLimits[key]
-        readonly property int stored: page.settings[key]
-        readonly property int fallback: page.defaults[key]
+        // A hoardor setting by default; a UI preference overrides these four.
+        property var range: Library.settingLimits[key]
+        property int stored: page.settings[key]
+        property int fallback: page.defaults[key]
+        property var save: (value) => {
+            const map = {}
+            map[key] = value
+            page.save(map)
+        }
         readonly property bool valid: field.acceptableInput && Number(field.text) >= range.min && Number(field.text) <= range.max
         spacing: Theme.px(16)
         Layout.fillWidth: true
         onStoredChanged: field.text = String(stored)
         Component.onCompleted: field.text = String(stored)
-        function saveValue(value) {
-            const map = {}
-            map[key] = value
-            page.save(map)
-        }
+        function saveValue(value) { save(value) }
         function commit() {
             if (valid && Number(field.text) !== stored)
                 saveValue(Number(field.text))
         }
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.preferredWidth: 1  // only the width left over: long help wraps instead of running under the field
             spacing: 0
             Text { text: setting.title; color: Theme.text }
             Text { Layout.fillWidth: true; text: setting.help; color: Theme.textDim; wrapMode: Text.Wrap }
@@ -241,6 +244,7 @@ Item {
                     spacing: Theme.px(16)
                     ColumnLayout {
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 1  // the width left over, as in NumberSetting
                         spacing: 0
                         Text { text: "sync at startup"; color: Theme.text }
                         Text { Layout.fillWidth: true; text: "sync everything in the background when tyli starts"; color: Theme.textDim }
@@ -263,6 +267,24 @@ Item {
                 NumberSetting { key: "batchMaxRows"; title: "batch size (rows)"; help: "database writes commit after this many rows…" }
                 NumberSetting { key: "batchMaxMilliseconds"; title: "batch time (ms)"; help: "…or this many milliseconds, so other writes never wait long" }
                 NumberSetting { key: "progressIntervalFiles"; title: "progress interval (files)"; help: "sync progress is reported every this many files" }
+            }
+
+            Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
+
+            // ---- Interface
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Theme.px(8)
+                SectionTitle { text: "interface" }
+                NumberSetting {
+                    objectName: "scrollSpeed"
+                    title: "scroll speed (%)"
+                    help: "how far one mouse-wheel notch scrolls, compared with the system's own (100 = the same)"
+                    range: ({ min: 50, max: 500 })
+                    stored: Library.scrollSpeed
+                    fallback: Library.defaultScrollSpeed
+                    save: (value) => { Library.scrollSpeed = value }
+                }
             }
 
             Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }

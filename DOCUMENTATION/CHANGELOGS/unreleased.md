@@ -2,6 +2,36 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The user's next test: scroll speed setting, hand cursor, home page, no Books, white track icons (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** The user's notes from testing `cc88672` on Windows, and their answers:
+1. **"Scroll speed is still slow":** 2× by default (one notch = 144 px at 3 lines), plus a **"scroll speed" setting** (Settings → General → interface, 50–500%). The bridge's `scrollSpeed` property stores it as `ui/scrollSpeed` and applies it at once; the bridge applies the stored value at startup. `WheelSpeed` (a constant) became `setWheelSpeed()` / `wheelSpeed()` in `app_setup`.
+2. **Like and add-to-playlist icons:** white outlines (`Theme.text`). Liking itself comes with liked songs and playlists (the user: "only the look now"). The heart will fill with `Theme.accent`.
+3. **The hand cursor:** the shared controls (`TyIconButton`, which covers the gear, plus `TyCheckBox`, `TyTab`, `TyPill`, `TyMenuItem`), the folder rows in Settings → Library, and the wordmark.
+4. **No Books:** hoardor's file migration 3 removes the untouched default category (see its changelog). TYLI needed no code for it.
+5. **`tyli_` opens a home page:** blank for now (designed after the player and playlists, and the place for recommendations). Back, a category, or a search result leaves it.
+- **Also fixed:** in Settings → General, long help text ran under the fields and checkbox since the bigger sizes. Its column now takes only the width left over and wraps.
+
+**Files**
+- `src/app_setup.{hpp,cpp}` (`setWheelSpeed`, `wheelSpeed`, `DefaultScrollSpeedPercent`), `src/library_bridge.{hpp,cpp}` (`scrollSpeed`, `defaultScrollSpeed`)
+- `qml/GeneralSettings.qml` (the interface section; `NumberSetting` takes a UI preference too; help text wraps)
+- `qml/controls/{TyIconButton,TyCheckBox,TyTab,TyPill,TyMenuItem}.qml`, `qml/LibrarySettings.qml`
+- `qml/TopBar.qml` (the wordmark), `qml/Main.qml` (`homeOpen`, `openHome`)
+- `qml/TrackList.qml`
+- `tests/tst_media_models.cpp`, `tests/tst_qml_smoke.cpp`
+- `DOCUMENTATION/application/{ARCHITECTURE.md, features/theme.md, features/media_listing_ui.md}`
+
+**Tests:** all 4 suites pass.
+- `TestMediaModels::scrollSpeedIsAPreferenceAppliedAtOnce`: default 200%, applied at once, clamped to 500, and applied again by a new bridge (the next start).
+- The smoke test's wheel test follows the setting (2×).
+- `TestQmlSmoke::theWordmarkOpensHome`: a real click on `tyli_` shows the blank home, and the mouse's back button leaves it.
+- A screenshot of the lower General page (`settings-general-lower`).
+- The views test adds its own Books category.
+
+**Not done:** liking, and the home page's design.
+
+**CI: test output on Windows.** `tst_media_models` has failed in the Windows workflow for several builds, and the log showed no output at all. Without a console window, Qt Test and `qWarning` write to the Windows debugger (`OutputDebugString`), not to stdout. `tests/CMakeLists.txt` now sets `QT_FORCE_STDERR_LOGGING=1` for every suite, so the next run prints the `FAIL!` lines. The failure itself is still open: it doesn't reproduce on Linux.
+
 ### The user's Windows test: back and forward, scroll position, sizes, scroll speed, sidebar, posters (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** The user tested the Windows build on their real library and reported eight points. This entry covers TYLI's part. Item 7 (posters) was fixed in hoardor (see its changelog), and items 3 and 6 are deferred by the user.

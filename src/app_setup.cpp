@@ -11,7 +11,9 @@ namespace tyli {
 
 namespace {
 
-// Makes every list and grid scroll WheelSpeed times as far per wheel notch. Qt Quick scrolls
+double wheelFactor = DefaultScrollSpeedPercent / 100.0;
+
+// Makes every list and grid scroll wheelSpeed() times as far per wheel notch. Qt Quick scrolls
 // in proportion to the wheel's delta (one notch = the system's "lines per notch" × 24 px), so
 // scaling the delta once, where the event reaches a window, speeds up every view alike and
 // still follows the system setting. Items aren't filtered: they get the window's scaled event.
@@ -22,7 +24,7 @@ public:
     bool eventFilter(QObject* receiver, QEvent* event) override {
         if (event->type() != QEvent::Wheel || resending_ || !qobject_cast<QWindow*>(receiver)) return false;
         const auto* wheel = static_cast<QWheelEvent*>(event);
-        const auto scaled = [](QPoint p) { return QPoint(qRound(p.x() * WheelSpeed), qRound(p.y() * WheelSpeed)); };
+        const auto scaled = [](QPoint p) { return QPoint(qRound(p.x() * wheelFactor), qRound(p.y() * wheelFactor)); };
         QWheelEvent faster(wheel->position(), wheel->globalPosition(), scaled(wheel->pixelDelta()), scaled(wheel->angleDelta()),
                            wheel->buttons(), wheel->modifiers(), wheel->phase(), wheel->inverted(), wheel->source(),
                            wheel->pointingDevice());
@@ -39,6 +41,9 @@ private:
 };
 
 }
+
+void setWheelSpeed(double factor) { wheelFactor = factor; }
+double wheelSpeed() { return wheelFactor; }
 
 void setupApplication() {
     // Basic is the style Qt designed for customization. Fusion draws gradients and

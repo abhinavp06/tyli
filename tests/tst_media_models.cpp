@@ -1,6 +1,7 @@
 // GroupModel, ItemModel, the bridge's copy lists and default views, and ThumbnailCache,
 // over a real library whose metadata is seeded (test_support.hpp).
 
+#include "app_setup.hpp"
 #include "group_model.hpp"
 #include "item_model.hpp"
 #include "library_bridge.hpp"
@@ -231,6 +232,7 @@ private slots:
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Music")), QStringLiteral("music"));
         QCOMPARE(bridge_->categoryView(movies), QStringLiteral("movies"));
         QCOMPARE(bridge_->categoryView(shows), QStringLiteral("shows"));
+        QVERIFY(bridge_->addCategory("Books", {"text"}));  // not seeded any more (hoardor file migration 3)
         QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Books")), QStringLiteral("none"));
         // The user's choice wins, and "" goes back to automatic.
         QSignalSpy changed(bridge_.get(), &LibraryBridge::categoryViewsChanged);
@@ -276,6 +278,23 @@ private slots:
         QVERIFY(stray.open(QIODevice::WriteOnly));
         stray.close();
         QCOMPARE(ThumbnailCache::build(folder, bridge_->databasePath()).removed, 1);
+    }
+
+    void scrollSpeedIsAPreferenceAppliedAtOnce() {
+        QCOMPARE(bridge_->scrollSpeed(), DefaultScrollSpeedPercent);
+        QCOMPARE(wheelSpeed(), 2.0);
+        QSignalSpy changed(bridge_.get(), &LibraryBridge::scrollSpeedChanged);
+        bridge_->setScrollSpeed(150);
+        QCOMPARE(wheelSpeed(), 1.5);
+        QCOMPARE(changed.count(), 1);
+        bridge_->setScrollSpeed(9000);  // clamped
+        QCOMPARE(bridge_->scrollSpeed(), 500);
+        // A new bridge (the next start) applies the stored value.
+        bridge_.reset();
+        setWheelSpeed(1.0);
+        bridge_ = std::make_unique<LibraryBridge>(data_->path());
+        QCOMPARE(wheelSpeed(), 5.0);
+        bridge_->setScrollSpeed(DefaultScrollSpeedPercent);
     }
 
     void trackColumnsArePreferences() {

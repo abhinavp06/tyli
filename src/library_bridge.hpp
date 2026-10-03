@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app_setup.hpp"
+
 #include <hoardor/audio/audio.hpp>
 #include <hoardor/db/database.hpp>
 #include <hoardor/file/library.hpp>
@@ -65,6 +67,9 @@ class LibraryBridge : public QObject {
     Q_PROPERTY(QVariantMap metadataProgress READ metadataProgress NOTIFY metadataProgressChanged)
     // UI preferences (QSettings): which columns a track list shows, in order.
     Q_PROPERTY(QStringList trackColumns READ trackColumns WRITE setTrackColumns NOTIFY trackColumnsChanged)
+    // How far a mouse-wheel notch scrolls, in percent of Qt's default (50–500, default 200).
+    Q_PROPERTY(int scrollSpeed READ scrollSpeed WRITE setScrollSpeed NOTIFY scrollSpeedChanged)
+    Q_PROPERTY(int defaultScrollSpeed READ defaultScrollSpeed CONSTANT)
     Q_PROPERTY(QStringList allTrackColumns READ allTrackColumns CONSTANT)
 
 public:
@@ -105,6 +110,9 @@ public:
     bool folderOperationRunning() const { return folderOperations_ > 0; }
     QVariantMap metadataProgress() const { return metadataProgress_; }
     QStringList trackColumns() const;
+    int scrollSpeed() const;
+    int defaultScrollSpeed() const { return DefaultScrollSpeedPercent; }
+    void setScrollSpeed(int percent);
     void setTrackColumns(const QStringList& columns);
     QStringList allTrackColumns() const;
 
@@ -170,6 +178,7 @@ signals:
     // during a pass and at its end): models refresh in place.
     void contentChanged();
     void trackColumnsChanged();
+    void scrollSpeedChanged();
     void categoryViewsChanged();
     void folderOperationFinished(bool ok, const QString& message);
     // Anything else that failed, in plain words.

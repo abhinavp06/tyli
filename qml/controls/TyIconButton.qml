@@ -8,6 +8,9 @@ import Tyli
 T.Button {
     id: control
 
+    // The hand over anything clickable (Templates controls keep the arrow by themselves).
+    HoverHandler { cursorShape: control.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor }
+
     property string iconName
     property string tip
     property bool primary: false  // green even at rest: the main action here

@@ -40,6 +40,7 @@ ApplicationWindow {
 
     property int currentCategoryId: Library.categories.length > 0 ? Library.categories[0].id : -1
     property bool settingsOpen: false
+    property bool homeOpen: false   // the home page (tyli_), instead of a category
     property bool sidebarCollapsed: false
     property string searchText  // what the results page shows ("" = no search)
     readonly property var currentCategory: Library.categories.find(c => c.id === currentCategoryId)
@@ -57,11 +58,18 @@ ApplicationWindow {
             settingsOpen = false
         else if (searchText !== "")
             clearSearch()
+        else if (homeOpen)
+            homeOpen = false
         else
             categoryView.back()
     }
+    function openHome() {
+        homeOpen = true
+        settingsOpen = false
+        clearSearch()
+    }
     function goForward() {
-        if (!settingsOpen && searchText === "")
+        if (!settingsOpen && !homeOpen && searchText === "")
             categoryView.forward()
     }
     function clearSearch() {
@@ -98,6 +106,7 @@ ApplicationWindow {
             onToggleSidebar: window.sidebarCollapsed = !window.sidebarCollapsed
             onSettingsRequested: window.settingsOpen ? (window.settingsOpen = false) : window.openSettings("library")
             onSyncStatusClicked: window.openSettings("library")
+            onHomeRequested: window.openHome()
         }
 
         RowLayout {
@@ -108,13 +117,14 @@ ApplicationWindow {
             Sidebar {
                 Layout.fillHeight: true
                 collapsed: window.sidebarCollapsed
-                currentCategoryId: window.settingsOpen ? -1 : window.currentCategoryId
+                currentCategoryId: window.settingsOpen || window.homeOpen ? -1 : window.currentCategoryId
                 onCategoryClicked: (id) => {
                     // The category already shown: back to its home page, as you left it.
-                    if (id === window.currentCategoryId && !window.settingsOpen && window.searchText === "")
+                    if (id === window.currentCategoryId && !window.settingsOpen && !window.homeOpen && window.searchText === "")
                         categoryView.goToCrumb({ depth: 0 })
                     window.currentCategoryId = id
                     window.settingsOpen = false
+                    window.homeOpen = false
                 }
             }
 
@@ -131,6 +141,7 @@ ApplicationWindow {
                     text: window.searchText
                     onOpened: (categoryId, page, params) => {
                         window.currentCategoryId = categoryId
+                        window.homeOpen = false
                         window.clearSearch()
                         categoryView.open(page, params)
                     }
@@ -138,7 +149,7 @@ ApplicationWindow {
                 CategoryView {
                     id: categoryView
                     anchors.fill: parent
-                    visible: !window.settingsOpen && window.searchText === ""
+                    visible: !window.settingsOpen && !window.homeOpen && window.searchText === ""
                     category: window.currentCategory
                     onAddFolderRequested: window.openSettings("library")
                     // The drive link on an album, movie, or show: that folder's category in Settings → Library.
@@ -148,6 +159,13 @@ ApplicationWindow {
                         if (folder)
                             settings.showCategory(folder.categoryId)
                     }
+                }
+                // The home page: blank for now. It gets designed after the player and playlists,
+                // and is where recommendations will live (the user, 2026-10-03).
+                Item {
+                    objectName: "homeView"
+                    anchors.fill: parent
+                    visible: window.homeOpen && !window.settingsOpen && window.searchText === ""
                 }
                 SettingsView {
                     id: settings
