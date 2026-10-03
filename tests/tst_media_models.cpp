@@ -288,7 +288,7 @@ private slots:
         if (ffmpeg.isEmpty()) QSKIP("the ffmpeg tool isn't installed");
         QDir().mkpath(media("Films/Heat"));
         QCOMPARE(QProcess::execute(ffmpeg, {"-y", "-loglevel", "error", "-f", "lavfi", "-t", "2", "-i", "testsrc=size=640x360:rate=25",
-                                            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", media("Films/Heat/Heat.mkv")}),
+                                            "-c:v", "mpeg4", "-q:v", "5", "-pix_fmt", "yuv420p", media("Films/Heat/Heat.mkv")}),
                  0);
         writeFile(media("Films/Arrival/Arrival.mkv"));  // junk: only Plex can help
         writeFile(media("Films/Junk/Junk.mkv"));        // junk Plex doesn't know: no poster at all

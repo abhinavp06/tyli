@@ -171,8 +171,11 @@ private slots:
                                    media_.filePath(QStringLiteral("Music/Radiohead/In Rainbows/%1.flac").arg(i, 2, 10, QLatin1Char('0')))});
             }
             realMedia_ &= run({"-f", "lavfi", "-t", "4", "-i", "testsrc=size=960x540:rate=10", "-f", "lavfi", "-t", "4", "-i", "anullsrc",
-                               "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                               "-c:v", "mpeg4", "-q:v", "5", "-pix_fmt", "yuv420p", "-c:a", "aac",
                                "-f", "matroska", media_.filePath("Films/Heat (1995)/Heat.mkv")});
+            // The tool is there but couldn't make them (e.g. an encoder missing from an LGPL
+            // build): fail here, not skip the player's screens quietly.
+            QVERIFY2(realMedia_, "the ffmpeg tool couldn't make the test media");
         }
 
         const int music = categoryId(*bridge_, "Music");

@@ -2,6 +2,16 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### CI: test videos made with ffmpeg's own encoder (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** On Windows, `tst_media_models::videoPostersFromPlexThenFrames` failed with "Unknown encoder 'libx264'". The runner's ffmpeg tool is the LGPL build, and x264 is GPL.
+- **Found on the way:** the smoke test's real media had the same problem, quietly. Its Heat clip was never made on Windows, so the player's screens were skipped there.
+- **Fixed:** both tests encode with `mpeg4`, ffmpeg's built-in encoder, which is in every build.
+- **No more quiet skips:** the smoke test now fails when the tool is installed but can't make its media.
+- **Expect** the player's screens to run on the Windows runner from now on.
+
+**Files:** `tests/tst_media_models.cpp`, `tests/tst_qml_smoke.cpp`
+
 ### Search: a clear button, and search from any page (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** Two requests from the user: "add an x button in search to clear things", and "search should work from any screen" (it didn't from Settings: Settings outranked the results in `Main.qml`'s `view`).
