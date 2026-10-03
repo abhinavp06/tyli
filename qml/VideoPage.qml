@@ -31,6 +31,10 @@ Rectangle {
     }
 
     // ---- Showing and hiding the controls
+    // An episode (not a movie): previous and next episode, through the season's queue.
+    readonly property bool episode: Player.link !== undefined && Player.link.page === "show"
+    readonly property bool hasPrevious: Player.current > 0
+    readonly property bool hasNext: Player.current >= 0 && Player.current < Player.queueLength - 1
     property bool controlsShown: true
     function poke() {
         controlsShown = true
@@ -60,6 +64,8 @@ Rectangle {
         case Qt.Key_Right: Player.seekBy(10000); break
         case Qt.Key_F: page.fullScreenToggled(); break
         case Qt.Key_M: Player.setMuted(!Player.muted); break
+        case Qt.Key_N: if (page.episode && page.hasNext) Player.jump(Player.current + 1); break
+        case Qt.Key_P: if (page.episode && page.hasPrevious) Player.jump(Player.current - 1); break
         case Qt.Key_Escape: if (page.fullScreen) page.fullScreenToggled(); else page.back(); break
         default: return
         }
@@ -143,6 +149,7 @@ Rectangle {
     }
 
     Rectangle {
+        id: bottomBar
         anchors.bottom: parent.bottom
         width: parent.width
         height: bottom.implicitHeight + Theme.px(22)
@@ -164,6 +171,14 @@ Rectangle {
             }
             RowLayout {
                 spacing: Theme.px(14)
+                TyIconButton {
+                    objectName: "previousEpisode"
+                    visible: page.episode
+                    enabled: page.hasPrevious
+                    iconName: "previous"
+                    tip: "previous episode (p)"
+                    onClicked: Player.jump(Player.current - 1)
+                }
                 Rectangle {
                     implicitWidth: 36
                     implicitHeight: 36
@@ -172,6 +187,14 @@ Rectangle {
                     border.color: ppArea.containsMouse ? Theme.accent : Theme.accentDim
                     Icon { anchors.centerIn: parent; size: 16; name: Player.state === "playing" ? "pause" : "play"; color: Theme.accent }
                     MouseArea { id: ppArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
+                }
+                TyIconButton {
+                    objectName: "nextEpisode"
+                    visible: page.episode
+                    enabled: page.hasNext
+                    iconName: "next"
+                    tip: "next episode (n)"
+                    onClicked: Player.jump(Player.current + 1)
                 }
                 TyIconButton { iconName: "rewind"; tip: "back 10 s (←)"; onClicked: Player.seekBy(-10000) }
                 TyIconButton { iconName: "forward"; tip: "forward 10 s (→)"; onClicked: Player.seekBy(10000) }

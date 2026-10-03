@@ -174,6 +174,11 @@ private slots:
             realMedia_ &= run({"-f", "lavfi", "-t", "4", "-i", "testsrc=size=960x540:rate=10", "-f", "lavfi", "-t", "4", "-i", "anullsrc",
                                "-c:v", "mpeg4", "-q:v", "5", "-pix_fmt", "yuv420p", "-c:a", "aac",
                                "-f", "matroska", media_.filePath("Films/Heat (1995)/Heat.mkv")});
+            // Two real episodes for the video page's previous/next episode (copies of Heat's clip).
+            for (const char* e : {"TV/Dark/Season 1/Dark S01E01.mkv", "TV/Dark/Season 1/Dark S01E02.mkv"}) {
+                QFile::remove(media_.filePath(QLatin1String(e)));
+                realMedia_ &= QFile::copy(media_.filePath("Films/Heat (1995)/Heat.mkv"), media_.filePath(QLatin1String(e)));
+            }
             // The tool is there but couldn't make them (e.g. an encoder missing from an LGPL
             // build): fail here, not skip the player's screens quietly.
             QVERIFY2(realMedia_, "the ffmpeg tool couldn't make the test media");
@@ -553,9 +558,32 @@ private slots:
         QCOMPARE(fsButton->property("iconName").toString(), QStringLiteral("fullscreenExit"));
         QVERIFY(QMetaObject::invokeMethod(fsButton, "clicked"));
         QTRY_COMPARE(window_->visibility(), QWindow::Windowed);
+        QVERIFY(!qobject_cast<QQuickItem*>(find("nextEpisode"))->isVisible());   // a movie: no episodes
         QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
         QTRY_VERIFY(!window_->property("videoOpen").toBool());
         QTRY_COMPARE(player_->state(), QStringLiteral("paused"));
+
+        // An episode: the season plays as a queue, with previous and next episode.
+        showCategory("Shows");
+        call("categoryView", "open", "season", QVariantMap{{"show", "Dark"}, {"season", 1}, {"crumb", "Season 1"}});
+        QTRY_VERIFY(find("seasonView") && qobject_cast<QQuickItem*>(find("seasonView"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(find("playSeason"), "clicked"));
+        QTRY_VERIFY(window_->property("videoOpen").toBool());
+        QTRY_COMPARE(player_->queueLength(), 3);   // the whole season
+        QTRY_VERIFY(player_->hasVideo());
+        auto* prevEp = qobject_cast<QQuickItem*>(find("previousEpisode"));
+        auto* nextEp = qobject_cast<QQuickItem*>(find("nextEpisode"));
+        QTRY_VERIFY(nextEp->isVisible());
+        QVERIFY(!prevEp->isEnabled());   // the first episode
+        QVERIFY(nextEp->isEnabled());
+        screenshot("video-episode", true);
+        QVERIFY(QMetaObject::invokeMethod(nextEp, "clicked"));
+        QTRY_COMPARE(player_->current(), 1);
+        QTRY_VERIFY(prevEp->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(prevEp, "clicked"));
+        QTRY_COMPARE(player_->current(), 0);
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_VERIFY(!window_->property("videoOpen").toBool());
         player_->clear();
         QTRY_VERIFY(!player_->active());
         QVERIFY(qmlWarnings.isEmpty());
