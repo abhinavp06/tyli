@@ -2,6 +2,22 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Shows: a season plays as a queue you can see from the video page (2026-10-03, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** The user: "while playing a season of a show, I want the same queue system like an album/playlist".
+- **Already true:** the season is queued (decision P2).
+- **The gap:** the queue could only be seen on the queue page, and leaving the video page pauses the video.
+
+**What changed:**
+- **`QueuePanel.qml` (new):** the expanded player's queue panel as its own component ("queue · N next · length", clear, ×, the rows). Used by `ExpandedPlayer` (unchanged for the user) and now by the video page.
+- **`VideoPage`:** a queue button (and `q`) opens the panel on the right, above the controls, which stay up while it's open.
+  - A click on a row jumps to that episode; × removes one.
+  - With an episode playing, rows read "S1 E2 · title" (`QueueList.episodes`), since every row's title would be the show's name.
+
+**Tests:** `tst_qml_smoke::playingMusicAndVideo`: the panel opens with the season's 3 episodes and closes. The expanded player's panel tests pass unchanged. Screenshot: `video-episode`.
+
+**Files:** `qml/{QueuePanel.qml (new), ExpandedPlayer.qml, QueueList.qml, VideoPage.qml}`, `CMakeLists.txt`, `tests/tst_qml_smoke.cpp`
+
 ### Shows: previous and next episode on the video page (2026-10-03, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** The user: "add next episode and previous episode buttons, only for shows".

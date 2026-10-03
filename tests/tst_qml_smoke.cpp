@@ -576,7 +576,13 @@ private slots:
         QTRY_VERIFY(nextEp->isVisible());
         QVERIFY(!prevEp->isEnabled());   // the first episode
         QVERIFY(nextEp->isEnabled());
+        // The season as a queue, beside the picture: its rows, and a click jumps.
+        QVERIFY(QMetaObject::invokeMethod(find("videoQueueButton"), "clicked"));
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("videoQueuePanel"))->isVisible());
+        QTRY_COMPARE(find("videoQueueList")->property("count").toInt(), 3);
         screenshot("video-episode", true);
+        QVERIFY(QMetaObject::invokeMethod(find("closeVideoQueue"), "clicked"));
+        QTRY_VERIFY(!qobject_cast<QQuickItem*>(find("videoQueuePanel"))->isVisible());
         QVERIFY(QMetaObject::invokeMethod(nextEp, "clicked"));
         QTRY_COMPARE(player_->current(), 1);
         QTRY_VERIFY(prevEp->isEnabled());

@@ -26,7 +26,6 @@ Rectangle {
     onVisibleChanged: if (visible) forceActiveFocus()
     Keys.onEscapePressed: collapse()
 
-    QueueModel { id: queue }
 
     ColumnLayout {
         anchors.fill: parent
@@ -98,43 +97,15 @@ Rectangle {
                 }
             }
 
-            // ---- The queue, as a panel on the right
-            Rectangle {
+            // ---- The queue, as a panel on the right (shared with the video page)
+            QueuePanel {
                 objectName: "queuePanel"
                 visible: view.queueOpen
                 Layout.fillHeight: true
                 Layout.preferredWidth: Theme.px(460)
-                color: Theme.background
-                Rectangle { width: 1; height: parent.height; color: Theme.hairline }
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 1
-                    spacing: 0
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: Theme.px(20)
-                        Layout.rightMargin: Theme.px(12)
-                        Layout.preferredHeight: Theme.controlHeight + Theme.px(10)
-                        spacing: Theme.px(12)
-                        Text { text: "queue"; color: Theme.text }
-                        Text {
-                            text: Math.max(0, Player.queueLength - Player.current - 1) + " next"
-                                  + (queue.remainingDuration > 0 ? " · " + Format.duration(queue.remainingDuration) : "")
-                            color: Theme.textDim
-                        }
-                        Item { Layout.fillWidth: true }
-                        LinkText { visible: queue.count > 0; text: "clear"; onActivated: Player.clear() }
-                        TyIconButton { objectName: "closeQueuePanel"; iconName: "close"; tip: "close the queue"; onClicked: view.queueClosed() }
-                    }
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.hairline }
-                    QueueList {
-                        objectName: "queuePanelList"
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        compact: true
-                        model: queue
-                    }
-                }
+                closeName: "closeQueuePanel"
+                listName: "queuePanelList"
+                onClosed: view.queueClosed()
             }
         }
     }

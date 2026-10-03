@@ -92,6 +92,7 @@ qt_add_qml_module(tyli_ui
         qml/PlayerBar.qml
         qml/QualityPicker.qml
         qml/QueueList.qml
+        qml/QueuePanel.qml
         qml/QueuePage.qml
         qml/QueuePrompt.qml
         qml/SettingsView.qml

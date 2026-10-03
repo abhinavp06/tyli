@@ -35,12 +35,13 @@ Rectangle {
     readonly property bool episode: Player.link !== undefined && Player.link.page === "show"
     readonly property bool hasPrevious: Player.current > 0
     readonly property bool hasNext: Player.current >= 0 && Player.current < Player.queueLength - 1
+    property bool queueOpen: false   // the queue (a season's episodes) as a panel on the right
     property bool controlsShown: true
     function poke() {
         controlsShown = true
         hide.restart()
     }
-    Timer { id: hide; interval: 3000; onTriggered: if (Player.state === "playing") page.controlsShown = false }
+    Timer { id: hide; interval: 3000; onTriggered: if (Player.state === "playing" && !page.queueOpen) page.controlsShown = false }
     Connections {
         target: Player
         function onStatusChanged() { if (Player.state !== "playing") page.controlsShown = true }
@@ -64,6 +65,7 @@ Rectangle {
         case Qt.Key_Right: Player.seekBy(10000); break
         case Qt.Key_F: page.fullScreenToggled(); break
         case Qt.Key_M: Player.setMuted(!Player.muted); break
+        case Qt.Key_Q: page.queueOpen = !page.queueOpen; break
         case Qt.Key_N: if (page.episode && page.hasNext) Player.jump(Player.current + 1); break
         case Qt.Key_P: if (page.episode && page.hasPrevious) Player.jump(Player.current - 1); break
         case Qt.Key_Escape: if (page.fullScreen) page.fullScreenToggled(); else page.back(); break
@@ -200,6 +202,13 @@ Rectangle {
                 TyIconButton { iconName: "forward"; tip: "forward 10 s (→)"; onClicked: Player.seekBy(10000) }
                 Text { text: Format.duration(Player.position) + " / " + Format.duration(Player.duration); color: Theme.textDim }
                 Item { Layout.fillWidth: true }
+                TyIconButton {
+                    objectName: "videoQueueButton"
+                    iconName: "queue"
+                    checked: page.queueOpen
+                    tip: page.queueOpen ? "close the queue (q)" : "the queue (q)" + (page.episode ? ": the season's episodes" : "")
+                    onClicked: page.queueOpen = !page.queueOpen
+                }
                 TrackMenuButton {
                     objectName: "audioMenu"
                     label: "audio"
@@ -222,5 +231,20 @@ Rectangle {
                 TyIconButton { objectName: "fullScreenButton"; iconName: page.fullScreen ? "fullscreenExit" : "fullscreen"; tip: page.fullScreen ? "leave full screen (Esc)" : "full screen (f)"; onClicked: page.fullScreenToggled() }
             }
         }
+    }
+
+    // ---- The queue on the right: a season's episodes (or whatever the queue holds); a click jumps.
+    // The controls stay up while it's open.
+    QueuePanel {
+        objectName: "videoQueuePanel"
+        visible: page.queueOpen
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: bottomBar.top
+        width: Math.min(Theme.px(460), parent.width * 0.45)
+        closeName: "closeVideoQueue"
+        listName: "videoQueueList"
+        episodes: page.episode
+        onClosed: page.queueOpen = false
     }
 }

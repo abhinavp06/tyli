@@ -10,6 +10,8 @@ import "Format.js" as Format
 ListView {
     id: list
     property bool compact: false
+    // A season's episodes: every row's title is the show, so a compact row shows "S1 E2 · title".
+    property bool episodes: false
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     ScrollBar.vertical: TyScrollBar {}
@@ -51,7 +53,7 @@ ListView {
                 }
                 Icon { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: row.playing; name: "play"; size: Theme.px(12); color: Theme.accent }
             }
-            Text { Layout.fillWidth: true; Layout.preferredWidth: 6; text: row.title; elide: Text.ElideRight; color: row.ink }
+            Text { Layout.fillWidth: true; Layout.preferredWidth: 6; text: list.compact && list.episodes && row.subtitle !== "" ? row.subtitle : row.title; elide: Text.ElideRight; color: row.ink }
             Text { visible: !list.compact; Layout.fillWidth: true; Layout.preferredWidth: 5; text: row.subtitle; elide: Text.ElideRight; color: row.played ? Theme.textFaint : Theme.textDim }
             Text { Layout.preferredWidth: Theme.px(60); horizontalAlignment: Text.AlignRight; text: row.duration > 0 ? Format.duration(row.duration) : ""; color: row.played ? Theme.textFaint : Theme.textDim }
             TyIconButton {
