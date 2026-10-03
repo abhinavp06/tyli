@@ -2,6 +2,19 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Video grain checked; TYLI_MPV_LOG; the "Resume" idea recorded (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:**
+- **"Video playback is a little grainy":** measured on the VM, with a 10-bit gradient clip through `VideoView` on OpenGL compared with ffmpeg's clean scaling (hoardor `features/player.md` §10b).
+  - The video surface has the item's full device pixels.
+  - It's 8 bits per channel, so mpv dithers 10-bit video, about one step of noise. That's the grain, and it's at the reference conversion's level.
+  - TYLI's path adds nothing.
+- **`TYLI_MPV_LOG=1`** makes mpv write `mpv.log` next to `library.db`, to see what the user's Windows libmpv chooses (it's newer than the VM's 0.37).
+- **Recorded, not built:** the user's idea of separate music and video players, or a deliberate merge, with a "Resume" section in the sidebar. OI-U3 in `features/player_ui.md`.
+- **Seen while measuring (open):** in the smoke test on this VM's software OpenGL, a video sought and paused right after starting sometimes showed no picture. mpv logged "mpv_render_context_render() not being called". Each frame mpv announced did lead to a redraw, so this looks like seek/pause timing on llvmpipe; to watch for on a real GPU.
+
+**Files:** `src/player_bridge.cpp`, `DOCUMENTATION/application/features/player_ui.md` (§5b, OI-U3)
+
 ### The expanded player; artist and album links in the bar; a docs audit (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** Built from the approved mockup `player-expanded.html` (the user: "looks good.. build and push").

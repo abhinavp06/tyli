@@ -143,7 +143,16 @@
   - a space-bar toggle outside the video page
   - showing which copy plays on an album with several qualities
 
+## 5b. Picture quality: how to look (2026-10-03)
+
+- **The finding:** the grain the user saw is mpv's dithering on an 8-bit surface; TYLI's own path adds nothing (hoardor `features/player.md` §10b).
+- **On Windows,** start TYLI with `TYLI_MPV_LOG=1`, then send `%APPDATA%\TYLI\mpv.log`. It shows the decoder, hardware decoding, scalers, and dithering mpv chose. In PowerShell, in the unzipped folder: `$env:TYLI_MPV_LOG="1"; .\tyli.exe`.
+
 ## 6. Open items
 
 - **OI-U1:** the controls' sizes at 1.15 scale vs the mockups (drawn at 1.0).
+- **OI-U3 (the user, 2026-10-03, "something to keep in mind"):** one player or two?
+  - Today, a movie takes over the music bar.
+  - The user's idea: keep music and video apart, or merge them deliberately, with a **"Resume" section in the sidebar** to switch back to the music (album, playlist, song) or the show or movie they were on.
+  - Design it with playlists, or before.
 - **OI-U2:** where the home page will show "continue watching" (later, with the home page).

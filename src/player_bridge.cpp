@@ -6,6 +6,8 @@
 #include <hoardor/master/playback.hpp>
 
 #include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QQmlEngine>
 
 #include <chrono>
@@ -68,6 +70,11 @@ PlayerBridge::PlayerBridge(const QString& databasePath, QObject* parent) : QObje
     const QString wanted = qEnvironmentVariable("TYLI_PLAYER_OUTPUTS");
     if (wanted == QLatin1String("null")) outputs = {"null", "null"};
     else if (wanted == QLatin1String("noaudio")) outputs = {"null", "libmpv"};
+    // TYLI_MPV_LOG=1: mpv writes mpv.log next to library.db (which decoder, hardware decoding,
+    // scaler, and dithering it used), to diagnose playback on the user's machine.
+    if (qEnvironmentVariable("TYLI_MPV_LOG") == QLatin1String("1")) {
+        outputs.log_file = std::filesystem::path(QFileInfo(databasePath).absoluteDir().filePath(QStringLiteral("mpv.log")).toStdU16String());
+    }
 
     player::Callbacks callbacks;
     callbacks.status = [this](const player::Status& s) {
