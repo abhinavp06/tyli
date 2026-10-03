@@ -50,6 +50,7 @@ Item {
         volume: "M4 9h4l5-4v14l-5-4H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11",
         mute: "M4 9h4l5-4v14l-5-4H4z M16 9l5 6 M21 9l-5 6",
         fullscreen: "M4 9V4h5 M15 4h5v5 M20 15v5h-5 M9 20H4v-5",
+        fullscreenExit: "M9 4v5H4 M20 9h-5V4 M15 20v-5h5 M4 15h5v5",
         rewind: "M11 7l-5 5 5 5 M18 7l-5 5 5 5",
         forward: "M6 7l5 5-5 5 M13 7l5 5-5 5"
     })

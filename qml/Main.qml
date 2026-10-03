@@ -61,7 +61,24 @@ ApplicationWindow {
         }
         lastView = view
     }
-    onFullScreenChanged: visibility = fullScreen ? Window.FullScreen : Window.Windowed
+    // Full screen follows the window both ways: our button sets it, and a window that changes by
+    // itself (the OS, a shortcut, minimizing) updates `fullScreen`, so its icon is always right.
+    // Leaving full screen goes back to how the window was (maximized stays maximized).
+    property int visibilityBeforeFullScreen: Window.Windowed
+    onFullScreenChanged: {
+        if (fullScreen && visibility !== Window.FullScreen) {
+            visibilityBeforeFullScreen = visibility === Window.Maximized ? Window.Maximized : Window.Windowed
+            visibility = Window.FullScreen
+        } else if (!fullScreen && visibility === Window.FullScreen) {
+            visibility = visibilityBeforeFullScreen
+        }
+    }
+    onVisibilityChanged: (shown) => {
+        if (shown === Window.FullScreen)
+            fullScreen = true
+        else if (shown !== Window.Hidden && shown !== Window.Minimized)
+            fullScreen = false
+    }
     property bool sidebarCollapsed: false
     property string searchText  // what the results page shows ("" = no search)
     readonly property var currentCategory: Library.categories.find(c => c.id === currentCategoryId)

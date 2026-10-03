@@ -196,7 +196,7 @@ Rectangle {
                     value: Player.muted ? 0 : Player.volume / 100
                     onMoved: (v) => { Player.setVolume(Math.round(v * 100)); if (Player.muted) Player.setMuted(false) }
                 }
-                TyIconButton { iconName: "fullscreen"; tip: page.fullScreen ? "leave full screen (Esc)" : "full screen (f)"; checked: page.fullScreen; onClicked: page.fullScreenToggled() }
+                TyIconButton { objectName: "fullScreenButton"; iconName: page.fullScreen ? "fullscreenExit" : "fullscreen"; tip: page.fullScreen ? "leave full screen (Esc)" : "full screen (f)"; onClicked: page.fullScreenToggled() }
             }
         }
     }

@@ -538,6 +538,21 @@ private slots:
         QTRY_COMPARE(player_->state(), QStringLiteral("playing"));
         QCOMPARE(player_->queueLength(), 1);   // the video replaced the queue
         screenshot("video-page", true);
+        // Full screen and its icon follow the window both ways (the user, 2026-10-03).
+        QObject* fsButton = find("fullScreenButton");
+        QVERIFY(fsButton);
+        QCOMPARE(fsButton->property("iconName").toString(), QStringLiteral("fullscreen"));
+        QVERIFY(QMetaObject::invokeMethod(fsButton, "clicked"));
+        QTRY_COMPARE(window_->visibility(), QWindow::FullScreen);
+        QCOMPARE(fsButton->property("iconName").toString(), QStringLiteral("fullscreenExit"));
+        window_->setVisibility(QWindow::Windowed);   // the window changes by itself
+        QTRY_VERIFY(!window_->property("fullScreen").toBool());
+        QCOMPARE(fsButton->property("iconName").toString(), QStringLiteral("fullscreen"));
+        window_->setVisibility(QWindow::FullScreen);
+        QTRY_VERIFY(window_->property("fullScreen").toBool());
+        QCOMPARE(fsButton->property("iconName").toString(), QStringLiteral("fullscreenExit"));
+        QVERIFY(QMetaObject::invokeMethod(fsButton, "clicked"));
+        QTRY_COMPARE(window_->visibility(), QWindow::Windowed);
         QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
         QTRY_VERIFY(!window_->property("videoOpen").toBool());
         QTRY_COMPARE(player_->state(), QStringLiteral("paused"));
