@@ -2,6 +2,25 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The sidebar (and the queue button) leave search results (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user: with search results showing, clicking a section in the sidebar showed the hand but went nowhere. The results outrank every page (`view` puts search first), and the sidebar's click reset every page flag except the search.
+- **Fixed:** a section click clears the search (and its "back to results" memory), then goes to the category.
+- **Same gap, found while checking every page switch:**
+  - The queue button set `queueOpen`, which search results and Settings both outrank. It now opens the queue over them, and closes it only when the queue is the page shown.
+  - Playing a video now also clears a search and leaves Settings.
+- **The logo:** `tyli_` already cleared the search (`openHome`). Its test passes with a real click while the field has focus. It now also forgets the "back to results" memory.
+
+**Tests:** `tst_qml_smoke::theSidebarAndTheLogoLeaveSearch`, with real clicks:
+- a section from results
+- the logo from results
+- a section from results over Settings
+- the queue button over results and over Settings, and closing it again
+
+The sidebar items have object names (`sidebarItem-<name>`).
+
+**Files:** `qml/Main.qml`, `qml/Sidebar.qml`, `tests/tst_qml_smoke.cpp`
+
 ### The search field's × no longer covers its outline (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user noticed that hovering the × drew its grey background over the right edge of the field's green outline. The button sat flush right and was sized 2 px short of the field's height, so it covered the 1 px outline on the right.

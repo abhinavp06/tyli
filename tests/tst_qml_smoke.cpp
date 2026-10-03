@@ -643,6 +643,54 @@ private slots:
         QVERIFY(qmlWarnings.isEmpty());
     }
 
+    // With search results showing (over any page), the sidebar's sections and tyli_ go to their
+    // page and end the search (the user, 2026-10-03: they didn't).
+    void theSidebarAndTheLogoLeaveSearch() {
+        auto* field = qobject_cast<QQuickItem*>(find("searchField"));
+        const auto clickOn = [&](const char* name) {
+            auto* item = qobject_cast<QQuickItem*>(find(name));
+            QVERIFY2(item && item->isVisible(), name);
+            QTest::mouseClick(window_, Qt::LeftButton, {}, item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint());
+        };
+        const auto search = [&] {
+            field->forceActiveFocus();
+            field->setProperty("text", "radio");
+            QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("search"));
+        };
+
+        search();
+        clickOn("sidebarItem-movies");
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("category"));
+        QCOMPARE(window_->property("currentCategoryId").toInt(), categoryId(*bridge_, "Movies"));
+        QCOMPARE(field->property("text").toString(), QString());
+
+        search();
+        clickOn("wordmark");
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("home"));
+        QCOMPARE(field->property("text").toString(), QString());
+
+        // Results over Settings: a section leaves both.
+        QVERIFY(window_->setProperty("settingsOpen", true));
+        search();
+        clickOn("sidebarItem-music");
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("category"));
+        QCOMPARE(window_->property("currentCategoryId").toInt(), categoryId(*bridge_, "Music"));
+        QVERIFY(!window_->property("settingsOpen").toBool());
+
+        // The bar's queue button opens the queue over results and over Settings, and closes it.
+        search();
+        QVERIFY(QMetaObject::invokeMethod(find("playerBar"), "queueToggled"));
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("queue"));
+        QCOMPARE(field->property("text").toString(), QString());
+        QVERIFY(window_->setProperty("settingsOpen", true));
+        QCOMPARE(window_->property("view").toString(), QStringLiteral("settings"));
+        QVERIFY(QMetaObject::invokeMethod(find("playerBar"), "queueToggled"));
+        QCOMPARE(window_->property("view").toString(), QStringLiteral("queue"));
+        QVERIFY(QMetaObject::invokeMethod(find("playerBar"), "queueToggled"));
+        QVERIFY(window_->property("view").toString() != QStringLiteral("queue"));
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
     void theSidebarCollapses() {
         QVERIFY(window_->setProperty("sidebarCollapsed", true));
         screenshot("sidebar-collapsed");

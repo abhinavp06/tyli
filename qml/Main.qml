@@ -97,6 +97,7 @@ ApplicationWindow {
         videoOpen = false
         queueOpen = false
         clearSearch()
+        returnSearch = ""
     }
     function goForward() {
         if (view === "category")
@@ -120,6 +121,8 @@ ApplicationWindow {
         if (ids.length === 0)
             return
         pendingVideo = { ids: ids, start: start }
+        clearSearch()
+        settingsOpen = false
         queueOpen = false
         homeOpen = false
         videoOpen = true
@@ -239,6 +242,8 @@ ApplicationWindow {
                     if (id === window.currentCategoryId && window.view === "category")
                         categoryView.goToCrumb({ depth: 0 })
                     window.currentCategoryId = id
+                    window.clearSearch()  // results cover every page: a section ends the search
+                    window.returnSearch = ""
                     window.settingsOpen = false
                     window.homeOpen = false
                     window.queueOpen = false
@@ -350,8 +355,15 @@ ApplicationWindow {
                     window.expandedQueue = !window.expandedQueue
                     return
                 }
+                // Shown: close it. Otherwise open it over whatever covers it (results, Settings).
+                if (window.view === "queue") {
+                    window.queueOpen = false
+                    return
+                }
+                window.clearSearch()
+                window.settingsOpen = false
                 window.videoOpen = false
-                window.queueOpen = !window.queueOpen
+                window.queueOpen = true
             }
         }
 

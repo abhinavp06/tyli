@@ -33,6 +33,7 @@ Rectangle {
         delegate: Rectangle {
             id: item
             required property var modelData
+            objectName: "sidebarItem-" + modelData.name.toLowerCase()
             readonly property bool current: modelData.id === sidebar.currentCategoryId
             width: ListView.view.width
             height: Theme.px(34)
