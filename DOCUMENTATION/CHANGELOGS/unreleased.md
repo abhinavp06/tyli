@@ -2,6 +2,31 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Preferences are saved on Windows (the CI failure) (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
+
+**Summary:** `tst_media_models` had failed in the Windows workflow for several builds. With test output visible (`QT_FORCE_STDERR_LOGGING`, the entry below), the log showed three failures, all of one kind: a preference that was written read back as its old value (the category view, the scroll speed, the track columns).
+- **Cause:** the bridge used `QSettings()`, which needs an organization name. TYLI sets only an application name. On Linux, Qt writes `~/.config/TYLI.conf` anyway; on Windows, it saves nothing (`AccessError`).
+- **For the user:** on Windows, no preference was ever saved: sort choices, the quality remembered per album, movie, or show, track columns, the per-category view, and the scroll speed.
+- **Fix:** preferences are `preferences.ini` in the data folder, next to `library.db` (`LibraryBridge::preferencesPath_`). The same file on every OS, `TYLI_DATA_DIR` moves it too, and each test now has its own.
+- **Also fixed:** `preference(key, fallback)` returns the fallback's type. INI files keep only text, so "oldest first" (`false`) came back as the string `"false"`, which QML treats as true. That bug was there on Linux too.
+
+**Decisions**
+- **Rejected:** setting an organization name. `QStandardPaths::AppDataLocation` would then be `%APPDATA%\TYLI\TYLI`, and TYLI would open an empty library.
+- **Rejected:** the registry. A file next to the database is easy to back up, inspect, and reset, and behaves the same on every OS.
+
+**Tests:** all 4 suites pass.
+- `TestMediaModels::preferencesPersistInTheDataFolderWithTheirTypes`: the file exists in the data folder, and after a restart a bool comes back as a `false` bool, a string as itself, and a category view as set.
+- The three tests that failed on Windows now each read their own temporary file.
+
+**Files**
+- `src/library_bridge.{hpp,cpp}`
+- `tests/tst_media_models.cpp`, `tests/tst_qml_smoke.cpp` (a comment)
+- `DOCUMENTATION/application/ARCHITECTURE.md` (§3 and a decision row)
+
+**Notes**
+- **Preferences start fresh, once:** on Linux (this VM), the ones in `~/.config/TYLI.conf` are left behind. On Windows there were none.
+- **Not the cause:** the suspected 27-second file-time shift on Windows (MSVC's `clock_cast` counting leap seconds). It's still unverified, and is listed in the workspace TODO.
+
 ### The user's next test: scroll speed setting, hand cursor, home page, no Books, white track icons (2026-10-03, branch `abhinavp06/MEDIA_LISTING`)
 
 **Summary:** The user's notes from testing `cc88672` on Windows, and their answers:

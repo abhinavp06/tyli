@@ -31,6 +31,7 @@ Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and any
 ## 3. Data location (Proposed)
 
 - **The library database** is `QStandardPaths::AppDataLocation/library.db`: on Windows `%APPDATA%\TYLI\library.db`, on Linux `~/.local/share/TYLI/library.db`. That's always internal storage, never a media drive (hoardor ARCHITECTURE §3).
+- **UI preferences** (sort choices, remembered qualities, track columns, category views, scroll speed) are `preferences.ini` in the same folder (since 2026-10-03). Before, they went through `QSettings()`, which on Windows saves nothing without an organization name (found through the CI failure). Setting an organization name would have moved the data folder to `%APPDATA%\TYLI\TYLI`.
 - **Override:** the environment variable `TYLI_DATA_DIR` changes the folder, for tests and for trying things without touching the real library.
 
 ## 4. Look (Decided, 2026-10-02)
@@ -66,3 +67,4 @@ Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and any
 | 2026-10-03 | **Back and forward like a browser** (the user's Windows test): `CategoryView` keeps the pages you came from alive in a `StackView`, so going back restores the scroll position. The mouse's side buttons, Alt+←/→, and the sidebar's current category navigate. History doesn't span categories. `features/media_listing_ui.md` §7d. |
 | 2026-10-03 | **Sizes:** one scale (`Theme.scale` 1.15, `Theme.px()`) for every length. The play button and the quality picker stay at 40 px. Screens of different sizes rely on Windows' per-monitor display scaling through Qt, with no TYLI setting. The mouse wheel scrolls 1.2× as far, through one app-wide filter (`WheelSpeed`). `features/theme.md` §5b. |
 | 2026-10-03 | **The wheel speed became a setting** ("scroll speed", default 200%) after 1.2× still felt slow. **`tyli_` opens a home page** (blank until it's designed after the player and playlists; recommendations will live there). Every clickable control shows the hand cursor. |
+| 2026-10-03 | **UI preferences live in `preferences.ini` next to `library.db`**, not in `QSettings()`, which saved nothing on Windows (no organization name). Values come back as the fallback's type. §3. |

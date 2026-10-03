@@ -127,7 +127,7 @@ private:
 private slots:
     void initTestCase() {
         setupApplication();
-        QStandardPaths::setTestModeEnabled(true);  // QSettings (sort choices, columns) go to a test location
+        QStandardPaths::setTestModeEnabled(true);  // preferences live in the temporary data folder anyway
         previousHandler = qInstallMessageHandler(collectWarnings);
 
         bridge_ = std::make_unique<LibraryBridge>(data_.path());

@@ -65,7 +65,7 @@ class LibraryBridge : public QObject {
     Q_PROPERTY(bool folderOperationRunning READ folderOperationRunning NOTIFY folderOperationRunningChanged)
     // Reading metadata: {done, total, perSecond}; empty when not reading.
     Q_PROPERTY(QVariantMap metadataProgress READ metadataProgress NOTIFY metadataProgressChanged)
-    // UI preferences (QSettings): which columns a track list shows, in order.
+    // UI preferences (preferences.ini next to library.db): which columns a track list shows, in order.
     Q_PROPERTY(QStringList trackColumns READ trackColumns WRITE setTrackColumns NOTIFY trackColumnsChanged)
     // How far a mouse-wheel notch scrolls, in percent of Qt's default (50–500, default 200).
     Q_PROPERTY(int scrollSpeed READ scrollSpeed WRITE setScrollSpeed NOTIFY scrollSpeedChanged)
@@ -210,6 +210,9 @@ private:
     inline static LibraryBridge* instance_ = nullptr;
 
     QString databasePath_;
+    // UI preferences: an INI file in the data folder, not QSettings() (the registry on Windows,
+    // which saves nothing without an organization name; setting one would move the data folder).
+    QString preferencesPath_;
     QString openError_;
     std::optional<hoardor::db::Database> database_;  // the UI thread's connection
     std::optional<hoardor::file::Library> library_;  // uses database_, so declared after it

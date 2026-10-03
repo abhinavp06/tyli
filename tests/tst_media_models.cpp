@@ -297,6 +297,22 @@ private slots:
         bridge_->setScrollSpeed(DefaultScrollSpeedPercent);
     }
 
+    // Preferences are an INI file next to library.db (QSettings() saved nothing on Windows),
+    // survive a restart, and come back with the fallback's type.
+    void preferencesPersistInTheDataFolderWithTheirTypes() {
+        bridge_->setPreference("sort/music/added", false);
+        bridge_->setPreference("sort/music", "year");
+        bridge_->setCategoryView(categoryId(*bridge_, "Movies"), "shows");
+        QVERIFY(QFile::exists(data_->filePath("preferences.ini")));
+        bridge_.reset();
+        bridge_ = std::make_unique<LibraryBridge>(data_->path());  // the next start
+        const QVariant descending = bridge_->preference("sort/music/added", true);
+        QCOMPARE(descending.metaType(), QMetaType::fromType<bool>());
+        QCOMPARE(descending.toBool(), false);
+        QCOMPARE(bridge_->preference("sort/music", "added").toString(), QStringLiteral("year"));
+        QCOMPARE(bridge_->categoryView(categoryId(*bridge_, "Movies")), QStringLiteral("shows"));
+    }
+
     void trackColumnsArePreferences() {
         QCOMPARE(bridge_->trackColumns(), (QStringList{"length", "bitrate"}));
         QSignalSpy changed(bridge_.get(), &LibraryBridge::trackColumnsChanged);

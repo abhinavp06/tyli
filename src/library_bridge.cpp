@@ -158,7 +158,8 @@ QVariantMap rootToMap(const file::Root& root) {
 
 }  // namespace
 
-LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent) : QObject(parent) {
+LibraryBridge::LibraryBridge(const QString& dataDir, QObject* parent)
+    : QObject(parent), preferencesPath_(QDir(dataDir).filePath(QStringLiteral("preferences.ini"))) {
     // While a sync runs, poll SyncWorker::idle(): its "finished" callback runs before
     // the worker clears its running flag, so the callback alone can't say "all done".
     idleTimer_.setInterval(100);
@@ -538,11 +539,11 @@ int LibraryBridge::categoryOfFolder(int folderId) const {
 QString LibraryBridge::thumbnail(qint64 entryId) { return thumbnails_ ? thumbnails_->url(entryId) : QString(); }
 
 QString LibraryBridge::categoryViewChoice(int categoryId) const {
-    return QSettings().value(QStringLiteral("views/category%1").arg(categoryId)).toString();
+    return QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("views/category%1").arg(categoryId)).toString();
 }
 
 void LibraryBridge::setCategoryView(int categoryId, const QString& view) {
-    QSettings settings;
+    QSettings settings(preferencesPath_, QSettings::IniFormat);
     if (view.isEmpty()) settings.remove(QStringLiteral("views/category%1").arg(categoryId));
     else settings.setValue(QStringLiteral("views/category%1").arg(categoryId), view);
     emit categoryViewsChanged();
@@ -581,7 +582,9 @@ QStringList LibraryBridge::allTrackColumns() const {
 }
 
 QStringList LibraryBridge::trackColumns() const {
-    return QSettings().value(QStringLiteral("tracks/columns"), QStringList{QStringLiteral("length"), QStringLiteral("bitrate")}).toStringList();
+    return QSettings(preferencesPath_, QSettings::IniFormat)
+        .value(QStringLiteral("tracks/columns"), QStringList{QStringLiteral("length"), QStringLiteral("bitrate")})
+        .toStringList();
 }
 
 void LibraryBridge::setTrackColumns(const QStringList& columns) {
@@ -590,28 +593,33 @@ void LibraryBridge::setTrackColumns(const QStringList& columns) {
         if (columns.contains(c)) ordered << c;
     }
     if (ordered == trackColumns()) return;
-    QSettings().setValue(QStringLiteral("tracks/columns"), ordered);
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("tracks/columns"), ordered);
     emit trackColumnsChanged();
 }
 
 int LibraryBridge::scrollSpeed() const {
-    return std::clamp(QSettings().value(QStringLiteral("ui/scrollSpeed"), DefaultScrollSpeedPercent).toInt(), 50, 500);
+    const int stored = QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("ui/scrollSpeed"), DefaultScrollSpeedPercent).toInt();
+    return std::clamp(stored, 50, 500);
 }
 
 void LibraryBridge::setScrollSpeed(int percent) {
     percent = std::clamp(percent, 50, 500);
     setWheelSpeed(percent / 100.0);
     if (percent == scrollSpeed()) return;
-    QSettings().setValue(QStringLiteral("ui/scrollSpeed"), percent);
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("ui/scrollSpeed"), percent);
     emit scrollSpeedChanged();
 }
 
 QVariant LibraryBridge::preference(const QString& key, const QVariant& fallback) const {
-    return QSettings().value(QStringLiteral("ui/") + key, fallback);
+    // An INI file keeps only text: hand back the fallback's type, so false stays false in QML
+    // (the string "false" would be truthy).
+    QVariant value = QSettings(preferencesPath_, QSettings::IniFormat).value(QStringLiteral("ui/") + key, fallback);
+    if (fallback.isValid() && value.metaType() != fallback.metaType()) value.convert(fallback.metaType());
+    return value;
 }
 
 void LibraryBridge::setPreference(const QString& key, const QVariant& value) {
-    QSettings().setValue(QStringLiteral("ui/") + key, value);
+    QSettings(preferencesPath_, QSettings::IniFormat).setValue(QStringLiteral("ui/") + key, value);
 }
 
 // ---------------------------------------------------------------- Folders
