@@ -118,6 +118,7 @@ private:
 
     void showCategory(const QString& name) {
         QVERIFY(window_->setProperty("settingsOpen", false));
+        QVERIFY(window_->setProperty("playlistOpen", 0));   // as a sidebar click does
         QVERIFY(window_->setProperty("currentCategoryId", categoryId(*bridge_, name)));
         call("categoryView", "home");  // also when it was already the category shown
         QTest::qWait(50);
@@ -399,7 +400,7 @@ private slots:
         QTRY_VERIFY(!grid->isVisible());
         auto* sidebarList = qobject_cast<QQuickItem*>(find("categoryList"));
         QVERIFY(sidebarList);
-        QVERIFY(QMetaObject::invokeMethod(sidebarList->parentItem(), "categoryClicked", Q_ARG(int, categoryId(*bridge_, "Music"))));
+        QVERIFY(QMetaObject::invokeMethod(find("sidebar"), "categoryClicked", Q_ARG(int, categoryId(*bridge_, "Music"))));
         QTRY_VERIFY(grid->isVisible());
         QCOMPARE(grid->property("contentY").toReal(), 60.0);
 
@@ -592,6 +593,115 @@ private slots:
         QTRY_VERIFY(!window_->property("videoOpen").toBool());
         player_->clear();
         QTRY_VERIFY(!player_->active());
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    // Playlists end to end (features/playlists_ui.md): the sidebar, the add menu on a track, a
+    // playlist's page (rename, pin, reorder, remove, play), Liked Songs, and delete.
+    void playlistsEndToEnd() {
+        if (!realMedia_) QSKIP("the ffmpeg tool isn't installed: no real media to play");
+        const auto clickAt = [&](QQuickItem* item) {
+            QVERIFY(item);
+            QTest::mouseClick(window_, Qt::LeftButton, {}, item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint());
+        };
+        const auto item = [&](const QString& name) { return qobject_cast<QQuickItem*>(find(name.toUtf8().constData())); };
+
+        // + in the sidebar: a name, ✓, and the new playlist opens.
+        clickAt(item("newPlaylistButton"));
+        auto* name = item("newPlaylistName");
+        QTRY_VERIFY(name->isVisible());
+        name->setProperty("text", "Road Trip");
+        QTest::qWait(100);   // the field just appeared: let the sidebar lay it out before clicking its ✓
+        clickAt(item("newPlaylistNameOk"));
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("playlist"));
+        QTRY_COMPARE(find("playlistTitle")->property("text").toString(), QStringLiteral("Road Trip"));
+        QVERIFY(item("sidebarPlaylist-Road Trip"));
+        QCOMPARE(find("playlistRows")->property("count").toInt(), 0);
+
+        // An album's track: its playlist icon, then the playlist in the menu.
+        const QVariantList copies = bridge_->albumCopies("Radiohead", "In Rainbows");
+        QVERIFY(!copies.isEmpty());
+        QVariantList tracks;
+        for (const QVariant& t : copies[0].toMap().value("tracks").toList()) tracks << t.toMap().value("entryId");
+        QVERIFY(tracks.size() >= 3);
+        showCategory("Music");
+        call("categoryView", "open", "album", QVariantMap{{"albumArtist", "Radiohead"}, {"album", "In Rainbows"}, {"crumb", "In Rainbows"}});
+        // (Pages you came from stay alive, hidden: wait for this page's own row.)
+        const QString addName = QStringLiteral("addToPlaylist-%1").arg(tracks[0].toLongLong());
+        QTRY_VERIFY(item(addName) && item(addName)->isVisible());
+        clickAt(item(addName));
+        // The menu is a Popup (not an item): its rows are inside its content item.
+        QTRY_VERIFY(find("playlistMenu")->property("opened").toBool());
+        auto* menuContent = find("playlistMenu")->property("contentItem").value<QQuickItem*>();
+        QVERIFY(menuContent);
+        auto* roadRow = qobject_cast<QQuickItem*>(findIn(menuContent, "menuPlaylist-Road Trip"));
+        QTRY_VERIFY(roadRow && roadRow->isVisible());
+        screenshot("playlist-add-menu");
+        clickAt(roadRow);
+        QTRY_COMPARE(player_->playlistInfo(player_->playlists()[0].toMap().value("id").toLongLong()).value("tracks").toInt(), 1);
+        const qint64 road = player_->playlists()[0].toMap().value("id").toLongLong();
+        player_->addToPlaylist(road, {tracks[1], tracks[2]});
+
+        // The page: three rows, from the sidebar.
+        clickAt(item("sidebarPlaylist-Road Trip"));
+        QTRY_COMPARE(window_->property("view").toString(), QStringLiteral("playlist"));
+        QTRY_COMPARE(find("playlistRows")->property("count").toInt(), 3);
+        screenshot("playlist");
+
+        // Rename in the field, with its ✓.
+        clickAt(item("renamePlaylist"));
+        QTRY_VERIFY(item("renameField")->isVisible());
+        item("renameField")->setProperty("text", "Road");
+        screenshot("playlist-rename");
+        clickAt(item("renameFieldOk"));
+        QTRY_COMPARE(find("playlistTitle")->property("text").toString(), QStringLiteral("Road"));
+
+        // Pin it (the pin on the right of its sidebar row).
+        QTest::mouseMove(window_, item("sidebarPlaylist-Road")->mapToScene(QPointF(20, 10)).toPoint());
+        clickAt(item("pin-Road"));
+        QTRY_VERIFY(player_->playlists()[0].toMap().value("pinned").toBool());
+
+        // Drag the third row to the top by its handle.
+        const auto first = [&] { return player_->playlistEntries(road).first().toLongLong(); };
+        auto* grip = item("grip-2");
+        auto* top = item("playlistRow-0");
+        QVERIFY(grip && top);
+        const QPoint from = grip->mapToScene(QPointF(grip->width() / 2, grip->height() / 2)).toPoint();
+        const QPoint to = top->mapToScene(QPointF(top->width() / 2, 2)).toPoint();
+        QTest::mousePress(window_, Qt::LeftButton, {}, from);
+        for (int i = 1; i <= 6; ++i) QTest::mouseMove(window_, from + (to - from) * i / 6, 10);
+        QTest::mouseRelease(window_, Qt::LeftButton, {}, to);
+        QTRY_COMPARE(first(), tracks[2].toLongLong());
+
+        // × removes a row.
+        QTest::mouseMove(window_, item("playlistRow-1")->mapToScene(QPointF(40, 10)).toPoint());
+        clickAt(item("rowRemove-1"));
+        QTRY_COMPARE(find("playlistRows")->property("count").toInt(), 2);
+
+        // Play it: the sidebar's speaker marks where the music came from.
+        QVERIFY(QMetaObject::invokeMethod(find("playPlaylist"), "clicked"));
+        if (find("queuePrompt")->property("opened").toBool()) QVERIFY(QMetaObject::invokeMethod(find("queuePrompt"), "clearAndPlay"));
+        QTRY_COMPARE(player_->source().value("kind").toString(), QStringLiteral("playlist"));
+        QTRY_VERIFY(item("playingFrom-Road") && item("playingFrom-Road")->isVisible());
+        screenshot("playlist-playing");
+        player_->clear();
+
+        // Liked Songs: the hearts, on their own page.
+        player_->setLiked(tracks[0].toLongLong(), true);
+        clickAt(item("sidebarLiked"));
+        QTRY_COMPARE(find("playlistTitle")->property("text").toString(), QStringLiteral("Liked Songs"));
+        QTRY_COMPARE(find("playlistRows")->property("count").toInt(), 1);
+        screenshot("liked-songs");
+        player_->setLiked(tracks[0].toLongLong(), false);
+
+        // Delete, with its inline confirm: back to where you were.
+        clickAt(item("sidebarPlaylist-Road"));
+        QTRY_COMPARE(find("playlistTitle")->property("text").toString(), QStringLiteral("Road"));
+        clickAt(item("deletePlaylist"));
+        QTRY_VERIFY(item("confirmDeletePlaylist")->isVisible());
+        clickAt(item("confirmDeletePlaylist"));
+        QTRY_VERIFY(player_->playlists().isEmpty());
+        QTRY_VERIFY(window_->property("view").toString() != QStringLiteral("playlist"));
         QVERIFY(qmlWarnings.isEmpty());
     }
 

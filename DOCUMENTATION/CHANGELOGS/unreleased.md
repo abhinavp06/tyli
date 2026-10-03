@@ -2,6 +2,53 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Playlists and Liked Songs: the screens (2026-10-03, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** The UI for the approved design (mockups `playlist.html`, `liked.html`; the user's review in `features/playlists_ui.md` §0), on the bridge from the previous commit and hoardor `799e939`. As built: §6.
+
+**What changed:**
+- **The sidebar's "playlists" section:**
+  - **+** opens a name field with ✓ and ×; the new playlist opens.
+  - Liked Songs is fixed on top, then the pinned playlists and the rest, each group in the user's order. Drag a row to reorder it within its group; a green line shows where it lands.
+  - **On the right:** the green speaker while playing from it (`Player.source`), and the pin (on hover; always on pinned ones).
+- **The playlist page** (top level, like the queue page):
+  - **Hero:** a mosaic of its first four albums' covers; the name with a pencil that renames in place (✓ and × inside the field); "N tracks · length · updated"; delete with an inline "delete? / keep"; play.
+  - **Rows:** drag by the handle that replaces the number on hover; artist and album links; heart; add to another playlist; × to remove. A click plays the playlist from that row (queue prompt). The playing row is marked.
+- **Liked Songs:** the same page, with a heart cover, a "liked" column, and no editing.
+- **Adding:** one add menu ("new playlist…" with a name field, then the playlists with checks; already-in ones can't be picked), opened from:
+  - an album's track rows (the playlist icon is live now)
+  - playlist rows
+  - the now-playing bar (songs only)
+  - the queue page's new "save as playlist"
+  - No "add a whole album", per the user.
+- **Shared parts:** `NameField` (a field with ✓ and × inside) and `PlaylistMenu`. The queue prompt passes the source on.
+
+**Found on the way:**
+- **The empty sidebar:** the category list was a `ListView` sized to its own content height, which with the new layout created no rows (the playlists section rose over "music"). Now a `Repeater`. The add menu's list had the same problem (now a `Column` in a `Flickable`).
+- **Stale page info:** switching the page from Liked Songs to a playlist reloaded Liked Songs' info, because the change handler ran before the `liked` binding updated. `refresh()` reads `playlistId` itself.
+- **Missing page margins:** the playlist page had none at first (the cover touched the sidebar, the play button the window's edge); it now has the queue page's.
+
+**Tests:** 5 suites pass. `tst_qml_smoke::playlistsEndToEnd` (real clicks):
+- create from the sidebar
+- add through an album row's menu (a screenshot of the menu)
+- the page with three rows
+- rename with ✓, pin from the sidebar
+- drag the third row to the top, × removes one
+- play: the speaker lights
+- Liked Songs
+- delete with its confirm
+
+The `showCategory` helper leaves a playlist page, as a sidebar click does; one test finds the sidebar by name. Screenshots: `playlist`, `playlist-add-menu`, `playlist-rename`, `playlist-playing`, `liked-songs`.
+
+**Files:**
+- `qml/{Sidebar.qml, PlaylistPage.qml (new), PlaylistMenu.qml (new), NameField.qml (new), Main.qml, QueuePrompt.qml, QueuePage.qml, TrackList.qml, PlayerBar.qml, Icon.qml}`
+- `src/{player_bridge.hpp, playlist_model.hpp, playlist_model.cpp}`, `CMakeLists.txt`, `tests/tst_qml_smoke.cpp`
+- `DOCUMENTATION/application/{features/playlists_ui.md, ARCHITECTURE.md}`
+
+**Known limitations:**
+- Reordering drags rows already loaded (pages of 200) and doesn't scroll by itself.
+- A moved or renamed file drops out of playlists (no move detection yet).
+
 ### Playlists: the bridge and `PlaylistModel` (2026-10-03, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** TYLI's side of hoardor `799e939` (playlists in `player::Library`). The screens follow in the next commit.

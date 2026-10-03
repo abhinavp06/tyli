@@ -42,6 +42,7 @@ ApplicationWindow {
     property bool settingsOpen: false
     property bool homeOpen: false   // the home page (tyli_), instead of a category
     property bool queueOpen: false  // the queue page (from the now-playing bar)
+    property var playlistOpen: 0    // a playlist's page (its id), Liked Songs (-1), or none (0)
     property bool videoOpen: false  // the video page
     property bool fullScreen: false
     property bool expandedOpen: false   // the expanded player, over everything above the bar
@@ -50,7 +51,7 @@ ApplicationWindow {
     // Search works from every page, Settings included: its results cover the page, and clearing
     // them (or going back) shows that page again.
     readonly property string view: searchText !== "" ? "search" : settingsOpen ? "settings" : videoOpen ? "video"
-                                   : queueOpen ? "queue" : homeOpen ? "home" : "category"
+                                   : queueOpen ? "queue" : playlistOpen !== 0 ? "playlist" : homeOpen ? "home" : "category"
     property string lastView: "category"
     // Leaving the video page pauses the video (features/player_ui.md, decision P3); the bar keeps it.
     onViewChanged: {
@@ -103,6 +104,8 @@ ApplicationWindow {
             videoOpen = false
         else if (queueOpen)
             queueOpen = false
+        else if (playlistOpen !== 0)
+            playlistOpen = 0
         else if (homeOpen)
             homeOpen = false
         else
@@ -113,6 +116,7 @@ ApplicationWindow {
         settingsOpen = false
         videoOpen = false
         queueOpen = false
+        playlistOpen = 0
         clearSearch()
         returnSearch = ""
     }
@@ -124,13 +128,38 @@ ApplicationWindow {
     // ---- Playing (features/player_ui.md §1)
     // Music: plays at once when nothing is loaded, otherwise asks (the queue prompt).
     // `addIds` is what "add to queue" adds: the clicked track, or the whole album.
-    function playTracks(ids, start, addIds, label) {
+    // `source`: what this was started from ({kind: "playlist", id} or {kind: "liked"}), for the
+    // sidebar's speaker; anything else plays without one.
+    function playTracks(ids, start, addIds, label, source) {
         if (ids.length === 0)
             return
         if (Player.active)
-            queuePrompt.ask(ids, start, addIds, label)
+            queuePrompt.ask(ids, start, addIds, label, source || {})
         else
-            Player.playNow(ids, start)
+            Player.playNow(ids, start, source || {})
+    }
+    // A track's (or the bar's) playlist icon: the add menu, under `anchor` (playlists_ui.md §1.4).
+    function addToPlaylist(entryIds, anchor, label) {
+        if (entryIds.length > 0)
+            playlistMenu.openFor(entryIds, anchor, label)
+    }
+    function openPlaylist(id) {
+        clearSearch()
+        returnSearch = ""
+        settingsOpen = false
+        videoOpen = false
+        queueOpen = false
+        homeOpen = false
+        playlistOpen = id
+    }
+    // A link from a playlist's row (its artist or album) opens that page in its category.
+    function openInCategory(categoryId, page, params) {
+        playlistOpen = 0
+        homeOpen = false
+        queueOpen = false
+        if (categoryId >= 0)
+            currentCategoryId = categoryId
+        categoryView.open(page, params)
     }
     // Video: replaces the queue (decision P1) once the picture is ready to be drawn.
     property var pendingVideo: null
@@ -162,6 +191,7 @@ ApplicationWindow {
         settingsOpen = false
         clearSearch()
         queueOpen = false
+        playlistOpen = 0
         homeOpen = false
         videoOpen = false
         currentCategoryId = link.categoryId
@@ -182,6 +212,7 @@ ApplicationWindow {
         settingsOpen = false
         clearSearch()
         queueOpen = false
+        playlistOpen = 0
         homeOpen = false
         currentCategoryId = link.categoryId
         categoryView.open(link.page, link.params)
@@ -219,6 +250,7 @@ ApplicationWindow {
     }
 
     QueuePrompt { id: queuePrompt }
+    PlaylistMenu { id: playlistMenu }
 
     ColumnLayout {
         anchors.fill: parent
@@ -254,6 +286,8 @@ ApplicationWindow {
                 visible: !window.fullScreen
                 collapsed: window.sidebarCollapsed
                 currentCategoryId: window.view === "category" ? window.currentCategoryId : -1
+                currentPlaylist: window.view === "playlist" ? window.playlistOpen : 0
+                onPlaylistClicked: (id) => window.openPlaylist(id)
                 onCategoryClicked: (id) => {
                     // The category already shown: back to its home page, as you left it.
                     if (id === window.currentCategoryId && window.view === "category")
@@ -264,6 +298,7 @@ ApplicationWindow {
                     window.settingsOpen = false
                     window.homeOpen = false
                     window.queueOpen = false
+                    window.playlistOpen = 0
                     window.videoOpen = false
                 }
             }
@@ -314,6 +349,7 @@ ApplicationWindow {
                         window.settingsOpen = false
                         window.homeOpen = false
                         window.queueOpen = false
+                        window.playlistOpen = 0
                         window.videoOpen = false
                         window.clearSearch()
                         categoryView.open(page, params)
@@ -348,6 +384,19 @@ ApplicationWindow {
                 QueuePage {
                     anchors.fill: parent
                     visible: window.view === "queue"
+                }
+                PlaylistPage {
+                    // The same margins as the queue page's (a top-level page has no crumbs).
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.pageMargin
+                    anchors.rightMargin: Theme.pageMargin
+                    anchors.topMargin: Theme.px(20)
+                    anchors.bottomMargin: Theme.px(12)
+                    visible: window.view === "playlist"
+                    playlistId: window.playlistOpen
+                    onPlayRequested: (ids, start, addIds, label, source) => window.playTracks(ids, start, addIds, label, source)
+                    onOpenPage: (categoryId, pageName, params) => window.openInCategory(categoryId, pageName, params)
+                    onDeleted: window.playlistOpen = 0
                 }
                 SettingsView {
                     id: settings

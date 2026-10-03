@@ -41,6 +41,9 @@ public:
 
     // Every row's entry id in order (to play from a row), and a row's item id.
     Q_INVOKABLE QVariantList entryIds() const;
+    // The covers (thumbnail entries) of the first `max` different albums among the loaded rows:
+    // a playlist's mosaic.
+    Q_INVOKABLE QVariantList coverEntries(int max = 4) const;
     Q_INVOKABLE void reload();
 
 signals:

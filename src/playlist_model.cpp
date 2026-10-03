@@ -3,7 +3,10 @@
 #include "library_bridge.hpp"
 #include "player_bridge.hpp"
 
+#include <hoardor/audio/audio.hpp>
 #include <hoardor/player/player.hpp>
+
+#include <QSet>
 
 namespace tyli {
 
@@ -106,6 +109,26 @@ QVariantList PlaylistModel::entryIds() const {
     QVariantList out;
     if (auto* player = PlayerBridge::instance()) {
         out = playlistId_ == -1 ? player->likedEntries() : player->playlistEntries(playlistId_);
+    }
+    return out;
+}
+
+QVariantList PlaylistModel::coverEntries(int max) const {
+    namespace a = hoardor::audio;
+    QVariantList out;
+    auto* library = LibraryBridge::instance();
+    if (!library || !library->tracks()) return out;
+    QSet<QString> seen;
+    const std::vector<a::Field> by{a::Field::AlbumArtist, a::Field::Album};
+    for (const Row& r : rows_) {
+        if (out.size() >= max) break;
+        const QString key = r.albumArtist.toCaseFolded() + QChar(0x1f) + r.album.toCaseFolded();
+        if (r.album.isEmpty() || seen.contains(key)) continue;
+        seen.insert(key);
+        const a::Filter one{{{a::Field::AlbumArtist, a::Value{r.albumArtist.toStdString()}}, {a::Field::Album, a::Value{r.album.toStdString()}}}};
+        if (auto g = library->tracks()->groups(by, one, a::GroupOrder::Values, false, std::nullopt, 1); g && !g->items.empty()) {
+            out << qint64(g->items.front().cover_entry);
+        }
     }
     return out;
 }

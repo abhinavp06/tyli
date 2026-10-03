@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Approved with changes** (2026-10-03; §0). Mockups: `playlist.html`, `liked.html`. The engine side: hoardor `features/playlists.md` |
+| Status | **Built** (2026-10-03; §6) on `abhinavp06/PLAYLISTS`, waiting for the user's Windows test. Approved with changes (§0). Mockups: `playlist.html`, `liked.html`. The engine side: hoardor `features/playlists.md` |
 | Branch | `abhinavp06/PLAYLISTS` |
 | Scope | The user's choices: music only, manual playlists, and liked songs. Not now: smart playlists, M3U, the "Resume" section |
 
@@ -84,6 +84,30 @@
   - the add menu on a track and on an album
   - delete's inline confirm
   - reordering by drag
+
+## 6. As built (2026-10-03)
+
+- **`Sidebar`:**
+  - The categories (a `Repeater` now: a `ListView` sized to its own content created no rows) and the playlists section, in one `Flickable`.
+  - **+** opens a `NameField`.
+  - Liked Songs, then the pinned and the other playlists, each group a `Column` with its own drop line.
+  - Press and drag a row to reorder it within its group; a click opens it.
+  - The speaker shows while `Player.source` is that playlist; the pin shows on hover and stays on pinned ones.
+- **`PlaylistPage`** (a top-level page, `Main.view` "playlist", the queue page's margins):
+  - the hero (a mosaic of the first four albums' covers via `PlaylistModel.coverEntries`; one cover; or the playlist icon; a heart for Liked Songs)
+  - rename in a `NameField`, delete with an inline confirm, play
+  - rows: drag by the handle that replaces the number on hover; artist and album links; the heart; add to another playlist; × on hover
+  - **Liked Songs:** a "liked" column and no editing; its rows go when unliked
+- **`NameField`** (new): a `TyField` with ✓ and × inside (inset like the search ×), `confirmed(name)` and `cancelled()`. Used by the sidebar, the rename, the add menu, and the queue page.
+- **`PlaylistMenu`** (new): a `Popup` under the clicked icon, one instance in `Main` (`Window.window.addToPlaylist(ids, anchor, label)`).
+  - It offers "new playlist…" (a `NameField` in place) and the playlists, with checks.
+  - Its rows are a `Column` in a `Flickable`, since a `ListView` sized to its content made none.
+- **Where tracks are added:**
+  - an album's track rows (`TrackList`: the playlist icon is live)
+  - a playlist's or Liked Songs' rows
+  - the now-playing bar (songs only)
+  - the queue page's "save as playlist" (a `NameField`; then `Player.queueIds()`)
+- **The queue prompt** carries the source, so "clear queue and play" from a playlist lights its speaker; "add to queue" doesn't.
 
 ## 5. Open items
 

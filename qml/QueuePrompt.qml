@@ -14,8 +14,10 @@ Popup {
     property int start: 0
     property var addIds: []        // "add to queue": just the clicked track, or the whole album
     property string what: "this track"
+    property var source: ({})      // what "clear queue and play" starts from (a playlist page)
 
-    function ask(ids, from, toAdd, label) {
+    function ask(ids, from, toAdd, label, from_) {
+        source = from_ || ({})
         entryIds = ids
         start = from
         addIds = toAdd
@@ -27,7 +29,7 @@ Popup {
         close()
     }
     function clearAndPlay() {
-        Player.playNow(entryIds, start)
+        Player.playNow(entryIds, start, source)
         close()
     }
 

@@ -141,7 +141,7 @@ ListView {
                         }
                     }
                     // A white outline; liked: filled with Theme.accent, so it follows the theme
-                    // (the user, 2026-10-03). The playlist icon waits for playlists.
+                    // (the user, 2026-10-03). The playlist icon adds the track to a playlist.
                     Item {
                         width: Theme.px(22)
                         height: parent.height
@@ -153,7 +153,12 @@ ListView {
                             color: row.liked || heartArea.containsMouse ? Theme.accent : Theme.text
                         }
                     }
-                    Icon { name: "playlist"; size: Theme.px(14); color: Theme.textFaint; anchors.verticalCenter: parent.verticalCenter }
+                    Item {
+                        id: addIcon
+                        width: Theme.px(22)
+                        height: parent.height
+                        Icon { anchors.centerIn: parent; name: "playlist"; size: Theme.px(14); color: addArea.containsMouse ? Theme.accent : Theme.text }
+                    }
                 }
                 MouseArea {
                     id: area
@@ -172,6 +177,20 @@ ListView {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Player.setLiked(row.modelData.entryId, !row.liked)
+                }
+                // And the playlist icon: the add menu, under it.
+                MouseArea {
+                    id: addArea
+                    objectName: "addToPlaylist-" + row.modelData.entryId
+                    x: heartArea.x + heartArea.width + Theme.px(16)
+                    width: Theme.px(22)
+                    height: parent.height
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    ToolTip.visible: containsMouse
+                    ToolTip.text: "add to a playlist"
+                    ToolTip.delay: 500
+                    onClicked: Window.window.addToPlaylist([row.modelData.entryId], addArea, "“" + row.modelData.title + "”")
                 }
             }
         }

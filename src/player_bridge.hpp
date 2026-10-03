@@ -103,6 +103,11 @@ public:
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     QList<qint64> queue() const { return queue_; }
+    Q_INVOKABLE QVariantList queueIds() const {
+        QVariantList out;
+        for (qint64 id : queue_) out << id;
+        return out;
+    }
 
     // ---- Transport
     Q_INVOKABLE void toggle();

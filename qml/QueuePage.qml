@@ -31,6 +31,32 @@ Item {
                 color: Theme.textDim
             }
             Item { Layout.fillWidth: true }
+            // "save as playlist": a name, then a new playlist of everything queued.
+            NameField {
+                id: saveName
+                objectName: "saveQueueName"
+                visible: false
+                Layout.preferredWidth: Theme.px(280)
+                placeholderText: "playlist name"
+                onConfirmed: (name) => {
+                    const id = Player.createPlaylist(name)
+                    if (id > 0) {
+                        Player.addToPlaylist(id, Player.queueIds())
+                        visible = false
+                    }
+                }
+                onCancelled: visible = false
+            }
+            LinkText {
+                objectName: "saveQueue"
+                visible: queue.count > 0 && !saveName.visible
+                text: "save as playlist"
+                onActivated: {
+                    saveName.text = ""
+                    saveName.visible = true
+                    saveName.forceActiveFocus()
+                }
+            }
             LinkText {
                 objectName: "clearQueue"
                 visible: queue.count > 0

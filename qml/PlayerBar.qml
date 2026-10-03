@@ -7,7 +7,7 @@ import "Format.js" as Format
 // The now-playing bar (features/player_ui.md §1.2, mockups player-music.html and
 // player-expanded.html), shown while something is loaded: the cover (↑ expands the player,
 // ↓ while expanded collapses it), what plays with links to its album and artist, the
-// transport with a seek line, and like, add to playlist (later), the queue, mute, and volume.
+// transport with a seek line, and like, add to a playlist, the queue, mute, and volume.
 Rectangle {
     id: bar
     objectName: "playerBar"
@@ -146,7 +146,7 @@ Rectangle {
             }
         }
 
-        // ---- Like, playlist (later), queue, volume
+        // ---- Like, playlist, queue, volume
         RowLayout {
             Layout.preferredWidth: Theme.px(320)
             Layout.maximumWidth: Theme.px(320)
@@ -173,7 +173,15 @@ Rectangle {
                 ToolTip.text: bar.liked ? "liked (click to unlike)" : "like"
                 ToolTip.delay: 500
             }
-            TyIconButton { iconName: "playlist"; tip: "add to a playlist (comes with playlists)"; enabled: false }
+            TyIconButton {
+                id: barAdd
+                objectName: "barAddToPlaylist"
+                iconName: "playlist"
+                // Songs only: a video isn't something a playlist holds.
+                enabled: Player.active && !Player.hasVideo
+                tip: "add to a playlist"
+                onClicked: Window.window.addToPlaylist([Player.entryId], barAdd, "“" + Player.title + "”")
+            }
             TyIconButton {
                 objectName: "queueButton"
                 iconName: "queue"
