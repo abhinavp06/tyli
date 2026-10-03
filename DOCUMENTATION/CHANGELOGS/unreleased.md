@@ -2,6 +2,64 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The player in TYLI: now-playing bar, queue prompt, queue page, video page, likes, markers (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The approved player design (`features/player_ui.md`, mockups `player-*.html`), built on hoardor's new `player` engine.
+- **Music:**
+  - a track click plays the album from it; while something plays, the queue prompt asks (cancel / add to queue (just that track) / clear queue and play)
+  - the album's play button works the same way
+  - the playing track is green with a ▶
+  - the hearts on track rows like and unlike: a white outline, filled with the accent color when liked
+- **The now-playing bar** (while something is loaded):
+  - cover, title (to its album, or back to the video page), and artist · album
+  - previous / play-pause / next, and a seek line with times
+  - like, add to playlist (disabled: the playlists feature), the queue, mute, and volume
+- **The queue page:** played rows dim, the current one green; jump, remove, clear, and the time left.
+- **The video page:**
+  - the picture through mpv
+  - controls over it that hide (with the cursor) after 3 s
+  - seek, ±10 s, the audio and subtitle menus, mute and volume, and full screen (the top bar, sidebar, and bar hidden)
+  - keys: space, ←/→, f, Esc, m
+  - "resumed at … · from the start"
+  - leaving the page pauses (P3), and the bar's title goes back to it
+- **Movies and shows:**
+  - a movie plays the chosen copy, with "resume at …" in the play button's tooltip
+  - an episode plays with the rest of its season (P2)
+  - the show's play button resumes the episode you're partway through, or plays the next unwatched one
+  - episode rows show a viewed check and a progress line
+- **Under the hood:**
+  - `PlayerBridge` (`Player`), `QueueModel`, and `VideoItem` (`VideoView`)
+  - Qt Quick on OpenGL (P4)
+  - `CategoryView.play()`, and `Main.view` choosing the page
+
+**Decisions and findings**
+- **A video waits for its picture:** `pendingVideo` starts once `VideoView.ready`, so mpv never plays a video it can't draw.
+- **The video page stays drawn under a cover while a video is loaded,** because mpv waits up to 0.2 s for each undrawn frame. A safeguard: a test failure I first blamed on this turned out to be Qt Test cutting a wait short after an earlier failed check.
+- **`Player.revision >= 0 && …` in bindings,** not a bare `Player.revision;` statement, which can be compiled away. The bar's heart then intermittently missed a like (about 1 run in 7 under ctest).
+- **Checked on the VNC display:** the picture draws on OpenGL. A 160×90 clip blown up on llvmpipe showed a grid of lines (software upscaling); a 960×540 clip is clean.
+
+**Files**
+- **New:** `src/player_bridge.{hpp,cpp}`, `src/queue_model.{hpp,cpp}`, `src/video_item.{hpp,cpp}`, `qml/PlayerBar.qml`, `qml/QueuePrompt.qml`, `qml/QueuePage.qml`, `qml/VideoPage.qml`, `qml/SeekLine.qml`, `tests/tst_player_bridge.cpp`
+- **Changed:** `src/main.cpp`, `qml/Main.qml`, `qml/CategoryView.qml`, `qml/AlbumView.qml`, `qml/TrackList.qml`, `qml/MovieView.qml`, `qml/ShowView.qml`, `qml/PlayButton.qml`, `qml/Icon.qml`, `CMakeLists.txt` (Qt OpenGL, the new files), `tests/CMakeLists.txt` (`TYLI_PLAYER_OUTPUTS=null`), `tests/tst_qml_smoke.cpp`, `CLAUDE.md`
+- **Docs:** `DOCUMENTATION/application/{ARCHITECTURE.md, features/player_ui.md}`
+
+**Tests:** all 5 suites pass (two runs in a row).
+- **`tst_player_bridge`** (new):
+  - playing describes the track (title, artist · album, the link to its album, the cover entry); the queue model's rows, playing/played marks, and time left
+  - three unplayable files make one status line
+  - likes and states come back, also after a restart
+- **The smoke test's `playingMusicAndVideo`**, with real tones and a clip when the ffmpeg tool exists:
+  - the album plays without a prompt, and the bar follows a like
+  - a track click opens the prompt, and "add to queue" adds one track
+  - the queue page lists 7
+  - a movie opens the video page and replaces the queue; the back button leaves it and pauses
+  - screenshots
+- **Also run on the VNC display with OpenGL** (`TYLI_PLAYER_OUTPUTS=noaudio`): the picture draws.
+
+**Not built yet:** markers on movie cards, the artist page's play button, a space-bar toggle outside the video page, showing which copy plays.
+
+**To check on Windows:** playback on the user's library (music gapless, a 4K remux, subtitles), the picture with a real GPU on OpenGL, the zip with `libmpv-2.dll`, and OI-1 (a sync on the same HDD while a movie plays).
+
 ### Windows build: libmpv (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** hoardor's new `player` engine links libmpv, so the Windows workflow now fetches it.

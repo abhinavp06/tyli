@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Approved by the user** (2026-10-03: "looks good", plus the like heart); mockups `player-*.html` |
+| Status | **Built** (2026-10-03, §5a); waiting for the user's Windows test. Approved 2026-10-03 ("looks good", plus the like heart); mockups `player-*.html` |
 | Branch | `abhinavp06/PLAYER` (pairs with hoardor's branch of the same name) |
 | Ships in | TYLI `v0.3.0`, together with hoardor `v0.3.0` |
 | hoardor side | `../hoardor/DOCUMENTATION/application/features/player.md` (the `player` engine on libmpv, the queue, progress) |
@@ -105,6 +105,29 @@
   - the now-playing bar, the queue page, and the video page (with the software placeholder)
   - the prompt opens on a track click while something plays; screenshots
 - **On the VNC display:** a real frame on the video page (a manual check; the CI runner has no GPU).
+
+## 5a. As built (2026-10-03)
+
+- **C++:**
+  - `PlayerBridge` (`Player`): properties and invokables as §3, plus `ready`, `active`, `link` (where the title leads), and `revision`. `describe(entry)` names a track or a video. Several skipped files within 0.4 s make one status line.
+  - `QueueModel`, with `count` and `remainingDuration`.
+  - `VideoItem` (`VideoView`): a `QQuickFramebufferObject` drawing through hoardor's `VideoRenderer`. `ready` turns true once mpv's renderer exists.
+  - `main.cpp` sets Qt Quick to OpenGL (P4), and creates the player bridge after the library bridge and before the QML engine.
+  - **Tests:** `TYLI_PLAYER_OUTPUTS=null` (no sound, no frames) is set by `tests/CMakeLists.txt`. `noaudio` keeps the frames, for a check on a display.
+- **QML:**
+  - `PlayerBar`, `QueuePrompt`, `QueuePage`, `VideoPage`, `SeekLine`, and the new icons (`Icon.filled` for the liked heart)
+  - `Main.view` decides the page (settings > search > video > queue > home > category); `playTracks` / `playVideo` / `openPlaying`
+  - `CategoryView.play()` is how pages ask to play
+  - the album, movie, and show pages, and `TrackList` (playing marker, hearts)
+- **A video starts only once its picture can be drawn:** `Main.pendingVideo` waits for `VideoView.ready`. mpv would otherwise play it without a picture.
+- **The video page stays drawn under a black cover while a video is loaded.** mpv waits up to 0.2 s for every undrawn frame, so a hidden picture would slow it. The page takes input only when it's the page shown.
+- **Bindings that must follow likes and progress** read `Player.revision` inside the expression (`Player.revision >= 0 && …`). A bare `Player.revision;` statement can be compiled away, and then the bar's heart stopped following a like.
+- **Checked on the VNC display (OpenGL, llvmpipe):** a 960×540 clip draws into the video page. A tiny 160×90 clip blown up 6× showed a grid of lines on llvmpipe: upscaling in software OpenGL, gone at a normal size. To check on a GPU in the Windows build (hoardor OI-P2).
+- **Not built yet:**
+  - markers on movie cards (a card is a group of copies; the movie page has the resume tooltip)
+  - the artist page's play button
+  - a space-bar toggle outside the video page
+  - showing which copy plays on an album with several qualities
 
 ## 6. Open items
 

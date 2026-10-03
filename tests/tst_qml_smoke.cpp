@@ -1,9 +1,11 @@
 #include "app_setup.hpp"
 #include "library_bridge.hpp"
+#include "player_bridge.hpp"
 #include "test_support.hpp"
 #include "thumbnail_cache.hpp"
 
 #include <QDir>
+#include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickStyle>
@@ -50,10 +52,13 @@ private:
     QTemporaryDir data_;
     QTemporaryDir media_;
     std::unique_ptr<LibraryBridge> bridge_;
+    std::unique_ptr<PlayerBridge> player_;
+    bool realMedia_ = false;
     std::unique_ptr<QQmlApplicationEngine> engine_;
     QQuickWindow* window_ = nullptr;
 
-    void screenshot(const QString& name) {
+    // `picture`: the page may show a video frame (on OpenGL), so the black check doesn't apply.
+    void screenshot(const QString& name, bool picture = false) {
         QTest::qWait(80);  // let bindings and layouts settle
         const QImage image = window_->grabWindow().convertToFormat(QImage::Format_RGB32);
         QVERIFY(!image.isNull());
@@ -68,6 +73,7 @@ private:
             for (int x = 0; x < image.width(); ++x) black += (line[x] & 0xFFFFFF) == 0;
         }
         const double share = double(black) / (qint64(image.width()) * image.height());
+        if (picture) return;
         QVERIFY2(share > 0.80, qPrintable(QStringLiteral("%1: only %2% of the pixels are pure black").arg(name).arg(share * 100, 0, 'f', 1)));
     }
 
@@ -154,6 +160,20 @@ private slots:
             writeFile(media_.filePath(QStringLiteral("TV/Dark/") + QLatin1String(episode)), 2048);
         }
         writeImage(media_.filePath("TV/Dark/poster.png"), QColor(30, 30, 30));
+        // Real media for the player's screens, when the ffmpeg tool is there (it is in CI):
+        // three tones in In Rainbows and a clip for Heat.
+        const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+        if (!ffmpeg.isEmpty()) {
+            const auto run = [&](const QStringList& args) { return QProcess::execute(ffmpeg, QStringList{"-y", "-loglevel", "error"} + args) == 0; };
+            realMedia_ = true;
+            for (int i = 1; i <= 3; ++i) {
+                realMedia_ &= run({"-f", "lavfi", "-t", "4", "-i", QStringLiteral("sine=frequency=%1").arg(300 + 100 * i), "-c:a", "flac",
+                                   media_.filePath(QStringLiteral("Music/Radiohead/In Rainbows/%1.flac").arg(i, 2, 10, QLatin1Char('0')))});
+            }
+            realMedia_ &= run({"-f", "lavfi", "-t", "4", "-i", "testsrc=size=960x540:rate=10", "-f", "lavfi", "-t", "4", "-i", "anullsrc",
+                               "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                               "-f", "matroska", media_.filePath("Films/Heat (1995)/Heat.mkv")});
+        }
 
         const int music = categoryId(*bridge_, "Music");
         QVERIFY(addFolder(*bridge_, music, media_.filePath("Music"), "Music (E:)").first);
@@ -229,6 +249,12 @@ private slots:
         QVERIFY(QDir().rename(media_.filePath("Drive"), media_.filePath("Unplugged")));
         QVERIFY(!sync(*bridge_, music).isEmpty());
 
+        // The player, headless (no sound card, no window of its own).
+        if (qEnvironmentVariable("TYLI_PLAYER_OUTPUTS") != QLatin1String("noaudio")) qputenv("TYLI_PLAYER_OUTPUTS", "null");
+        player_ = std::make_unique<PlayerBridge>(bridge_->databasePath());
+        PlayerBridge::setInstance(player_.get());
+        QVERIFY(player_->ready());
+
         engine_ = std::make_unique<QQmlApplicationEngine>();
         engine_->loadFromModule("Tyli", "Main");
         QCOMPARE(engine_->rootObjects().size(), 1);
@@ -239,6 +265,7 @@ private slots:
 
     void cleanupTestCase() {
         engine_.reset();
+        player_.reset();
         bridge_.reset();
         qInstallMessageHandler(previousHandler);
     }
@@ -411,6 +438,60 @@ private slots:
         QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
         QTRY_VERIFY(!window_->property("homeOpen").toBool());
         QVERIFY(qobject_cast<QQuickItem*>(find("categoryView"))->isVisible());
+        QVERIFY(qmlWarnings.isEmpty());
+    }
+
+    // The player's screens with real files (features/player_ui.md §1): the bar, the like,
+    // the queue prompt, the queue page, and the video page (black here: no OpenGL).
+    void playingMusicAndVideo() {
+        if (!realMedia_) QSKIP("the ffmpeg tool isn't installed: no real media to play");
+        showCategory("Music");
+        call("categoryView", "open", "album", QVariantMap{{"albumArtist", "Radiohead"}, {"album", "In Rainbows"}, {"crumb", "In Rainbows"}});
+        QTRY_VERIFY(find("albumView"));
+        QVERIFY(QMetaObject::invokeMethod(find("playAlbum"), "clicked"));   // nothing plays yet: no prompt
+        QTRY_COMPARE(player_->state(), QStringLiteral("playing"));
+        QTRY_COMPARE(player_->title(), QStringLiteral("Track 1"));
+        QVERIFY(qobject_cast<QQuickItem*>(find("playerBar"))->isVisible());
+        QCOMPARE(player_->queueLength(), 6);
+        // Paused, so the 4 s track can't end (and the bar move on) while the test looks at it.
+        player_->pause();
+        QTRY_COMPARE(player_->state(), QStringLiteral("paused"));
+        player_->setLiked(player_->entryId(), true);
+        QVERIFY(player_->isLiked(player_->entryId()));
+        QTRY_VERIFY(find("playerBar")->property("liked").toBool());   // the bar follows a like made anywhere
+        screenshot("player-bar");
+
+        // A track click while something plays: the prompt; "add to queue" adds just that track.
+        const QVariantList tracks = find("trackList")->property("tracks").toList();
+        QVERIFY(QMetaObject::invokeMethod(find("trackList"), "trackClicked", Q_ARG(QVariant, tracks.value(2))));
+        QObject* prompt = find("queuePrompt");
+        QTRY_VERIFY(prompt->property("opened").toBool());
+        screenshot("queue-prompt");
+        QVERIFY(QMetaObject::invokeMethod(prompt, "addToQueue"));
+        QTRY_COMPARE(player_->queueLength(), 7);
+        QTRY_VERIFY(!prompt->property("opened").toBool());
+
+        QVERIFY(window_->setProperty("queueOpen", true));
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("queuePage"))->isVisible());
+        QTRY_COMPARE(find("queueList")->property("count").toInt(), 7);
+        screenshot("queue");
+        QVERIFY(window_->setProperty("queueOpen", false));
+
+        // A movie: the video page, playing at once (no prompt); leaving it pauses.
+        showCategory("Movies");
+        call("categoryView", "open", "movie", QVariantMap{{"title", "Heat"}, {"year", 1995}, {"crumb", "Heat"}});
+        QTRY_VERIFY(find("movieView"));
+        QVERIFY(QMetaObject::invokeMethod(find("playMovie"), "clicked"));
+        QTRY_VERIFY(window_->property("videoOpen").toBool());
+        QTRY_VERIFY(player_->hasVideo());
+        QTRY_COMPARE(player_->state(), QStringLiteral("playing"));
+        QCOMPARE(player_->queueLength(), 1);   // the video replaced the queue
+        screenshot("video-page", true);
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_VERIFY(!window_->property("videoOpen").toBool());
+        QTRY_COMPARE(player_->state(), QStringLiteral("paused"));
+        player_->clear();
+        QTRY_VERIFY(!player_->active());
         QVERIFY(qmlWarnings.isEmpty());
     }
 

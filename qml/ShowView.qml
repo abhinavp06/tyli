@@ -29,6 +29,28 @@ ColumnLayout {
     }
     readonly property var episodes: (info.episodes || []).filter(e => e.season === season).map(e => pick(e))
     readonly property var any: episodes.length > 0 ? episodes[0] : null
+    // What you watched: entryId -> {position, duration, viewed}; re-read when playback saves.
+    readonly property var watched: {
+        const all = Player.revision >= 0 ? (info.episodes || []).map(e => pick(e)) : []   // reads revision: see PlayerBar
+        const out = {}
+        for (const s of Player.itemStates(all.map(e => e.entryId))) out[s.entryId] = s
+        return out
+    }
+    function partway(e) { const s = watched[e.entryId]; return s && !s.viewed && s.position > 0 && s.duration > 0 }
+    function viewed(e) { const s = watched[e.entryId]; return s && s.viewed }
+    // An episode plays with the rest of its season after it (features/player_ui.md, decision P2).
+    function playFrom(episode) {
+        const season = (info.episodes || []).filter(e => e.season === episode.season).map(e => pick(e))
+        const ids = season.map(e => e.entryId)
+        page.owner.play(ids, Math.max(0, ids.indexOf(episode.entryId)), [], "", true)
+    }
+    // The show's play button: the episode you're partway through, else the next unwatched one.
+    function playNext() {
+        const all = (info.episodes || []).map(e => pick(e))
+        if (all.length === 0) return
+        const next = all.find(e => partway(e)) || all.find(e => !viewed(e)) || all[0]
+        playFrom(next)
+    }
     readonly property var directors: Format.unique(Format.flatten(info.episodes || [], e => e.copies[0].item.directors))
     readonly property int firstYear: (info.episodes || []).reduce((y, e) => { const v = e.copies[0].item.year; return v > 0 && (y === 0 || v < y) ? v : y }, 0)
 
@@ -113,7 +135,7 @@ ColumnLayout {
                     Library.setPreference(page.qualityKey, page.chosen)
                 }
             },
-            PlayButton { tip: "play the next episode" }
+            PlayButton { objectName: "playShow"; tip: "play the next episode (or resume one)"; onClicked: page.playNext() }
         ]
     }
 
@@ -163,21 +185,47 @@ ColumnLayout {
                 spacing: Theme.px(16)
                 leftPadding: Theme.px(12)
                 Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.episode > 0 ? row.modelData.episode : ""; color: Theme.textDim }
-                Text {
-                    width: row.width - Theme.px(12 + 28 + 16 * 3 + 70 + 120)
-                    text: row.modelData.title
-                    elide: Text.ElideRight
-                    color: !row.modelData.online ? Theme.textFaint : row.modelData.fromName ? Theme.textDim : Theme.text
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: row.width - Theme.px(12 + 28 + 16 * 4 + 70 + 120 + 22)
+                    spacing: Theme.px(3)
+                    Text {
+                        width: parent.width
+                        text: row.modelData.title
+                        elide: Text.ElideRight
+                        color: row.modelData.entryId === Player.entryId ? Theme.accent : !row.modelData.online ? Theme.textFaint
+                             : row.modelData.fromName ? Theme.textDim : Theme.text
+                    }
+                    // Partway: a green line under the name, as far as you got (mockup player-markers.html).
+                    Rectangle {
+                        objectName: "progress-" + row.modelData.entryId
+                        visible: page.partway(row.modelData)
+                        width: parent.width * 0.6
+                        height: Theme.lineWidth
+                        color: Theme.hairline
+                        Rectangle {
+                            readonly property var saved: page.watched[row.modelData.entryId]
+                            width: parent.width * (saved && saved.duration > 0 ? Math.min(1, saved.position / saved.duration) : 0)
+                            height: parent.height
+                            color: Theme.accent
+                        }
+                    }
                 }
                 Text { width: Theme.px(70); horizontalAlignment: Text.AlignRight; text: row.modelData.duration > 0 ? Format.runtime(row.modelData.duration) : ""; color: Theme.textDim }
                 Text { width: Theme.px(120); text: Format.resolution(row.modelData.height) + (row.modelData.hdr ? " " + row.modelData.hdr : ""); color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
+                // Viewed: a dim green check.
+                Item {
+                    width: Theme.px(22)
+                    height: row.height
+                    Icon { objectName: "viewed-" + row.modelData.entryId; anchors.centerIn: parent; visible: page.viewed(row.modelData); name: "check"; size: Theme.px(14); color: Theme.accentDim }
+                }
             }
             MouseArea {
                 id: area
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Library.notice("playing “" + row.modelData.title + "” comes with the player")
+                onClicked: page.playFrom(row.modelData)
             }
         }
     }

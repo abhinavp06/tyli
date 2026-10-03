@@ -13,6 +13,9 @@ Item {
     property var category
     signal addFolderRequested()
     signal folderSettingsRequested(int folderId)
+    // Pages ask to play through here; Main decides how (the queue prompt, the video page).
+    signal playRequested(var ids, int start, var addIds, string label, bool video)
+    function play(ids, start, addIds, label, video) { playRequested(ids, start, addIds, label, video) }
 
     readonly property int categoryId: category ? category.id : -1
     property int kindRevision: 0

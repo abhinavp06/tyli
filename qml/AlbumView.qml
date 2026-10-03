@@ -123,14 +123,26 @@ ColumnLayout {
                     Library.setPreference(page.qualityKey, page.chosen)
                 }
             },
-            PlayButton { tip: "play album" }
+            PlayButton {
+                objectName: "playAlbum"
+                tip: "play album"
+                onClicked: {
+                    const ids = page.tracks.map(t => t.entryId)
+                    page.owner.play(ids, 0, ids, "“" + page.params.album + "”", false)
+                }
+            }
         ]
     }
 
     TrackList {
+        objectName: "trackList"
         Layout.fillWidth: true
         Layout.fillHeight: true
         tracks: page.tracks
-        onTrackClicked: (track) => Library.notice("playing “" + track.title + "” comes with the player")
+        // The album from this track, in the copy shown; "add to queue" adds just this track.
+        onTrackClicked: (track) => {
+            const ids = page.tracks.map(t => t.entryId)
+            page.owner.play(ids, Math.max(0, ids.indexOf(track.entryId)), [track.entryId], "“" + track.title + "”", false)
+        }
     }
 }

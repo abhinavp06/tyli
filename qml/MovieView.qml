@@ -114,7 +114,14 @@ ColumnLayout {
                     Library.setPreference(page.qualityKey, page.chosen)
                 }
             },
-            PlayButton { tip: "play" }
+            PlayButton {
+                objectName: "playMovie"
+                // Re-read when playback saved a position (Player.revision).
+                readonly property var saved: Player.revision >= 0 && page.item ? Player.itemStates([page.item.entryId])[0] : null
+                readonly property bool resumes: saved && !saved.viewed && saved.position >= 60000
+                tip: resumes ? "resume at " + Format.duration(saved.position) : saved && saved.viewed ? "play again (watched)" : "play"
+                onClicked: if (page.item) page.owner.play([page.item.entryId], 0, [], "", true)
+            }
         ]
     }
 
