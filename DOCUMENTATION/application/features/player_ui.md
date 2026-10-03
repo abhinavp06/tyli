@@ -59,6 +59,20 @@
 - **Movies:** the same on their cards: the ✓ in the poster's corner, the line under the poster. The movie page's play button says "resume at 42:10" in its tooltip.
 - **The show's play button** resumes the episode you're partway through, or plays the next unwatched one.
 
+### 1.6 The expanded player (`player-expanded.html`, the user's request and approval, 2026-10-03)
+
+- **The bar's cover** shows ↑ on hover. A click expands the player over everything above the bar: "now playing" with ↓ at the top right, a large cover, the title, and artist · album (links) · year · quality.
+- **The queue button in the bar,** while expanded, opens the queue as a panel on the right (`QueueList`, compact), with its own × and "clear". The cover shrinks so both stay in view. Not expanded, the button still opens the queue page.
+- **Collapsing:** the bar's cover (it turns into ↓), ↓ at the top right (also with the queue open), Esc, or back. A link (artist, album) collapses the player and opens its page.
+- **Links in the bar:** the subtitle is now artist and album as links. A video's subtitle stays plain text, and its title returns to the video page.
+- **Built:**
+  - `qml/ExpandedPlayer.qml` (it takes the keyboard while open, so Esc works even when a field had focus)
+  - `qml/QueueList.qml` (shared with the queue page)
+  - `PlayerBar`: the cover button, and the links
+  - `Main`: `expandedOpen`, `expandedQueue`, `openLink()`
+  - `PlayerBridge`: `artist`, `album`, `artistLink`, `detail`
+- **Limitation:** the large cover is the 300 px thumbnail, scaled up. Real covers will look soft until the thumbnail cache keeps a larger size.
+
 ## 2. Decisions (proposed, then approved by the user with the design, 2026-10-03)
 
 | | Proposal | Why |

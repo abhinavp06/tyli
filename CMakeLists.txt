@@ -75,6 +75,7 @@ qt_add_qml_module(tyli_ui
         qml/CoverCard.qml
         qml/CoverGrid.qml
         qml/CoverImage.qml
+        qml/ExpandedPlayer.qml
         qml/Format.js
         qml/GeneralSettings.qml
         qml/HeroHeader.qml
@@ -89,6 +90,7 @@ qt_add_qml_module(tyli_ui
         qml/PlayButton.qml
         qml/PlayerBar.qml
         qml/QualityPicker.qml
+        qml/QueueList.qml
         qml/QueuePage.qml
         qml/QueuePrompt.qml
         qml/SettingsView.qml

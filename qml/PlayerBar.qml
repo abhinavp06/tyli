@@ -4,16 +4,19 @@ import QtQuick.Layouts
 import Tyli
 import "Format.js" as Format
 
-// The now-playing bar (features/player_ui.md §1.2, mockup player-music.html), shown while
-// something is loaded: what plays (a link to its page), the transport with a seek line, and
-// like, add to playlist (later), the queue, mute, and volume.
+// The now-playing bar (features/player_ui.md §1.2, mockups player-music.html and
+// player-expanded.html), shown while something is loaded: the cover (↑ expands the player,
+// ↓ while expanded collapses it), what plays with links to its album and artist, the
+// transport with a seek line, and like, add to playlist (later), the queue, mute, and volume.
 Rectangle {
     id: bar
     objectName: "playerBar"
 
     property bool queueOpen: false
+    property bool expanded: false
     signal openLink(var link)
     signal queueToggled()
+    signal expandToggled()
 
     implicitHeight: Theme.px(64)
     color: Theme.background
@@ -36,12 +39,36 @@ Rectangle {
             Layout.preferredWidth: Theme.px(320)
             Layout.maximumWidth: Theme.px(320)
             spacing: Theme.px(12)
-            CoverImage {
+            // The cover is the expand button: ↑ on hover; while expanded it turns into ↓.
+            Item {
+                objectName: "barCover"
                 Layout.preferredWidth: Theme.px(44)
                 Layout.preferredHeight: Theme.px(44)
-                source: Library.thumbnail(Player.coverEntry)
-                online: true
-                placeholder: Player.hasVideo ? "movies" : "music"
+                CoverImage {
+                    anchors.fill: parent
+                    visible: !bar.expanded
+                    source: Library.thumbnail(Player.coverEntry)
+                    online: true
+                    placeholder: Player.hasVideo ? "movies" : "music"
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: bar.expanded || coverArea.containsMouse
+                    color: bar.expanded ? "transparent" : Qt.rgba(0, 0, 0, 0.6)
+                    border.width: bar.expanded ? 1 : 0
+                    border.color: Theme.hairline
+                    Icon { anchors.centerIn: parent; name: bar.expanded ? "chevronDown" : "chevronUp"; color: Theme.accent }
+                }
+                MouseArea {
+                    id: coverArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: bar.expandToggled()
+                }
+                ToolTip.visible: coverArea.containsMouse
+                ToolTip.text: bar.expanded ? "collapse" : "expand"
+                ToolTip.delay: 500
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -59,8 +86,19 @@ Rectangle {
                         onClicked: bar.openLink(Player.link)
                     }
                 }
+                // Music: the artist and the album as links (the user, 2026-10-03); video: plain text.
+                Row {
+                    Layout.fillWidth: true
+                    visible: Player.artist !== ""
+                    spacing: Theme.px(6)
+                    clip: true
+                    LinkText { objectName: "barArtist"; text: Player.artist; font.pixelSize: Theme.fontSizeSmall; onActivated: bar.openLink(Player.artistLink) }
+                    Text { text: "·"; color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
+                    LinkText { objectName: "barAlbum"; text: Player.album; font.pixelSize: Theme.fontSizeSmall; onActivated: bar.openLink(Player.link) }
+                }
                 Text {
                     Layout.fillWidth: true
+                    visible: Player.artist === ""
                     text: Player.subtitle
                     elide: Text.ElideRight
                     color: Theme.textDim

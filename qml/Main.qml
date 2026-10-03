@@ -44,6 +44,8 @@ ApplicationWindow {
     property bool queueOpen: false  // the queue page (from the now-playing bar)
     property bool videoOpen: false  // the video page
     property bool fullScreen: false
+    property bool expandedOpen: false   // the expanded player, over everything above the bar
+    property bool expandedQueue: false  // its queue panel
     // The page in the content area, most specific first.
     readonly property string view: settingsOpen ? "settings" : searchText !== "" ? "search" : videoOpen ? "video"
                                    : queueOpen ? "queue" : homeOpen ? "home" : "category"
@@ -71,7 +73,9 @@ ApplicationWindow {
     // keyboard's Back / Forward keys. Back first leaves Settings or the search results, then
     // walks the category's pages; a page you go back to is exactly as you left it.
     function goBack() {
-        if (settingsOpen)
+        if (expandedOpen)
+            expandedOpen = false
+        else if (settingsOpen)
             settingsOpen = false
         else if (searchText !== "")
             clearSearch()
@@ -124,8 +128,25 @@ ApplicationWindow {
         Player.playNow(pendingVideo.ids, pendingVideo.start)
         pendingVideo = null
     }
+    // A link from the bar or the expanded player: its page (an album, an artist), collapsing the player.
+    function openLink(link) {
+        expandedOpen = false
+        if (!link || !link.page)
+            return
+        // A video's title goes back to its page (it's paused there), not to the movie's page.
+        if (Player.hasVideo && link.page !== "artist")
+            return openPlaying()
+        settingsOpen = false
+        clearSearch()
+        queueOpen = false
+        homeOpen = false
+        videoOpen = false
+        currentCategoryId = link.categoryId
+        categoryView.open(link.page, link.params)
+    }
     // The bar's title: a video goes back to its page, music opens its album.
     function openPlaying() {
+        expandedOpen = false
         if (Player.hasVideo) {
             settingsOpen = false
             clearSearch()
@@ -294,11 +315,19 @@ ApplicationWindow {
         }
 
         PlayerBar {
+            id: playerBar
             Layout.fillWidth: true
             visible: Player.active && !window.fullScreen
-            queueOpen: window.view === "queue"
-            onOpenLink: window.openPlaying()
+            queueOpen: window.expandedOpen ? window.expandedQueue : window.view === "queue"
+            expanded: window.expandedOpen
+            onOpenLink: (link) => window.openLink(link)
+            onExpandToggled: window.expandedOpen = !window.expandedOpen
+            // Expanded: the queue opens as the panel on the right; otherwise the queue page.
             onQueueToggled: {
+                if (window.expandedOpen) {
+                    window.expandedQueue = !window.expandedQueue
+                    return
+                }
                 window.videoOpen = false
                 window.queueOpen = !window.queueOpen
             }
@@ -307,6 +336,24 @@ ApplicationWindow {
         StatusLine {
             Layout.fillWidth: true
         }
+    }
+
+    // The expanded player covers everything above the bar (features/player_ui.md §1.6).
+    ExpandedPlayer {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: playerBar.visible ? playerBar.y : parent.height
+        visible: window.expandedOpen && Player.active
+        queueOpen: window.expandedQueue
+        onCollapse: window.expandedOpen = false
+        onQueueClosed: window.expandedQueue = false
+        onOpenLink: (link) => window.openLink(link)
+    }
+    // Nothing loaded any more (the queue cleared or ended): nothing to expand.
+    Connections {
+        target: Player
+        function onStatusChanged() { if (!Player.active) window.expandedOpen = false }
     }
 
     // Shown instead of everything else when the library database can't be opened.

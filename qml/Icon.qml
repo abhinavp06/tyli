@@ -30,6 +30,7 @@ Item {
         target: "M6 12a6 6 0 1 0 12 0a6 6 0 1 0 -12 0 M12 2v5 M12 17v5 M2 12h5 M17 12h5",
         move: "M4 8h13 M13 4l4 4-4 4 M20 16H7 M11 12l-4 4 4 4",
         chevronDown: "M6 9l6 6 6-6",
+        chevronUp: "M6 15l6-6 6 6",
         chevronRight: "M9 6l6 6-6 6",
         check: "M5 12l5 5 9-10",
         close: "M6 6l12 12 M18 6L6 18",

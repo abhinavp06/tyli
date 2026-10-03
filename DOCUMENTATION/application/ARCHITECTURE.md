@@ -11,7 +11,7 @@ QML views (qml/)                  what the user sees; no business logic
       │  properties, invokables, signals, list models
 C++ bridge (src/)                 QObjects and QAbstractListModels: converts hoardor types to Qt types,
       │                           and moves hoardor's background callbacks onto the UI thread
-hoardor (../hoardor, add_subdirectory)   all real work: SQLite, scanning, sync, (later) metadata and playback
+hoardor (../hoardor, add_subdirectory)   all real work: SQLite, scanning, sync, metadata, playback (libmpv)
 ```
 
 - **The bridge is thin.** If a view needs something hoardor can't provide, hoardor gets a feature first.
@@ -25,6 +25,9 @@ hoardor (../hoardor, add_subdirectory)   all real work: SQLite, scanning, sync, 
 | Config changes that don't touch a drive (rename a category, change settings) | UI thread | Directly |
 | Config changes that touch a drive (add or relocate a folder: marker, case probe) | A Qt thread-pool task with a short-lived hoardor connection | A queued signal |
 | Sync | `hoardor::master::SyncWorker` (hoardor's own thread) | Callbacks run on the worker. The bridge forwards them with `QMetaObject::invokeMethod(..., Qt::QueuedConnection)` |
+| Playback (since 2026-10-03) | `hoardor::player::Player` (hoardor's own thread; libmpv runs its own) | The same: `PlayerBridge` forwards status, position, queue, and error callbacks with queued calls. Commands never block the UI thread |
+| Video frames | Qt's render thread (`VideoItem`, mpv's OpenGL render API) | mpv asks for a redraw; the item draws on the next frame |
+| Search (since 2026-10-03) | A Qt thread-pool task with its own hoardor connection (`Library.search`) | `searchFinished(text, results)`; only the latest text is answered. A full-text search with counts over a big library took about 0.5 s, too long for "reading on the UI thread is fine" |
 
 Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and anything that touches it must not run on the UI thread.
 
@@ -70,4 +73,6 @@ Why: the UI must never freeze. A sleeping HDD takes 5–10 s to spin up, and any
 | 2026-10-03 | **UI preferences live in `preferences.ini` next to `library.db`**, not in `QSettings()`, which saved nothing on Windows (no organization name). Values come back as the fallback's type. §3. |
 | 2026-10-03 | **The player** (the user): libmpv in hoardor's new `player` engine. First draft: the music queue with the queue prompt, a now-playing bar, a video page, resume and viewed markers. *Proposed, pending approval:* `features/player_ui.md`, including Qt Quick on OpenGL everywhere (mpv's render API) and a second bridge object (`Player`), since it holds state. |
 | 2026-10-03 | **The player is built** (`features/player_ui.md` §5a). Decisions P1–P5, approved with the design: a video replaces the queue without a prompt; an episode queues the rest of its season; leaving the video page pauses; Qt Quick draws with OpenGL everywhere (`main.cpp`); the queue is a page. A second bridge object, `Player`, holds hoardor's `Player`. |
+| 2026-10-03 | **Search runs off the UI thread** (`Library.search`): at 50k tracks a keystroke took about 0.5 s of queries. The first library read moved off the UI thread (§2). Back from a search result returns to the results. |
+| 2026-10-03 | **The expanded player** (mockup `player-expanded.html`, approved): the bar's cover expands it over everything above the bar, the queue opens there as a right-hand panel, and artist and album are links in the bar. `features/player_ui.md` §1.6. |
 

@@ -1,5 +1,6 @@
 #include "player_bridge.hpp"
 
+#include "copy_grouper.hpp"
 #include "library_bridge.hpp"
 
 #include <hoardor/master/playback.hpp>
@@ -124,15 +125,22 @@ PlayerBridge::Description PlayerBridge::describe(qint64 entryId) const {
             for (const auto& a : t->artists) artists << qstr(a);
             d.subtitle = (artists.isEmpty() ? qstr(t->album_artist) : artists.join(QStringLiteral(", "))) + QStringLiteral(" · ") + qstr(t->album);
             d.duration = t->duration_ms;
+            d.artist = qstr(t->album_artist);
+            d.album = qstr(t->album);
+            d.detail = (t->year > 0 ? QString::number(t->year) + QStringLiteral(" · ") : QString()) + copies::audioLabel(*t);
             // The album's cover is named after its group's cover track (ThumbnailCache).
             const std::vector<audio::Field> by{audio::Field::AlbumArtist, audio::Field::Album};
             const audio::Filter one{{{audio::Field::AlbumArtist, audio::Value{t->album_artist}}, {audio::Field::Album, audio::Value{t->album}}}};
             if (auto page = tracks->groups(by, one, audio::GroupOrder::Values, false, std::nullopt, 1); page && !page->items.empty()) {
                 d.coverEntry = page->items.front().cover_entry;
             }
-            d.link = {{"categoryId", library->categoryOfFolder(int(t->root_id))},
+            const int category = library->categoryOfFolder(int(t->root_id));
+            d.link = {{"categoryId", category},
                       {"page", QStringLiteral("album")},
                       {"params", QVariantMap{{"albumArtist", qstr(t->album_artist)}, {"album", qstr(t->album)}, {"crumb", qstr(t->album)}}}};
+            d.artistLink = {{"categoryId", category},
+                            {"page", QStringLiteral("artist")},
+                            {"params", QVariantMap{{"name", qstr(t->album_artist)}, {"crumb", qstr(t->album_artist)}}}};
             return d;
         }
     }

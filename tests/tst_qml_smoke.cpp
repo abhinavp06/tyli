@@ -461,6 +461,33 @@ private slots:
         QTRY_VERIFY(find("playerBar")->property("liked").toBool());   // the bar follows a like made anywhere
         screenshot("player-bar");
 
+        // The expanded player (mockup player-expanded.html): the bar's cover expands it, the
+        // queue button opens the panel on the right, the artist link opens the artist and collapses.
+        auto* cover = qobject_cast<QQuickItem*>(find("barCover"));
+        QVERIFY(cover);
+        QTest::mouseClick(window_, Qt::LeftButton, {}, cover->mapToScene(QPointF(cover->width() / 2, cover->height() / 2)).toPoint());
+        QTRY_VERIFY(window_->property("expandedOpen").toBool());
+        QVERIFY(qobject_cast<QQuickItem*>(find("expandedPlayer"))->isVisible());
+        QCOMPARE(player_->artist(), QStringLiteral("Radiohead"));
+        QCOMPARE(player_->album(), QStringLiteral("In Rainbows"));
+        screenshot("player-expanded");
+        QVERIFY(QMetaObject::invokeMethod(find("queueButton"), "clicked"));
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("queuePanel"))->isVisible());
+        QVERIFY(!window_->property("queueOpen").toBool());   // the panel, not the queue page
+        screenshot("player-expanded-queue");
+        QVERIFY(QMetaObject::invokeMethod(find("closeQueuePanel"), "clicked"));
+        QTRY_VERIFY(!qobject_cast<QQuickItem*>(find("queuePanel"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(find("expandedArtist"), "activated"));
+        QTRY_VERIFY(!window_->property("expandedOpen").toBool());
+        QTRY_VERIFY(find("artistView") && qobject_cast<QQuickItem*>(find("artistView"))->isVisible());
+        // Expanded again: Esc collapses.
+        QTest::mouseClick(window_, Qt::LeftButton, {}, cover->mapToScene(QPointF(cover->width() / 2, cover->height() / 2)).toPoint());
+        QTRY_VERIFY(window_->property("expandedOpen").toBool());
+        QTest::keyClick(window_, Qt::Key_Escape);
+        QTRY_VERIFY(!window_->property("expandedOpen").toBool());
+        call("categoryView", "open", "album", QVariantMap{{"albumArtist", "Radiohead"}, {"album", "In Rainbows"}, {"crumb", "In Rainbows"}});
+        QTRY_VERIFY(find("trackList"));
+
         // A track click while something plays: the prompt; "add to queue" adds just that track.
         const QVariantList tracks = find("trackList")->property("tracks").toList();
         QVERIFY(QMetaObject::invokeMethod(find("trackList"), "trackClicked", Q_ARG(QVariant, tracks.value(2))));

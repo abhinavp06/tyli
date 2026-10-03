@@ -2,6 +2,43 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The expanded player; artist and album links in the bar; a docs audit (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Built from the approved mockup `player-expanded.html` (the user: "looks good.. build and push").
+- **The bar's cover** shows ↑ on hover. A click expands the player over everything above the bar: a large cover, the title, artist · album (links) · year · quality, and ↓ at the top right.
+- **While expanded,** the bar's queue button opens the queue as a right-hand panel, with its own × and "clear". The cover shrinks to stay in view.
+- **Collapsing:** the bar's cover (now ↓), ↓ at the top right (also with the queue open), Esc, or back. Links collapse the player and open their page.
+- **The bar's subtitle** is now artist and album as links (music; video stays plain).
+
+**Decisions**
+- **The queue list is shared:** `QueueList`, used by the queue page and the panel (compact, without the artist · album column).
+- **The expanded view takes the keyboard while open,** so Esc works. A window shortcut lost the key to a field that had focus (it failed in the smoke test).
+- **`openLink()` decides by the link's page,** not by comparing with `Player.link`. A map property read from C++ is a new JavaScript object each time, so `===` never matched.
+
+**Docs audit** (the user asked whether every document keeps up):
+- **hoardor:** `CODE_TREE.md` lists every file, checked by script; `DATABASE.md`'s migration history matches the code (file 1–3, audio 1–2, video 1–3, player 1). Fixed: `engines/master.md` gains §1b (`file_resolver`); ARCHITECTURE calls the player built, with a decision row.
+- **TYLI:**
+  - ARCHITECTURE's threads table gains playback, video frames, and search, and the layers line now says playback; two decision rows
+  - `features/player_ui.md` §1.6
+  - `CLAUDE.md`: the Windows zip's libmpv and Vulkan loader, and building with libmpv
+  - TYLI has no code tree of its own: `CLAUDE.md`'s layout lists the sources
+
+**Files**
+- **New:** `qml/ExpandedPlayer.qml`, `qml/QueueList.qml`
+- **Changed:**
+  - QML: `qml/PlayerBar.qml`, `qml/QueuePage.qml`, `qml/Main.qml`, `qml/Icon.qml` (`chevronUp`)
+  - C++: `src/player_bridge.{hpp,cpp}` (`artist`, `album`, `artistLink`, `detail`)
+  - build and tests: `CMakeLists.txt`, `tests/tst_qml_smoke.cpp`
+  - docs: `CLAUDE.md`, `DOCUMENTATION/application/{ARCHITECTURE.md, features/player_ui.md}`
+
+**Tests:** all 5 suites pass, in two runs in a row. The smoke test's `playingMusicAndVideo` now also covers:
+- the bar's cover expands the player; the bridge names the artist and album
+- the queue button opens the panel, not the page, and its × closes it
+- the artist link opens the artist and collapses; Esc collapses
+- screenshots `player-expanded` and `player-expanded-queue`
+
+**Limitation:** the large cover is the 300 px thumbnail, scaled up, so real covers will look soft. A larger cached size is a follow-up.
+
 ### Mockup fix: the expanded player showed a black screen (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user, reviewing `player-expanded.html`: "expanding just shows a black screen".

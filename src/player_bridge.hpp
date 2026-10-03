@@ -42,6 +42,11 @@ class PlayerBridge : public QObject {
     Q_PROPERTY(QString subtitle READ subtitle NOTIFY nowPlayingChanged)
     Q_PROPERTY(qint64 coverEntry READ coverEntry NOTIFY nowPlayingChanged)
     Q_PROPERTY(QVariantMap link READ link NOTIFY nowPlayingChanged)  // {categoryId, page, params}: its album, movie, or show
+    // Music only (empty for video): the parts of the subtitle as links (the bar, the expanded view).
+    Q_PROPERTY(QString artist READ artist NOTIFY nowPlayingChanged)
+    Q_PROPERTY(QString album READ album NOTIFY nowPlayingChanged)
+    Q_PROPERTY(QVariantMap artistLink READ artistLink NOTIFY nowPlayingChanged)   // {categoryId, page: "artist", params}
+    Q_PROPERTY(QString detail READ detail NOTIFY nowPlayingChanged)               // "2016 · 24/96 FLAC"
     Q_PROPERTY(int queueLength READ queueLength NOTIFY queueChanged)
     Q_PROPERTY(int current READ current NOTIFY queueChanged)
     // Bumped whenever likes, positions, or viewed marks may have changed: bindings that call
@@ -75,6 +80,10 @@ public:
     QString subtitle() const { return now_.subtitle; }
     qint64 coverEntry() const { return now_.coverEntry; }
     QVariantMap link() const { return now_.link; }
+    QString artist() const { return now_.artist; }
+    QString album() const { return now_.album; }
+    QVariantMap artistLink() const { return now_.artistLink; }
+    QString detail() const { return now_.detail; }
     int queueLength() const { return int(queue_.size()); }
     int current() const { return current_; }
     int revision() const { return revision_; }
@@ -110,8 +119,9 @@ public:
     // A file described for lists (the queue): {title, subtitle, duration, coverEntry, link}.
     struct Description {
         QString title, subtitle;
+        QString artist, album, detail;   // music: the subtitle's parts, and "year · quality"
         qint64 duration = 0, coverEntry = 0;
-        QVariantMap link;
+        QVariantMap link, artistLink;
     };
     Description describe(qint64 entryId) const;
 
