@@ -160,6 +160,7 @@ ColumnLayout {
     }
 
     ListView {
+        id: episodeList
         objectName: "episodeList"
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -167,12 +168,17 @@ ColumnLayout {
         boundsBehavior: Flickable.StopAtBounds
         model: page.episodes
         ScrollBar.vertical: TyScrollBar {}
+        // The same columns as the rows: #, name (fills), length, quality (both right-aligned, like
+        // the album page's length and bit rate), then the viewed check.
+        readonly property real nameWidth: width - Theme.px(12 + 28 + 16 * 4 + 70 + 120 + 22)
         header: Row {
             height: Theme.px(28)
             spacing: Theme.px(16)
             leftPadding: Theme.px(12)
             Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: "#"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
-            Text { width: Theme.px(400); text: "name"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Text { width: episodeList.nameWidth; text: "name"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Text { width: Theme.px(70); horizontalAlignment: Text.AlignRight; text: "length"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+            Text { width: Theme.px(120); horizontalAlignment: Text.AlignRight; text: "quality"; color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
         }
         delegate: Rectangle {
             id: row
@@ -180,14 +186,16 @@ ColumnLayout {
             width: ListView.view.width
             height: Theme.px(34)
             color: area.containsMouse ? Theme.hover : "transparent"
+            // Every cell centered on the row (the check's cell is full height; top-aligned text sat
+            // above the centered name).
             Row {
-                anchors.verticalCenter: parent.verticalCenter
+                height: row.height
                 spacing: Theme.px(16)
                 leftPadding: Theme.px(12)
-                Text { width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.episode > 0 ? row.modelData.episode : ""; color: Theme.textDim }
+                Text { anchors.verticalCenter: parent.verticalCenter; width: Theme.px(28); horizontalAlignment: Text.AlignRight; text: row.modelData.episode > 0 ? row.modelData.episode : ""; color: Theme.textDim }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: row.width - Theme.px(12 + 28 + 16 * 4 + 70 + 120 + 22)
+                    width: episodeList.nameWidth
                     spacing: Theme.px(3)
                     Text {
                         width: parent.width
@@ -211,8 +219,8 @@ ColumnLayout {
                         }
                     }
                 }
-                Text { width: Theme.px(70); horizontalAlignment: Text.AlignRight; text: row.modelData.duration > 0 ? Format.runtime(row.modelData.duration) : ""; color: Theme.textDim }
-                Text { width: Theme.px(120); text: Format.resolution(row.modelData.height) + (row.modelData.hdr ? " " + row.modelData.hdr : ""); color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
+                Text { anchors.verticalCenter: parent.verticalCenter; width: Theme.px(70); horizontalAlignment: Text.AlignRight; text: row.modelData.duration > 0 ? Format.runtime(row.modelData.duration) : ""; color: Theme.textDim }
+                Text { anchors.verticalCenter: parent.verticalCenter; width: Theme.px(120); horizontalAlignment: Text.AlignRight; text: Format.resolution(row.modelData.height) + (row.modelData.hdr ? " " + row.modelData.hdr : ""); color: Theme.textFaint; font.pixelSize: Theme.fontSizeSmall }
                 // Viewed: a dim green check.
                 Item {
                     width: Theme.px(22)

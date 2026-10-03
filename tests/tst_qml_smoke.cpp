@@ -289,6 +289,21 @@ private slots:
         QObject* grid = find("albumGrid");
         QVERIFY(grid);
         QTRY_COMPARE(grid->property("count").toInt(), 5);  // the two copies of one album are one card
+        // The grid fills its width: as many columns as it computed, the last card ending at the
+        // right edge, under the header's sort (the user, 2026-10-03: a column was lost to the gap).
+        {
+            auto* view = qobject_cast<QQuickItem*>(grid);
+            const int columns = grid->property("columns").toInt();
+            QVERIFY(columns >= 2);
+            QVERIFY(QMetaObject::invokeMethod(grid, "forceLayout"));
+            QQuickItem* last = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(grid, "itemAtIndex", Q_RETURN_ARG(QQuickItem*, last), Q_ARG(int, columns - 1)));
+            QVERIFY(last && !last->childItems().isEmpty());
+            QQuickItem* card = last->childItems().first();
+            QCOMPARE(last->y(), 0.0);  // still on the first row
+            const double right = card->mapToItem(view, QPointF(card->width(), 0)).x();
+            QVERIFY2(qAbs(right - view->width()) < 1.0, qPrintable(QStringLiteral("last card ends at %1 of %2").arg(right).arg(view->width())));
+        }
         for (const char* sort : {"az", "year", "artist", "added"}) {
             setState("musicView", "sortKey", sort);
             screenshot(QStringLiteral("music-sort-%1").arg(sort));

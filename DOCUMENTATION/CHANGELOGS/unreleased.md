@@ -2,6 +2,32 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Media lists fill the width, edge to edge (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user: "a lot of negative space on the right while listing any media", with the sort options at the far right and the cards ending well before them. Fixed as its own commit.
+
+**What was wrong:**
+- **`CoverGrid` lost a column.** It computed `columns` from the width, but each cell held its card plus the gap after it. `columns` cells came out one gap wider than the view, so `GridView` fitted one column fewer and left an empty strip about a card wide. At 1280×800: 4 albums in a row and about 200 px empty, where 5 fit.
+- **Fixed-width cards:** the artist page, search results, the director and actor page, and the album browser's by-artist sections used 172 px cards (posters in search 150 px) in a `Flow`, leaving a ragged gap.
+- **Fixed-width search track rows:** they used 360/260/260 px columns.
+- **Show page episode list:**
+  - Its quality column was left-aligned in 120 px, so the row looked unfinished on the right.
+  - Its header had only "#" and "name".
+  - Each episode's number sat about 10 px above its name: the check cell is full height, so the centered name dropped while the other cells stayed top-aligned.
+
+**What changed:**
+- **`CoverGrid`:** cells split the width evenly (`width / columns`), and each card shifts within its cell, so the last column ends exactly at the right edge, under the sort.
+- **`CardFlow.qml` (new):** a `Flow` that sizes cards like `CoverGrid` (at least 172 px, stretched to fill). Used by `ArtistView`, `SearchView` (albums, movies, shows), `PersonView`, and `AlbumBrowser`'s by-artist sections. Search's posters now match the grid's.
+- **Search track rows:** 40/30/30 % of the width.
+- **Episode rows:**
+  - every cell centered
+  - quality right-aligned, like the album page's bit rate
+  - header labels "length" and "quality" over their columns, sharing one `nameWidth`
+
+**Tests:** 5 suites pass. `tst_qml_smoke::musicAlbumsInEverySort` checks that the grid's last computed column is on the first row and its card ends within 1 px of the grid's right edge. It fails on the old layout, where the fifth card wrapped. Screenshots reviewed: music grid, search, artist, director, show, movies, queue.
+
+**Files:** `qml/{CoverGrid.qml, CardFlow.qml (new), ArtistView.qml, SearchView.qml, PersonView.qml, AlbumBrowser.qml, ShowView.qml}`, `CMakeLists.txt`, `tests/tst_qml_smoke.cpp`
+
 ### The sidebar (and the queue button) leave search results (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user: with search results showing, clicking a section in the sidebar showed the hand but went nowhere. The results outrank every page (`view` puts search first), and the sidebar's click reset every page flag except the search.

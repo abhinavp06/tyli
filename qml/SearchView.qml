@@ -81,16 +81,15 @@ Item {
             }
 
             Section { title: "albums"; total: view.albums.total }
-            Flow {
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
                 visible: view.albums.total > 0
                 Repeater {
                     model: view.albums.items
                     CoverCard {
                         required property var modelData
                         readonly property var model: modelData
-                        width: Theme.px(150)
+                        width: parent.cardWidth
                         source: Library.thumbnail(model.coverEntry)
                         online: model.online
                         title: model.values[2]
@@ -129,13 +128,17 @@ Item {
                         width: content.width
                         height: Theme.px(32)
                         color: trackArea.containsMouse ? Theme.hover : "transparent"
+                        // Title, artist, album across the whole width (40 / 30 / 30).
                         Row {
+                            id: trackRow
+                            readonly property real room: parent.width - leftPadding - rightPadding - 2 * spacing
                             anchors.verticalCenter: parent.verticalCenter
                             leftPadding: Theme.px(12)
+                            rightPadding: Theme.px(12)
                             spacing: Theme.px(16)
-                            Text { width: Theme.px(360); text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
-                            Text { width: Theme.px(260); text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
-                            Text { width: Theme.px(260); text: model.album; elide: Text.ElideRight; color: Theme.textDim }
+                            Text { width: trackRow.room * 0.4; text: model.title; elide: Text.ElideRight; color: model.online ? Theme.text : Theme.textFaint }
+                            Text { width: trackRow.room * 0.3; text: model.albumArtist; elide: Text.ElideRight; color: Theme.textDim }
+                            Text { width: trackRow.room * 0.3; text: model.album; elide: Text.ElideRight; color: Theme.textDim }
                         }
                         MouseArea {
                             id: trackArea
@@ -151,16 +154,15 @@ Item {
             }
 
             Section { title: "movies"; total: view.movies.total }
-            Flow {
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
                 visible: view.movies.total > 0
                 Repeater {
                     model: view.movies.items
                     CoverCard {
                         required property var modelData
                         readonly property var model: modelData
-                        width: Theme.px(130)
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "movies"
                         source: Library.thumbnail(model.coverEntry)
@@ -174,16 +176,15 @@ Item {
             }
 
             Section { title: "shows"; total: view.shows.total }
-            Flow {
+            CardFlow {
                 width: content.width
-                spacing: Theme.px(18)
                 visible: view.shows.total > 0
                 Repeater {
                     model: view.shows.items
                     CoverCard {
                         required property var modelData
                         readonly property var model: modelData
-                        width: Theme.px(130)
+                        width: parent.cardWidth
                         poster: true
                         placeholder: "shows"
                         source: Library.thumbnail(model.coverEntry)

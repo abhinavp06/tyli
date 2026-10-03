@@ -73,6 +73,7 @@ qt_add_qml_module(tyli_ui
         qml/BrowseHeader.qml
         qml/CategoryView.qml
         qml/CoverCard.qml
+        qml/CardFlow.qml
         qml/CoverGrid.qml
         qml/CoverImage.qml
         qml/ExpandedPlayer.qml
