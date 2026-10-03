@@ -2,6 +2,29 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Movies and shows grids: "by director" and "by genre" sections (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** Part 1 of "music's album structure for movies and shows" (mockups `movies-by.html` and `shows-by.html`, approved). Uses hoardor `f02c809` (`Condition::none`).
+
+**What changed:**
+- **The sort bar:**
+  - movies grid: "by director" and "by genre"
+  - shows grid: "by genre" (an episode's directors vary, so shows have no "by director")
+  - genre and year pages keep added / a–z / year
+- **`VideoGridView`:**
+  - In a section sort, the grid gives way to a `ListView` of sections: the name (a link to the director's or genre's page), its count, a hairline, then its cards (`CardFlow`, a–z, the first 120).
+  - A footer section "no director" / "no genre" holds the rest. Its filter is `{director: null}`, which `fields::videoFilter` now turns into `Condition::none`.
+  - Card subtitles and opening are shared with the grid (`subtitleOf`, `openRow`).
+- **Detail:** a section's count sat higher than its bigger name (a top-aligned `Row`). It's on the name's baseline now, in music's "by artist" too.
+
+**Tests:** `tst_qml_smoke`:
+- `moviesAMovieAndADirector`: by director, 2 sections and no "none" section; by genre, 2 sections and "no genre" for Heat
+- `showsAndAShow`: by genre
+
+Screenshots: `movies-by-director`, `movies-by-genre`, `shows-by-genre`.
+
+**Files:** `qml/VideoGridView.qml`, `qml/AlbumBrowser.qml`, `src/media_fields.cpp`, `tests/tst_qml_smoke.cpp`, `DOCUMENTATION/application/features/media_listing_ui.md` (§7g)
+
 ### Subtitles on by default (with hoardor 4f0f678) (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:**

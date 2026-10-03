@@ -209,6 +209,19 @@ Most folders have no art, because Plex keeps it in its own data folder. The user
   - a failed frame not retried
   - the grid's thumbnails
 
+## 7g. Album structure for movies and shows (2026-10-03, the user; mockups approved)
+
+The user asked for music's album structure in movies and shows. Mockups: `show-seasons.html`, `season.html`, `movie-album.html`, `movies-by.html`, `shows-by.html`. Built as separate commits:
+1. **"By" sections in the grids:**
+   - movies: "by director" and "by genre"; shows: "by genre", since an episode's directors vary
+   - like music's "by artist": a section per name, a–z, each a link to its page, with its cards a–z (the first 120; the page has all)
+   - a "no director" / "no genre" section last, so nothing drops out (hoardor `Condition::none`)
+   - only on a category's own page; the choice is remembered with the other sorts
+   - section counts sit on the name's baseline, music's included
+2. **Seasons as album cards, and a season page in the album layout** (below, as built).
+3. **The movie page in the album layout:** its copies as rows, then "more by" the director and "more in" each genre (below, as built).
+4. **The folder rule:** waiting for the user's answers.
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).

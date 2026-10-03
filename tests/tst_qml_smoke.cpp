@@ -546,6 +546,20 @@ private slots:
         QVERIFY(grid);
         QTRY_COMPARE(grid->property("count").toInt(), 2);  // Arrival's two copies are one card
         screenshot("movies");
+        // By director and by genre: sections, and the ones with none last (Heat has no genre).
+        setState("moviesView", "sortKey", "director");
+        QObject* sections = find("videoSections");
+        QVERIFY(sections && qobject_cast<QQuickItem*>(sections)->isVisible());
+        QVERIFY(!qobject_cast<QQuickItem*>(grid)->isVisible());
+        QTRY_COMPARE(sections->property("count").toInt(), 2);   // Denis Villeneuve, Michael Mann
+        QTRY_VERIFY(!qobject_cast<QQuickItem*>(find("noneSection"))->isVisible());   // everyone has a director
+        screenshot("movies-by-director");
+        setState("moviesView", "sortKey", "genre");
+        QTRY_COMPARE(sections->property("count").toInt(), 2);   // Drama, Science Fiction
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(find("noneSection"))->isVisible());    // Heat
+        screenshot("movies-by-genre");
+        setState("moviesView", "sortKey", "added");
+        QTRY_VERIFY(qobject_cast<QQuickItem*>(grid)->isVisible());
         call("categoryView", "open", "movie", QVariantMap{{"title", "Arrival"}, {"year", 2016}, {"crumb", "Arrival"}});
         QTRY_VERIFY(find("movieView"));
         const QVariantList options = find("qualityPicker")->property("options").toList();
@@ -564,6 +578,10 @@ private slots:
         QVERIFY(grid);
         QTRY_COMPARE(grid->property("count").toInt(), 1);
         screenshot("shows");
+        setState("showsView", "sortKey", "genre");
+        QTRY_COMPARE(find("videoSections")->property("count").toInt(), 1);   // Mystery
+        screenshot("shows-by-genre");
+        setState("showsView", "sortKey", "added");
         call("categoryView", "open", "show", QVariantMap{{"show", "Dark"}, {"crumb", "Dark"}});
         QTRY_VERIFY(find("showView"));
         QObject* episodes = find("episodeList");

@@ -67,7 +67,9 @@ std::optional<Filter> filterOf(const QVariantMap& map, Lookup lookup) {
         auto field = lookup(it.key());
         if (!field) return std::nullopt;
         using Value = decltype(filter.all.front().value);
-        filter.all.push_back({*field, toValue<Value>(it.value())});
+        // null: items with nothing in this field ({director: null}: the movies with no director).
+        if (it.value().isNull() || it.value().typeId() == QMetaType::Nullptr) filter.all.push_back({*field, Value{}, true});
+        else filter.all.push_back({*field, toValue<Value>(it.value())});
     }
     return filter;
 }

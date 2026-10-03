@@ -70,11 +70,12 @@ Item {
             Row {
                 spacing: Theme.px(12)
                 LinkText {
+                    id: artistName
                     text: section.model.values[0]
                     font.weight: Theme.weightBold
                     onActivated: browser.owner.open("artist", { name: section.model.values[0], crumb: section.model.values[0] })
                 }
-                Text { text: Format.plural(artistModel.total, "album"); color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
+                Text { anchors.baseline: artistName.baseline; text: Format.plural(artistModel.total, "album"); color: Theme.textDim; font.pixelSize: Theme.fontSizeSmall }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.hairline }
             CardFlow {
