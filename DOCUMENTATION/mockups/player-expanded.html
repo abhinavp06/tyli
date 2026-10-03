@@ -100,8 +100,9 @@
   .window.expanded .cover .arrow.down { display: grid; background: none; }
   a.link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-faint); }
   a.link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-  .expanded { position: absolute; left: 0; right: 0; top: 0; bottom: 64px; background: var(--background); display: none; flex-direction: column; z-index: 10; }
-  .window.expanded .expanded { display: flex; }
+  /* The view is .xview: "expanded" is the window's state class, so a rule on .expanded hid the whole window. */
+  .xview { position: absolute; left: 0; right: 0; top: 0; bottom: 64px; background: var(--background); display: none; flex-direction: column; z-index: 10; }
+  .window.expanded .xview { display: flex; }
   .xbar { height: 52px; flex-shrink: 0; display: flex; align-items: center; padding: 0 16px 0 24px; }
   .xbody { flex-grow: 1; min-height: 0; display: flex; }
   .xnow { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 0 32px 32px; transition: all .2s; }
@@ -121,6 +122,7 @@
   .qr.now { box-shadow: inset 2px 0 0 var(--accent); }
   .qr.played, .qr.played .num, .qr.played .dim { color: var(--text-faint); }
   .xnote { position: absolute; left: 24px; bottom: 10px; right: 24px; }
+  .window.queue .xnote { right: 484px; }   /* not under the queue panel */
 </style>
 <div class="mock-nav"><span>proposal · player (not built) · <a href="index.html">index</a> ·</span> <a href="player-music.html">music: queue + now playing</a> · <a href="player-queue.html">the queue</a> · <a href="player-video.html">video page</a> · <a href="player-markers.html">viewed + progress</a> · <a href="player-expanded.html" class="on">expanded player</a> · state: <a href="#" onclick="setState('bar'); return false">bar</a> · <a href="#" onclick="setState('expanded'); return false">expanded</a> · <a href="#" onclick="setState('queue'); return false">expanded + queue</a></div>
 <div class="window">
@@ -182,7 +184,7 @@
       </div>
     </main>
   </div>
-  <section class="expanded" id="expanded">
+  <section class="xview" id="expanded">
     <header class="xbar"><span class="label">now playing</span><span class="spacer"></span><button class="ib" title="collapse (Esc)" onclick="setState('bar')"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></header>
     <div class="xbody">
       <div class="xnow">

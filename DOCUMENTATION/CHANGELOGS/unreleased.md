@@ -2,6 +2,15 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Mockup fix: the expanded player showed a black screen (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** The user, reviewing `player-expanded.html`: "expanding just shows a black screen".
+- **Cause:** the class `expanded` was both the window's state class (`.window.expanded`) and the expanded view's own class, whose rule hides it (`display: none`). Expanding gave the window that class, so the rule hid the whole window.
+- **Fix:** the view's class is now `.xview`. With the queue open, the explanatory note no longer runs under the queue panel.
+- **Checked** with a headless Chromium (Playwright, in Claude's scratch folder, not the repo): screenshots of the bar, expanded, expanded + queue, and collapsed again, with no script errors.
+
+**Files:** `DOCUMENTATION/mockups/player-expanded.html`
+
 ### Search off the UI thread; back from a result returns to the results (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user: "search feels slow… maybe run a UI test yourself", and "if I go back… I want to go back to the search results, not the homepage".
