@@ -146,6 +146,7 @@
 ## 5b. Picture quality: how to look (2026-10-03)
 
 - **The finding:** the grain the user saw is mpv's dithering on an 8-bit surface; TYLI's own path adds nothing (hoardor `features/player.md` §10b).
+- **The user compared with Plex (2026-10-03):** just as grainy there, so it's the video itself. Parked.
 - **On Windows,** start TYLI with `TYLI_MPV_LOG=1`, then send `%APPDATA%\TYLI\mpv.log`. It shows the decoder, hardware decoding, scalers, and dithering mpv chose. In PowerShell, in the unzipped folder: `$env:TYLI_MPV_LOG="1"; .\tyli.exe`.
 
 ## 6. Open items
