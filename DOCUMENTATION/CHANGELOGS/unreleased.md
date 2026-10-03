@@ -2,6 +2,18 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Windows build: libmpv (2026-10-03, branch `abhinavp06/PLAYER`)
+
+**Summary:** hoardor's new `player` engine links libmpv, so the Windows workflow now fetches it.
+- **The package:** a pinned shinchiro `mpv-dev-x86_64` build (20261003, git `3186d369f9`), checked by SHA-256 and cached.
+- **The MSVC import library:** the package has only a MinGW one, so `mpv.lib` is made from the DLL's exports (`dumpbin /exports` → `.def` → `lib /def`), after the MSVC setup step.
+- **Configure** passes `-DMPV_ROOT`, and the tests have `mpv\bin` on `PATH`.
+- **The zip** ships `libmpv-2.dll` with `libmpv-NOTICE.txt` (where it comes from; GPL v2+, because the build bundles GPL parts; hoardor `features/player.md` §9).
+
+**Files:** `.github/workflows/windows.yml`
+
+**To check:** the first run on GitHub (it answers hoardor's OI-P3: the import library in MSVC).
+
 ### Player UI approved; the like heart (2026-10-03, branch `abhinavp06/PLAYER`)
 
 **Summary:** The user approved the design and the mockups, and asked for a heart next to the add-to-playlist button: green when liked, empty when not.

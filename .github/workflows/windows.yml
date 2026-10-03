@@ -18,6 +18,10 @@ jobs:
       # hoardor reads metadata with ffmpeg (LGPL, shared). A pinned BtbN build, checked by its SHA-256.
       FFMPEG_URL: https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-01-13-06/ffmpeg-n8.1.3-14-g330caae0c1-win64-lgpl-shared-8.1.zip
       FFMPEG_SHA256: bf545d8fee9bb6957c1f3dea0f384bf64edead407d763326dbbd2de1b04768a4
+      # hoardor plays audio and video with libmpv (hoardor features/player.md §9). A pinned
+      # shinchiro "dev" build (headers + libmpv-2.dll; GPL: it bundles GPL parts), checked by its SHA-256.
+      MPV_URL: https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261003/mpv-dev-x86_64-20261003-git-3186d369f9.7z
+      MPV_SHA256: b8c2d656c1584d5f08196fcee5c2d0783d1f76021897c4e0b3cc30f94c79522e
 
     steps:
       - name: Check out TYLI
@@ -75,10 +79,41 @@ jobs:
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Cache libmpv
+        id: mpv-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/mpv
+          key: mpv-${{ env.MPV_SHA256 }}-v1
+
+      # The package has a MinGW import library only, so MSVC's mpv.lib is made from the DLL's
+      # exports (dumpbin, then lib /def). After "Set up MSVC": both tools come from it.
+      - name: Install libmpv
+        if: steps.mpv-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mpv-dev.7z"
+          Invoke-WebRequest -Uri $env:MPV_URL -OutFile $archive
+          $hash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:MPV_SHA256) { throw "libmpv download has SHA-256 $hash, expected $env:MPV_SHA256" }
+          $mpv = "$env:RUNNER_TEMP\mpv"
+          & 7z x $archive "-o$mpv\unpacked" -y | Out-Null
+          New-Item -ItemType Directory "$mpv\bin", "$mpv\lib" | Out-Null
+          Move-Item "$mpv\unpacked\include" "$mpv\include"
+          Move-Item "$mpv\unpacked\libmpv-2.dll" "$mpv\bin\libmpv-2.dll"
+          $names = & dumpbin /exports "$mpv\bin\libmpv-2.dll" | ForEach-Object {
+            if ($_ -match '^\s+\d+\s+[0-9A-F]+\s+[0-9A-F]{8}\s+(\S+)$') { $Matches[1] }
+          }
+          if (-not ($names -contains 'mpv_create')) { throw "libmpv-2.dll exports no mpv_create" }
+          Set-Content "$mpv\lib\mpv.def" (@('LIBRARY libmpv-2', 'EXPORTS') + $names)
+          & lib /nologo /def:"$mpv\lib\mpv.def" /machine:x64 /out:"$mpv\lib\mpv.lib"
+          if ($LASTEXITCODE -ne 0) { throw "lib /def failed" }
+          Write-Host "mpv.lib made with $($names.Count) exports"
+
       # PowerShell, not Git Bash: Git Bash has its own link.exe that would shadow MSVC's linker.
       - name: Configure
         shell: pwsh
-        run: cmake -S tyli -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:RUNNER_TEMP/Qt/$env:QT_VERSION/$env:QT_DIR_NAME" "-DFFMPEG_ROOT=$env:RUNNER_TEMP/ffmpeg"
+        run: cmake -S tyli -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:RUNNER_TEMP/Qt/$env:QT_VERSION/$env:QT_DIR_NAME" "-DFFMPEG_ROOT=$env:RUNNER_TEMP/ffmpeg" "-DMPV_ROOT=$env:RUNNER_TEMP/mpv"
 
       - name: Build
         id: build
@@ -88,7 +123,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          $env:PATH = "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin;$env:RUNNER_TEMP\ffmpeg\bin;$env:PATH"
+          $env:PATH = "$env:RUNNER_TEMP\Qt\$env:QT_VERSION\$env:QT_DIR_NAME\bin;$env:RUNNER_TEMP\ffmpeg\bin;$env:RUNNER_TEMP\mpv\bin;$env:PATH"
           ctest --test-dir build --output-on-failure
 
       # Runs even when a test failed, so the exe can still be tried.
@@ -108,6 +143,13 @@ jobs:
             Copy-Item "$env:RUNNER_TEMP\ffmpeg\bin\$dll" dist/
           }
           Copy-Item "$env:RUNNER_TEMP\ffmpeg\LICENSE.txt" dist/ffmpeg-LICENSE.txt
+          # libmpv (the player), with where it comes from and its license.
+          Copy-Item "$env:RUNNER_TEMP\mpv\bin\libmpv-2.dll" dist/
+          Set-Content dist/libmpv-NOTICE.txt @(
+            "libmpv-2.dll is mpv's player library (https://mpv.io), source: https://github.com/mpv-player/mpv",
+            "This build: $env:MPV_URL (shinchiro/mpv-winbuild-cmake), SHA-256 $env:MPV_SHA256",
+            "It includes GPL components, so it is licensed under the GNU GPL version 2 or later:",
+            "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
           Get-ChildItem dist | Select-Object -First 40 Name
 
       - name: Upload
