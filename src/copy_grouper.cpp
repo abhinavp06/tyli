@@ -133,13 +133,18 @@ std::vector<VideoCopy> groupVideo(std::vector<video::Item> items) {
 }
 
 ShowCopies groupShow(std::vector<video::Item> episodes) {
-    std::map<std::pair<int, int>, std::vector<video::Item>> byEpisode;
-    for (auto& e : episodes) byEpisode[{e.season, e.episode}].push_back(std::move(e));
+    // An episode is its (season, number). Without a number (specials made of a show's films and
+    // OVAs, all numbered 0), its title tells them apart, and orders them.
+    std::map<std::tuple<int, int, QString>, std::vector<video::Item>> byEpisode;
+    for (auto& e : episodes) {
+        const QString title = e.episode > 0 ? QString() : QString::fromStdString(e.title).toCaseFolded();
+        byEpisode[{e.season, e.episode, title}].push_back(std::move(e));
+    }
 
     ShowCopies out;
     std::map<QString, std::pair<decltype(videoRank(video::Item{})), int>> qualities;
     for (auto& [key, items] : byEpisode) {
-        Episode episode{key.first, key.second, groupVideo(std::move(items))};
+        Episode episode{std::get<0>(key), std::get<1>(key), groupVideo(std::move(items))};
         for (const auto& c : episode.copies) {
             auto& q = qualities[c.label];
             q.first = std::max(q.first, videoRank(c.item));

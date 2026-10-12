@@ -240,6 +240,14 @@ The user asked for music's album structure in movies and shows. Mockups: `show-s
      - built by `Library.moreMovies(title, year, category, perRow)`, with `perRow` the cards that fit (CardFlow's columns)
 4. **The folder rule:** deferred by the user ("let's revisit this folder thing later"). The open questions: movies in shared folders, copies in separate folders, and show/season = folder.
 
+## 7h. Shows, specials, and extras (2026-10-12, the user's Windows test)
+
+Some shows never appeared, even after a rescan: hoardor read their episodes as movies, and a Shows grid lists only episodes. Fixed in hoardor (`../hoardor/DOCUMENTATION/application/features/shows_and_extras.md`), checked against the user's real folder lists (`tools/list_tree.ps1`). What it means here:
+- **Specials:** films, OVAs, and specials inside a show's folder come as episodes of season 0, numbered 0. The show page already titles season 0 "Specials". `copies::groupShow` now tells numberless episodes apart by title, so a show's 37 films and OVAs aren't one episode with 37 copies; the same title twice is still two copies.
+- **Extras** (featurettes, deleted scenes, trailers, …) are a new video type, 3. The grids already ask for type 1 or 2, so they're gone from Movies and Shows. The thumbnail pass now asks for movies and episodes only, so no frame is ever grabbed for an extra.
+- **Samples** are never listed.
+- **Not built yet: the Extras section** on a show's and a movie's page (the user, 2026-10-12: "extras in the shows page, same for movies"). A mockup comes first. The data is there: a show's extras are `{type: 3, show}`, a movie's are `{type: 3, show: title, year}`. `PRODUCT.md` I-18.
+
 ## 8. Open items
 
 - **Playlists and liked songs:** their own feature (the columns are TODO).

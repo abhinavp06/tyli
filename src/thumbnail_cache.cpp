@@ -271,10 +271,15 @@ ThumbnailCache::Result ThumbnailCache::build(const QString& folder, const QStrin
         ++result.fromFrames;
         return jpeg(*frame);
     };
-    for (const std::vector<video::Field>& by : {std::vector<video::Field>{video::Field::Title, video::Field::Year},
-                                                std::vector<video::Field>{video::Field::Show}}) {
+    // Movies and episodes only: extras (featurettes, trailers, …) get no poster, so a frame is
+    // never grabbed for each of them (hoardor features/shows_and_extras.md).
+    const std::vector<video::Field> titled{video::Field::Title, video::Field::Year}, shown{video::Field::Show};
+    const auto of_type = [](std::int64_t type) { return video::Filter{{{video::Field::Type, video::Value{type}}}}; };
+    const std::pair<const std::vector<video::Field>*, video::Filter> passes[] = {
+        {&titled, of_type(1)}, {&titled, of_type(2)}, {&shown, of_type(2)}};
+    for (const auto& [by, filter] : passes) {
         for (std::optional<hoardor::core::Cursor> after;;) {
-            auto page = videos->groups(by, {}, video::GroupOrder::Values, false, after, 500);
+            auto page = videos->groups(*by, filter, video::GroupOrder::Values, false, after, 500);
             if (!page) break;
             for (const auto& g : page->items) {
                 if (g.poster_entry) make(g.poster_entry, image_file);

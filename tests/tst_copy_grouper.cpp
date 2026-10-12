@@ -112,6 +112,23 @@ private slots:
         QCOMPARE(show.episodes.back().season, 2);
         QCOMPARE(show.episodes.front().copies.size(), std::size_t(2));
     }
+
+    void specialsWithoutANumberStayApartByTitle() {
+        // A show's films and OVAs become specials numbered 0 (hoardor features/shows_and_extras.md).
+        const auto special = [](const std::string& title, int height) {
+            auto i = item(height, "", "h264", true, 0, 0);
+            i.title = title;
+            return i;
+        };
+        const auto show = copies::groupShow({special("Movie 02 - The World's Strongest", 1080), special("Movie 01 - Dead Zone", 1080),
+                                             special("movie 01 - dead zone", 480), item(1080, "", "h264", true, 1, 1)});
+        QCOMPARE(show.episodes.size(), std::size_t(3));
+        QCOMPARE(show.episodes[0].season, 0);
+        QCOMPARE(show.episodes[0].copies.size(), std::size_t(2));  // the same film twice: copies
+        QCOMPARE(QString::fromStdString(show.episodes[0].copies[0].item.title), QStringLiteral("Movie 01 - Dead Zone"));
+        QCOMPARE(QString::fromStdString(show.episodes[1].copies[0].item.title), QStringLiteral("Movie 02 - The World's Strongest"));
+        QCOMPARE(show.episodes[2].season, 1);
+    }
 };
 
 QTEST_MAIN(TestCopyGrouper)

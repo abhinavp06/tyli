@@ -2,6 +2,37 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Shows, specials, and extras (with hoardor's "Shows, specials, and extras from release layouts") (2026-10-12, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** The user's Windows test: "some of the TV shows are not showing up, even on a rescan". hoardor read their episodes as movies, and the Shows grid lists only episodes. Checked against the user's real folder lists, from a new read-only script. The fix is in hoardor: more episode names, cleaned show names, extras as a new video type, a show's films as its specials, and samples skipped. TYLI's side is small.
+
+**What changed:**
+- **Specials:**
+  - A show's films, OVAs, and specials arrive as season 0, numbered 0 ("Specials" on the show page, as before).
+  - `copies::groupShow` keyed an episode by (season, number), so they would have merged into one episode with dozens of "copies". Numberless episodes are now told apart, and ordered, by their case-folded title. The same title twice is still two copies.
+- **Extras** (hoardor `video::Type::Extra`, 3):
+  - The grids and pages already filter type 1 or 2, so featurettes, trailers, and samples no longer show up as movies.
+  - The thumbnail pass grouped videos by title and by show without a type, so it would have made a poster, or grabbed a frame from the drive, for each of hundreds of extras. It now asks for movies and episodes only (titles of types 1 and 2, shows of type 2).
+- **`tools/list_tree.ps1` (new):** lists every folder and file under a folder, with sizes, into a text file on the Desktop. It's read-only, uses `-LiteralPath` (release names are full of `[` `]`, which PowerShell treats as wildcards), writes UTF-8, and lists unreadable folders at the end. The user ran it on Shows, Movies, and Music. Those lists also confirmed the album folder rule (about 1,852 album folders vs Plex's about 1,834; `PRODUCT.md` I-11).
+- **`DOCUMENTATION/PRODUCT.md` (new, 2026-10-04, the user's request):** the vision, the product principles, the release plan, and every idea the user has had (`I-<n>`) with its status and links. `CLAUDE.md` reads it at session start.
+
+**Decisions (the user, 2026-10-12):**
+- Extras go in an **Extras section on their show's or movie's page**, not in the grids.
+- A show's films and OVAs are its **Specials**.
+- **Samples** are never listed.
+- The Extras section isn't built yet: a mockup comes first (`PRODUCT.md` I-18).
+
+**Tests:** `tst_copy_grouper.specialsWithoutANumberStayApartByTitle` (two films apart, the same film twice as copies, ordered by title, a real episode after them); all 5 suites pass.
+
+**Files:**
+- `src/{copy_grouper.cpp, thumbnail_cache.cpp}`, `tests/tst_copy_grouper.cpp`, `tools/list_tree.ps1` (new)
+- `CLAUDE.md`
+- `DOCUMENTATION/{PRODUCT.md (new), application/ARCHITECTURE.md, application/features/media_listing_ui.md (§7h)}`
+
+**Follow-ups:**
+- The Extras section (mockup, then QML).
+- The folder rule for albums and shows (TODO E).
+
 ### The video page's queue button sits right of the subtitles (2026-10-03, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** The user asked to move the queue button "to the right of the subtitles options, or to the left of the volume". The controls now read: audio, subtitles, queue, mute, volume, full screen (it was first in that group).
