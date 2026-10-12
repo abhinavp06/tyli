@@ -17,6 +17,7 @@ A snappy, low-memory, fully offline home for the user's whole media and writing 
 ## Session start: read in this order
 
 1. **`CLAUDE.md` + `DOCUMENTATION/application/ARCHITECTURE.md`** load automatically: *how* TYLI is built.
+   **`DOCUMENTATION/PRODUCT.md`**: *why and what next*: the vision, product principles, release plan, and every idea the user has had (`I-<n>`), each with its status and links. File every new idea of the user's there (its "How it's kept" rules).
 2. **`DOCUMENTATION/CHANGELOGS/`**: read `unreleased.md` in full, and the newest `v*.md` (see the index in `README.md`): *where we are*.
 3. **`git status` and `git log --oneline -15`**: the current branch and uncommitted work.
 4. **`DOCUMENTATION/application/features/<feature>.md`**: *what we're building right now*. If the feature uses a hoardor API, also read that hoardor feature doc (`../hoardor/DOCUMENTATION/application/features/`).
@@ -44,6 +45,7 @@ qml/                          # QML views (one file per screen or reusable compo
 tests/                        # Qt Test suites (bridge, models, QML smoke test); screenshots land in build/screenshots/
 tools/                        # developer scripts (vnc_session.sh: the UI over VNC; mockup_server.sh: the HTML mockups; plex_probe.ps1: a read-only check of Plex's posters on Windows)
 DOCUMENTATION/
+  PRODUCT.md                  # vision, product principles, release plan, and every idea (I-<n>) linked to its docs and TODOs
   CHANGELOGS/                 # one file per version + unreleased.md (same rules as hoardor)
   application/
     ARCHITECTURE.md           # TYLI's architecture and decision log
