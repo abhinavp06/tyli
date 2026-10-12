@@ -10,6 +10,10 @@ on:
 jobs:
   windows:
     runs-on: windows-2022
+    # actions: write lets the job delete its older zips (the "Delete older zips" step).
+    permissions:
+      contents: read
+      actions: write
     timeout-minutes: 60
     env:
       QT_VERSION: 6.12.0
@@ -169,10 +173,24 @@ jobs:
             "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html")
           Get-ChildItem dist | Select-Object -First 40 Name
 
+      # The repository is private, and a private repository's artifact storage is small (500 MB
+      # on the free plan; each zip is a large share of it). Keep only the newest zip: delete the
+      # older ones first. GitHub recounts the storage every 6 to 12 hours.
+      - name: Delete older zips
+        if: always() && steps.build.outcome == 'success'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ids = gh api "repos/${{ github.repository }}/actions/artifacts?name=tyli-windows&per_page=100" --paginate --jq '.artifacts[].id'
+          foreach ($id in $ids) {
+            if ($id) { gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id"; "deleted artifact $id" }
+          }
+
       - name: Upload
         if: always() && steps.build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: tyli-windows
           path: dist/
-          retention-days: 14
+          retention-days: 3

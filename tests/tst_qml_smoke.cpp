@@ -697,8 +697,14 @@ private slots:
         // Delete, with its inline confirm: back to where you were.
         clickAt(item("sidebarPlaylist-Road"));
         QTRY_COMPARE(find("playlistTitle")->property("text").toString(), QStringLiteral("Road"));
+        // Liked Songs hid the trash, and the same page shows Road now: the actions row lays the
+        // trash out again on its next frame. Let it, before clicking (a slow runner clicked the
+        // old spot); the same for the confirm, which shifts the row once more.
+        QTRY_VERIFY(item("deletePlaylist")->isVisible());
+        QTest::qWait(100);
         clickAt(item("deletePlaylist"));
         QTRY_VERIFY(item("confirmDeletePlaylist")->isVisible());
+        QTest::qWait(100);
         clickAt(item("confirmDeletePlaylist"));
         QTRY_VERIFY(player_->playlists().isEmpty());
         QTRY_VERIFY(window_->property("view").toString() != QStringLiteral("playlist"));
