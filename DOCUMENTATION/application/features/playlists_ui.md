@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **Built** (2026-10-03; §6) on `abhinavp06/PLAYLISTS`, waiting for the user's Windows test. Approved with changes (§0). Mockups: `playlist.html`, `liked.html`. The engine side: hoardor `features/playlists.md` |
+| Status | **Shipped in `v0.4.0`** (2026-10-12; built 2026-10-03, §6), waiting for the user's Windows test. Approved with changes (§0). Mockups: `playlist.html`, `liked.html`. The engine side: hoardor `features/playlists.md` |
 | Branch | `abhinavp06/PLAYLISTS` |
 | Scope | The user's choices: music only, manual playlists, and liked songs. Not now: smart playlists, M3U, the "Resume" section |
 
