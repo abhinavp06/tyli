@@ -107,6 +107,7 @@
 | The window closes while playing | progress saved; the player shut down before the bridge |
 | No OpenGL (software renderer) | the video page shows black with its controls; audio plays |
 | Full screen on a second monitor | the window's own screen; Esc returns |
+| Entering or leaving full screen on Windows, with Windows' HDR on | no display-mode switch: the monitor doesn't blank and stays in HDR. The window keeps a one-pixel border in full screen, so the GPU driver doesn't take it over as exclusive full screen (`app_setup.cpp`; I-27) |
 
 ## 5. Tests
 

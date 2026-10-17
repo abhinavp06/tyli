@@ -100,6 +100,7 @@ Each one names where it's recorded, so a design can be checked against it.
 | I-24 | Skip Intro (finding the audio that repeats across episodes). | Planned | hoardor `engines/player.md` §4 |
 | I-25 | A visualizer. | Idea | hoardor `ARCHITECTURE.md` §2 (ring buffer candidate) |
 | I-26 | Video grain vs Plex. | Shipped (solved, the user 2026-10-04) | `CHANGELOGS/v0.3.0.md` ("Video grain checked") |
+| I-27 | **The monitor blanks when the video page enters or leaves full screen** (the user, 2026-10-17; a bug): with Windows' HDR on, the monitor goes black for a second and shows "HDR" on leaving full screen, even for SDR episodes. TYLI never reads or changes HDR: the GPU driver took the borderless full-screen OpenGL window over as exclusive full screen, which switches the display mode (and out of HDR). Fixed with a one-pixel border in full screen. Real HDR output for HDR videos is a separate idea (today they are tone-mapped to SDR, as before). | Fixed (to test in the Windows zip) | `CHANGELOGS/unreleased.md`; `application/features/player_ui.md` §4 |
 
 ### 4.4 Playlists
 

@@ -131,6 +131,11 @@ qt_add_qml_module(tyli_ui
 
 target_include_directories(tyli_ui PUBLIC src)
 target_link_libraries(tyli_ui PUBLIC Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::OpenGL hoardor)
+if(WIN32)
+    # Full screen without a display-mode switch (app_setup.cpp) needs Qt's private Windows interface.
+    find_package(Qt6 REQUIRED COMPONENTS GuiPrivate)
+    target_link_libraries(tyli_ui PRIVATE Qt6::GuiPrivate)
+endif()
 
 # -----------------------------------------------------------------------------
 # App

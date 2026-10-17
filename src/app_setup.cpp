@@ -7,6 +7,10 @@
 #include <QWheelEvent>
 #include <QWindow>
 
+#ifdef Q_OS_WIN
+#include <QtGui/private/qguiapplication_p.h>
+#endif
+
 namespace tyli {
 
 namespace {
@@ -63,6 +67,16 @@ void setupApplication() {
     QGuiApplication::setFont(font);
 
     qApp->installEventFilter(new WheelSpeedFilter(qApp));
+
+#ifdef Q_OS_WIN
+    // A borderless OpenGL window covering a whole monitor is taken over by the GPU driver as
+    // exclusive full screen: the monitor switches mode (and out of Windows' HDR mode) when the
+    // video page enters or leaves full screen, blanking for a second (the user, 2026-10-17).
+    // A one-pixel border keeps the window composited by Windows, like a browser's full screen.
+    // Qt's documented workaround ("Qt for Windows - Specific Issues"), through a private API.
+    using QNativeInterface::Private::QWindowsApplication;
+    if (auto* windows = qApp->nativeInterface<QWindowsApplication>()) windows->setHasBorderInFullScreenDefault(true);
+#endif
 }
 
 }
