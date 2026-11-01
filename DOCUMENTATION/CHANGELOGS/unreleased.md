@@ -2,6 +2,20 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### The Windows build: ffmpeg pinned to a build that stays online (2026-11-01, branch `abhinavp06/PLAYLISTS`)
+
+**Summary:** The user's manual run of the Windows build failed at "Install ffmpeg" with `Invoke-WebRequest: Not Found`. The pinned ffmpeg zip (BtbN `autobuild-2026-10-01-13-06`) had been deleted: BtbN keeps its daily builds for about two weeks, and only the last build of each month for good. The run never got past the downloads. The cache step didn't help either, because the job's cache had also expired.
+
+**What changed:** `FFMPEG_URL` and `FFMPEG_SHA256` now point at BtbN's month-end build `autobuild-2026-10-31-12-59`: `ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-shared-8.1.zip`, the same ffmpeg 8.1 branch with 13 more fixes. It has the same DLL names. Its SHA-256 (`5cef7bc4…56ab`) matches GitHub's digest and a download made on the VM. A comment in the workflow says to pin month-end builds only. The libmpv (shinchiro `20261003`) and Vulkan runtime (LunarG 1.4.363.0) downloads were checked and are still online.
+
+**Decisions:**
+- Rejected: BtbN's `latest` release. It moves every day, so a SHA-256 pin can't work with it.
+- Rejected, for now: keeping a copy of the zip as a release asset in our own repository. That would be fully under our control, but it needs `gh` logged in on the VM and a release to hold it. Worth doing together with downloadable releases (PRODUCT I-43) if a month-end build ever disappears too.
+
+**Tests:** the Windows run is the check.
+
+**Files:** `.github/workflows/windows.yml`, `DOCUMENTATION/CHANGELOGS/unreleased.md`
+
 ### Full screen no longer switches the monitor's mode on Windows (2026-10-17, branch `abhinavp06/PLAYLISTS`; PRODUCT I-27)
 
 **Summary:** The user, watching an episode in the Windows build with Windows' HDR on: entering or leaving full screen sometimes blanked the monitor for a second, and leaving it showed "HDR" in the monitor's corner, even for SDR episodes. A browser's full-screen YouTube doesn't do that.
