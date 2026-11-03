@@ -101,7 +101,7 @@ Each one names where it's recorded, so a design can be checked against it.
 | I-24 | Skip Intro (finding the audio that repeats across episodes). | Planned | hoardor `engines/player.md` §4 |
 | I-25 | A visualizer. | Idea | hoardor `ARCHITECTURE.md` §2 (ring buffer candidate) |
 | I-26 | Video grain vs Plex. | Shipped (solved, the user 2026-10-04) | `CHANGELOGS/v0.3.0.md` ("Video grain checked") |
-| I-27 | **The monitor blanks when the video page enters or leaves full screen** (the user, 2026-10-17; a bug): with Windows' HDR on, the monitor goes black for a second and shows "HDR" on leaving full screen, even for SDR episodes. TYLI never reads or changes HDR: the GPU driver took the borderless full-screen OpenGL window over as exclusive full screen, which switches the display mode (and out of HDR). Fixed with a one-pixel border in full screen. Real HDR output for HDR videos is a separate idea (today they are tone-mapped to SDR, as before). | Fixed (to test in the Windows zip) | `CHANGELOGS/unreleased.md`; `application/features/player_ui.md` §4 |
+| I-27 | **The monitor blanks when the video page enters or leaves full screen** (the user, 2026-10-17; a bug): with Windows' HDR on, the monitor goes black for a second and shows "HDR" on leaving full screen, even for SDR episodes. TYLI never reads or changes HDR: the GPU driver took the borderless full-screen OpenGL window over as exclusive full screen, which switches the display mode (and out of HDR). Fixed with a one-pixel border in full screen. **That border showed as a white line around the video** (the user, 2026-11-03); it's painted black now (`CHANGELOGS/unreleased.md`, 2026-11-03). Real HDR output for HDR videos is a separate idea (today they are tone-mapped to SDR, as before). | Fixed (to test in the Windows zip) | `CHANGELOGS/unreleased.md`; `application/features/player_ui.md` §4 |
 
 ### 4.4 Playlists
 
@@ -129,6 +129,7 @@ Each one names where it's recorded, so a design can be checked against it.
 | I-51 | Recommendations (hoardor's engine work). | Idea | hoardor `CLAUDE.md` (TYLI's role) |
 | I-52 | Local AI analysis of the user's own data on a home server, with hoardor as a headless daemon. | Idea (long term) | §1; hoardor `ARCHITECTURE.md` §1 |
 | I-53 | **Speech-to-text** (the user, 2026-10-06; use cases to be explained later): store the audio **and** its transcript. Confirmed speech-to-text, not text-to-speech, with Cactus Compute's **Whistle** as the candidate model. The user's storage idea: hoardor keeps only the locations, and the files live in the app's data folder. See §5.3. | Idea (feasibility checked 2026-10-06) | §5.3 |
+| I-54 | **Point out the track a search result opened** (the user, 2026-11-03: "highlight it, so it's easier for me to find; maybe a green flash"): a track in the search results opens its album; the album page now scrolls to that track and flashes a green outline around its row (about 2 s). | Built | `application/features/media_listing_ui.md` §7c; `CHANGELOGS/unreleased.md` (2026-11-03) |
 
 ### 4.7 Text
 

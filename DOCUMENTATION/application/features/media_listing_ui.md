@@ -160,6 +160,10 @@ Generic models that mirror hoardor's generic queries. A screen configures them, 
 - **The field:** the top bar's search field (debounced) shows `SearchView` in place of the page.
 - **Sections:** albums (`GroupModel` grouped by category, album artist, album), artists, tracks (`ItemModel`), movies, and shows, each filtered with `search`; up to 12 shown per section.
 - **A result** switches the sidebar to its category and opens its page there. A track opens its album.
+- **The track is pointed out on its album** (2026-11-03, the user: "highlight it, so it's easier for me to find"; PRODUCT I-54):
+  - The result passes `highlightEntry` and `highlightTitle` to the album page, which hands them to `TrackList.highlight`.
+  - The list scrolls the row into view (`positionViewAtIndex`, only if it isn't already) and flashes it: a green outline (`Theme.accent`) over a faint green fill (`Theme.selection`), under the row's text. Two pulses, then it fades; about 2 s in all, once per page (going back and forward shows it again).
+  - The row is the same file when the copy shown has it, else the track with the same title (the album may open on another copy, the remembered or best quality). Without a match, nothing flashes.
 - **Off the UI thread (2026-10-03, the user: "search feels slow"):** at 50k tracks one keystroke cost about 0.5 s of queries on the UI thread (hoardor's `BM_SearchKeystroke`), so typing froze the window.
   - `Library.search(text)` runs the five sections on Qt's thread pool, on its own connection, fetching only what the page shows (12 of each, 24 artists) and the totals.
   - Only the latest text is answered (`searchFinished`). A search overtaken while running is dropped, and the newest text runs next.

@@ -15,6 +15,42 @@ ListView {
     readonly property var columns: Library.trackColumns
     signal trackClicked(var track)
 
+    // A track to point out once, e.g. the one a search result opened ({ entryId, title }): it's
+    // scrolled into view and its row flashes a green outline. The same file if this copy has it,
+    // else the track with the same title (the album may show another copy).
+    property var highlight: null
+    property int flashIndex: -1
+    property real flashOpacity: 0
+    property bool pointedOut: false
+    function pointOut() {
+        if (pointedOut || !highlight || rows.length === 0 || height <= 0) return
+        pointedOut = true
+        let i = rows.findIndex(r => r.entryId !== undefined && r.entryId === highlight.entryId)
+        if (i < 0 && highlight.title) {
+            const title = highlight.title.toLowerCase()
+            i = rows.findIndex(r => r.heading === undefined && r.title.toLowerCase() === title)
+        }
+        if (i < 0) return
+        flashIndex = i
+        positionViewAtIndex(i, ListView.Contain)
+        flash.restart()
+    }
+    // After the page is laid out (a height to scroll in), and again if the tracks arrive later.
+    Timer { id: pointOutSoon; interval: 120; onTriggered: list.pointOut() }
+    Component.onCompleted: if (highlight) pointOutSoon.start()
+    onRowsChanged: if (highlight && !pointedOut) pointOutSoon.restart()
+    onHighlightChanged: if (highlight && !pointedOut) pointOutSoon.restart()
+    // Two pulses, then it fades: about 2 s, enough to catch the eye, gone before it's in the way.
+    SequentialAnimation {
+        id: flash
+        NumberAnimation { target: list; property: "flashOpacity"; from: 0; to: 1; duration: 150 }
+        PauseAnimation { duration: 250 }
+        NumberAnimation { target: list; property: "flashOpacity"; to: 0.2; duration: 250 }
+        NumberAnimation { target: list; property: "flashOpacity"; to: 1; duration: 200 }
+        PauseAnimation { duration: 450 }
+        NumberAnimation { target: list; property: "flashOpacity"; to: 0; duration: 700; easing.type: Easing.InQuad }
+    }
+
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     // Tracks with a heading row before each disc ("CD 1"), when the album has several.
@@ -108,6 +144,17 @@ ListView {
                 width: list.width
                 height: Theme.px(32)
                 color: area.containsMouse ? Theme.hover : "transparent"
+                // The flash of `list.highlight`: a green outline and a faint green fill,
+                // under the row's text (the first child is drawn first).
+                Rectangle {
+                    objectName: "trackFlash"
+                    anchors.fill: parent
+                    visible: opacity > 0
+                    opacity: row.index === list.flashIndex ? list.flashOpacity : 0
+                    color: Theme.selection
+                    border.width: Theme.px(1.5)
+                    border.color: Theme.accent
+                }
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.px(16)

@@ -145,9 +145,10 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            // A track opens its album (playing comes with the player).
+                            // A track opens its album, with the track pointed out (a green flash).
                             onClicked: view.opened(Library.categoryOfFolder(model.rootId), "album",
-                                                   { albumArtist: model.albumArtist, album: model.album, crumb: model.album })
+                                                   { albumArtist: model.albumArtist, album: model.album, crumb: model.album,
+                                                     highlightEntry: model.entryId, highlightTitle: model.title })
                         }
                     }
                 }

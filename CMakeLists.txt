@@ -132,9 +132,10 @@ qt_add_qml_module(tyli_ui
 target_include_directories(tyli_ui PUBLIC src)
 target_link_libraries(tyli_ui PUBLIC Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::OpenGL hoardor)
 if(WIN32)
-    # Full screen without a display-mode switch (app_setup.cpp) needs Qt's private Windows interface.
+    # Full screen without a display-mode switch (app_setup.cpp) needs Qt's private Windows interface,
+    # and its border painted black needs the Desktop Window Manager's API (dwmapi).
     find_package(Qt6 REQUIRED COMPONENTS GuiPrivate)
-    target_link_libraries(tyli_ui PRIVATE Qt6::GuiPrivate)
+    target_link_libraries(tyli_ui PRIVATE Qt6::GuiPrivate dwmapi)
 endif()
 
 # -----------------------------------------------------------------------------

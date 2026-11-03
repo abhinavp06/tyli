@@ -813,6 +813,25 @@ private slots:
         QVERIFY(qobject_cast<QQuickItem*>(find("searchView"))->isVisible());
         QCOMPARE(find("searchView")->property("answered").toString(), QStringLiteral("radio"));   // as they were
         screenshot("search-after-back");
+
+        // A track opens its album with the track pointed out: scrolled to, and flashed green.
+        const QVariantList tracks = find("searchView")->property("tracks").toMap().value("items").toList();
+        QVERIFY(!tracks.isEmpty());
+        const QVariantMap track = tracks.last().toMap();
+        const QVariant trackParams = QVariantMap{{"albumArtist", track["albumArtist"]}, {"album", track["album"]}, {"crumb", track["album"]},
+                                                 {"highlightEntry", track["entryId"]}, {"highlightTitle", track["title"]}};
+        QVERIFY(QMetaObject::invokeMethod(find("searchView"), "opened", Q_ARG(int, bridge_->categoryOfFolder(track["rootId"].toLongLong())),
+                                          Q_ARG(QString, "album"), Q_ARG(QVariant, trackParams)));
+        QTRY_VERIFY(find("albumView") && qobject_cast<QQuickItem*>(find("albumView"))->isVisible());
+        QObject* trackList = find("trackList");
+        QTRY_VERIFY(trackList->property("flashIndex").toInt() >= 0);
+        const QVariantMap row = trackList->property("rows").toList().value(trackList->property("flashIndex").toInt()).toMap();
+        QCOMPARE(row["title"].toString(), track["title"].toString());   // the same file, or its title in the copy shown
+        QTRY_VERIFY(trackList->property("flashOpacity").toDouble() > 0.9);
+        screenshot("search-track-flash");
+        QTRY_COMPARE_WITH_TIMEOUT(trackList->property("flashOpacity").toDouble(), 0.0, 4000);   // and gone again
+        QTest::mouseClick(window_, Qt::BackButton, {}, QPoint(window_->width() / 2, window_->height() / 2));
+        QTRY_COMPARE(window_->property("searchText").toString(), QStringLiteral("radio"));
         QVERIFY(window_->setProperty("searchText", ""));
         QVERIFY(qmlWarnings.isEmpty());
     }

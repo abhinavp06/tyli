@@ -139,6 +139,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         tracks: page.tracks
+        highlight: page.params.highlightEntry !== undefined ? { entryId: page.params.highlightEntry, title: page.params.highlightTitle || "" } : null
         // The album from this track, in the copy shown; "add to queue" adds just this track.
         onTrackClicked: (track) => {
             const ids = page.tracks.map(t => t.entryId)

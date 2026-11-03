@@ -2,6 +2,35 @@
 
 Work that is done but not yet part of a version. The newest entries come first.
 
+### Full screen's border painted black on Windows; a track from search flashes on its album (2026-11-03, branch `abhinavp06/PLAYLISTS`; PRODUCT I-27, I-54)
+
+**Summary:** two things the user found in the latest Windows build:
+1. **A white border around the whole window in full screen** (the video page).
+2. **A track in the search results opens its album, but the track is hard to find there.** The user: "highlight it, so it's easier for me to find; maybe a green flash surrounding it".
+
+**1. The border (`src/app_setup.cpp`, Windows only):**
+- **Cause:** the one-pixel full-screen border from the HDR fix (2026-10-17, below). Qt adds it as a classic `WS_BORDER` frame, and Windows draws that in its light theme's frame color: white. The border is the fix itself (the video surface no longer covers the whole monitor, so the GPU driver doesn't take it over as exclusive full screen), so it stays, invisible.
+- **What changed:** a native event filter (`BlackFullScreenBorder`) recognizes Qt's full screen with a border (a `WS_POPUP` window with `WS_BORDER` and no caption, covering its monitor) and, for that window only:
+  - paints the frame black on `WM_NCPAINT`, and again after `WM_NCACTIVATE` (Windows redraws the frame on focus changes without a `WM_NCPAINT`);
+  - on entering full screen (`WM_WINDOWPOSCHANGED`), turns off Windows 11's own accent outline (`DWMWA_BORDER_COLOR` = none) and DWM's frame drawing (`DWMWA_NCRENDERING_POLICY` = disabled), and puts both back on leaving it. On Windows 10 these calls fail harmlessly.
+  - Windowed mode is untouched: its frame has a caption, so the filter ignores it.
+- `tyli_ui` links `dwmapi` on Windows (`CMakeLists.txt`).
+- **Decisions:**
+  - Rejected: dropping the border. The monitor would blank and leave HDR again (I-27).
+  - Rejected: a window one pixel larger than the screen, with the border off screen. Same reason as on 2026-10-17: fragile with display scaling and several monitors.
+  - Rejected: `QStyleHints::setColorScheme(Dark)`, which darkens Windows' frames for the whole app. Its frame is dark grey, not black, and it changes Qt's palette on Windows as a side effect.
+- **Tests:** Windows-only code, so CI compiles it and the user's test is the real check: full screen in and out, alt-tab and a click on another monitor while in full screen (focus changes), no white line, and still no blanking with HDR on. **If a line still shows**, the user says its color (white, grey, or the accent color), which tells which part of Windows draws it.
+
+**2. The track from search (`qml/SearchView.qml`, `qml/AlbumView.qml`, `qml/TrackList.qml`):**
+- A track result passes `highlightEntry` and `highlightTitle` with the album it opens. The album page gives them to its `TrackList` (`highlight`).
+- The list scrolls the track into view (only if it isn't already) and flashes its row: a green outline (`Theme.accent`) over a faint green fill (`Theme.selection`), drawn under the row's text. It pulses twice and fades, about 2 s in all, once per page.
+- The row is the same file when the copy shown has it; else the track with the same title (the album opens on the remembered or best quality, which may be another copy of it). No match, no flash.
+- **Decisions:** the flash fades rather than staying, so the page looks normal again; the playing track keeps its own green marker. Rejected: switching the album to the copy the result came from. The quality the user picked for the album stays.
+- **Tests:** `tst_qml_smoke::searchAcrossTheLibrary` opens a track result, checks the flashed row's title, takes a screenshot mid-flash (`search-track-flash.png`, checked by eye: outline and fill under the text), waits for it to fade, and goes back to the results. All 5 suites pass.
+- **Not done:** other ways into an album (the player bar's album link, the expanded player) don't flash yet; the playing track is already green there. Easy to add if the user wants it.
+
+**Files:** `src/app_setup.cpp`, `CMakeLists.txt`, `qml/SearchView.qml`, `qml/AlbumView.qml`, `qml/TrackList.qml`, `tests/tst_qml_smoke.cpp`, `DOCUMENTATION/application/features/media_listing_ui.md` §7c, `DOCUMENTATION/application/features/player_ui.md` §4, `DOCUMENTATION/PRODUCT.md` (I-27, I-54), `DOCUMENTATION/CHANGELOGS/unreleased.md`
+
 ### The Windows build: ffmpeg pinned to a build that stays online (2026-11-01, branch `abhinavp06/PLAYLISTS`)
 
 **Summary:** The user's manual run of the Windows build failed at "Install ffmpeg" with `Invoke-WebRequest: Not Found`. The pinned ffmpeg zip (BtbN `autobuild-2026-10-01-13-06`) had been deleted: BtbN keeps its daily builds for about two weeks, and only the last build of each month for good. The run never got past the downloads. The cache step didn't help either, because the job's cache had also expired.
